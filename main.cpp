@@ -16,15 +16,25 @@
 #include <ws2tcpip.h>
 #include "version.h"
 
+// For  10 sec while loop
+#include <chrono>
+#include <thread>
+
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
-#define serial
+#define SERIAL_PORT "\\\\.\\COM4"
 #define WM_TRAYICON (WM_USER + 1)
 #define ID_TRAY_EXIT 1001
 
+
 NOTIFYICONDATA nid = {0};
 HMENU hMenu;
+
+// Helper functions to convert macro values to string
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
 
 // Utility: Get first IPv4 address
 std::string getIPv4Address() {
@@ -49,7 +59,7 @@ std::string getIPv4Address() {
 
 // Serial port thread
 void serialThread() {
-    HANDLE hSerial = CreateFileA("\\\\.\\COM4", GENERIC_READ | GENERIC_WRITE, 0, NULL,
+    HANDLE hSerial = CreateFileA(SERIAL_PORT, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                                  OPEN_EXISTING, 0, NULL);
     if (hSerial == INVALID_HANDLE_VALUE) return;
 
@@ -72,12 +82,26 @@ void serialThread() {
     
     // Send Hello string
     DWORD bytesWritten;
-    std::string out = "NodeWinApp running...\r\n";
+
+    std::string versionString = std::string(TOSTRING(VERSION_YEAR) "." TOSTRING(VERSION_MONTH) "." TOSTRING(VERSION_RELEASE) "_" VERSION_EXTRAVERSION);
+    if (std::string(VERSION_EXTRAVERSION) == "rc") {
+        versionString += TOSTRING(VERSION_RC_NO);
+    }
+    else if (std::string(VERSION_EXTRAVERSION) == "adhoc") {
+        versionString += TOSTRING(VERSION_ADHOC_NO);
+    }
+     
+    std::string out = std::string("NodeWinApp ") + versionString + " running...\r\n";
+
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
 
 
-    while (true) {
+    auto start = std::chrono::steady_clock::now();
+    auto end = start + std::chrono::seconds(5);
+    //while (true) {
+    while (std::chrono::steady_clock::now() < end) {
         if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
+            
             input.append(buffer, bytesRead);
 
             if (input.find("\n") != std::string::npos) {
@@ -90,7 +114,8 @@ void serialThread() {
             }
         }
     }
-
+    out = "serialThread closing...\r\n";
+    WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
     CloseHandle(hSerial);
 }
 

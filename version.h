@@ -11,11 +11,11 @@
 #ifndef _version_h
 
 #define _version_h
-#define year 2025
-#define month 4
-#define release 1
-#define extraversion "adhoc"
-#define rc_no 2
-#define adhoc_no 0
+#define VERSION_YEAR 2025
+#define VERSION_MONTH 4
+#define VERSION_RELEASE 1
+#define VERSION_EXTRAVERSION "adhoc"
+#define VERSION_RC_NO 2
+#define VERSION_ADHOC_NO 0
 
 #endif
