@@ -14,10 +14,12 @@
 #include <vector>
 #include <iphlpapi.h>
 #include <ws2tcpip.h>
+#include "version.h"
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
+#define serial
 #define WM_TRAYICON (WM_USER + 1)
 #define ID_TRAY_EXIT 1001
 
@@ -77,7 +79,7 @@ void serialThread() {
     while (true) {
         if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
             input.append(buffer, bytesRead);
-            
+
             if (input.find("\n") != std::string::npos) {
                 if (input.find("status") != std::string::npos) {
                     std::string ip = "IP: " + getIPv4Address() + "\r\n";
@@ -116,7 +118,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     wc.lpszClassName = TEXT("TrayAppClass");
     RegisterClass(&wc);
 
-    HWND hwnd = CreateWindow(wc.lpszClassName, TEXT("TrayApp"), 0, 0, 0, 0, 0,
+    HWND hwnd = CreateWindow(wc.lpszClassName, TEXT("AHK CoreStation"), 0, 0, 0, 0, 0,
                              NULL, NULL, hInstance, NULL);
 
     nid.cbSize = sizeof(NOTIFYICONDATA);
@@ -125,7 +127,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_TRAYICON;
     nid.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    lstrcpy(nid.szTip, TEXT("Serial IP Tray App"));
+    lstrcpy(nid.szTip, TEXT("AHK CoreStation HX"));
     Shell_NotifyIcon(NIM_ADD, &nid);
 
     hMenu = CreatePopupMenu();
