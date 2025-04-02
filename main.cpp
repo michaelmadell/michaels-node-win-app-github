@@ -5,6 +5,7 @@
 #include <thread>
 #include <string>
 #include <vector>
+#include <sstream>
 #include <iphlpapi.h>      // For GetAdaptersAddresses
 
 #include <windows.h>
@@ -14,11 +15,9 @@
 #include <vector>
 #include <iphlpapi.h>
 #include <ws2tcpip.h>
+#include <locale>
+#include <codecvt>
 #include "version.h"
-
-// For  10 sec while loop
-#include <chrono>
-#include <thread>
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -36,25 +35,43 @@ HMENU hMenu;
 #define TOSTRING(x) STRINGIFY(x)
 
 
-// Utility: Get first IPv4 address
-std::string getIPv4Address() {
-    char buffer[INET_ADDRSTRLEN] = "0.0.0.0";
+std::string getNetworkAdaptersInfo() {
     DWORD size = 0;
-    GetAdaptersAddresses(AF_INET, 0, nullptr, nullptr, &size);
+    GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, nullptr, &size);
 
     std::vector<BYTE> data(size);
     IP_ADAPTER_ADDRESSES *adapters = reinterpret_cast<IP_ADAPTER_ADDRESSES *>(data.data());
 
-    if (GetAdaptersAddresses(AF_INET, 0, nullptr, adapters, &size) == NO_ERROR) {
+    std::ostringstream result;
+
+    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, adapters, &size) == NO_ERROR) {
         for (IP_ADAPTER_ADDRESSES *adapter = adapters; adapter; adapter = adapter->Next) {
+            if (adapter->IfType != IF_TYPE_ETHERNET_CSMACD) continue; // Skip non-Ethernet
+            std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+            std::string name = adapter->FriendlyName ? converter.to_bytes(adapter->FriendlyName) : "Unknown";
+            std::string status = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
+            std::string ipv4 = "none", ipv6 = "none";
+            std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
+
             for (IP_ADAPTER_UNICAST_ADDRESS *addr = adapter->FirstUnicastAddress; addr; addr = addr->Next) {
-                SOCKADDR_IN *sa = reinterpret_cast<SOCKADDR_IN *>(addr->Address.lpSockaddr);
-                inet_ntop(AF_INET, &(sa->sin_addr), buffer, sizeof(buffer));
-                return buffer;
+                char buffer[INET6_ADDRSTRLEN] = {0};
+
+                if (addr->Address.lpSockaddr->sa_family == AF_INET) {
+                    sockaddr_in *sa = reinterpret_cast<sockaddr_in *>(addr->Address.lpSockaddr);
+                    inet_ntop(AF_INET, &(sa->sin_addr), buffer, sizeof(buffer));
+                    ipv4 = buffer;
+                } else if (addr->Address.lpSockaddr->sa_family == AF_INET6) {
+                    sockaddr_in6 *sa6 = reinterpret_cast<sockaddr_in6 *>(addr->Address.lpSockaddr);
+                    inet_ntop(AF_INET6, &(sa6->sin6_addr), buffer, sizeof(buffer));
+                    ipv6 = buffer;
+                }
             }
+
+            result << name << ", " << status << ", " << ipv6 << ", " << ipv4 << ", " << dhcp << "\r\n";
         }
     }
-    return "0.0.0.0";
+
+    return result.str();
 }
 
 // Serial port thread
@@ -96,19 +113,16 @@ void serialThread() {
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
 
 
-    auto start = std::chrono::steady_clock::now();
-    auto end = start + std::chrono::seconds(5);
-    //while (true) {
-    while (std::chrono::steady_clock::now() < end) {
+    while (true) {
         if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
-            
             input.append(buffer, bytesRead);
+            // WriteFile(hSerial, input.c_str(), (DWORD)input.size(), &bytesWritten, NULL);
 
-            if (input.find("\n") != std::string::npos) {
+            if (input.find("\r") != std::string::npos) {
                 if (input.find("status") != std::string::npos) {
-                    std::string ip = "IP: " + getIPv4Address() + "\r\n";
+                    std::string network = getNetworkAdaptersInfo();
                     DWORD bytesWritten;
-                    WriteFile(hSerial, ip.c_str(), (DWORD)ip.size(), &bytesWritten, NULL);
+                    WriteFile(hSerial, network.c_str(), (DWORD)network.size(), &bytesWritten, NULL);
                 }
                 input.clear();
             }
