@@ -28,7 +28,7 @@ This project was developed on a Win 11 Pro CoreStation Node
 
 # Day to Day use
 - Build `Ctrl+Shift+P` > `CMake: Build` or `F7`
-- Clang current file `Ctrl+Shift+P` > `Tasks: Run Task` > `Run Clang Tidy`, Issues will be listed in PROBLEMS tab at bottom and 
+- Clang current file `Ctrl+Shift+P` > `Tasks: Run Task` > `Run Clang Tidy (Current File)`, Issues will be listed in PROBLEMS tab at bottom and 
 
 
 
@@ -45,3 +45,25 @@ which generates compile_commands.json, which clang-tidy uses to understand how e
 - Or use the helper script to run clang-tidy on all source files:
 `run-clang-tidy.py -p build/`
 - VSCode Integration: Install the extension: *C++ Advanced Lint* or just configure clang-tidy via c_cpp_properties.json.
+
+To enable pre-commit checks I created this file 
+  ```
+  #!/bin/bash
+
+  echo "🔍 Running clang-tidy on main.cpp..."
+
+  SRC="main.cpp"
+  CLANG_FLAGS="-std=c++17 -Iinclude"
+
+  if [ -f "$SRC" ]; then
+    clang-tidy "$SRC" -- $CLANG_FLAGS
+    if [ $? -ne 0 ]; then
+      echo "❌ clang-tidy failed. Commit aborted."
+      exit 1
+    else
+      echo "✅ clang-tidy passed."
+    fi
+  else
+    echo "⚠️ File '$SRC' not found. Skipping."
+  fi
+  ```
