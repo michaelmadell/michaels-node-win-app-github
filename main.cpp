@@ -26,9 +26,11 @@
 #pragma comment(lib, "ws2_32.lib")
 
 #define SERIAL_PORT "\\\\.\\COM4"
+
+// Options on tray app
 #define WM_TRAYICON (WM_USER + 1)
 #define ID_TRAY_EXIT 1001
-
+#define ID_TRAY_ABOUT 1002
 
 NOTIFYICONDATA nid = {0};
 HMENU hMenu;
@@ -49,6 +51,24 @@ HMENU hMenu;
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
+
+std::string getVersionString() {
+    // Build version string
+    std::string versionString = std::string(TOSTRING(VERSION_YEAR) "." TOSTRING(VERSION_MONTH) "." TOSTRING(VERSION_RELEASE) "_" VERSION_EXTRAVERSION);
+    if (std::string(VERSION_EXTRAVERSION) == "rc") {
+        versionString += TOSTRING(VERSION_RC_NO);
+    }
+    else if (std::string(VERSION_EXTRAVERSION) == "adhoc") {
+        versionString += TOSTRING(VERSION_ADHOC_NO);
+    }
+    return versionString;
+}
+
+// String to wide string helper function
+std::wstring s2ws(const std::string& str) {
+    return std::wstring(str.begin(), str.end());
+}
+
 
 std::string getNetworkAdaptersInfo() {
     DWORD size = 0;
@@ -111,7 +131,6 @@ std::string getHostName() {
     return result.str();
 }
 
-
 std::string getLoggedInUser() {
     std::ostringstream result;
     
@@ -124,7 +143,6 @@ std::string getLoggedInUser() {
     result << "user, " << std::string(username) << "\r\n";
     return result.str();
 }
-
 
 // Serial port thread
 void serialThread() {
@@ -147,36 +165,32 @@ void serialThread() {
 
     char buffer[256];
     DWORD bytesRead;
-    std::string input;
-    
-    // Send Hello string
     DWORD bytesWritten;
+    std::string input;
 
-    std::string versionString = std::string(TOSTRING(VERSION_YEAR) "." TOSTRING(VERSION_MONTH) "." TOSTRING(VERSION_RELEASE) "_" VERSION_EXTRAVERSION);
-    if (std::string(VERSION_EXTRAVERSION) == "rc") {
-        versionString += TOSTRING(VERSION_RC_NO);
-    }
-    else if (std::string(VERSION_EXTRAVERSION) == "adhoc") {
-        versionString += TOSTRING(VERSION_ADHOC_NO);
-    }
      
-    std::string out = std::string("NodeWinApp ") + versionString + " running...\r\n";
-
+    // Send Running sting
+    std::string out = std::string("\r\nNodeWinApp ") + getVersionString() + " running...\r\n";
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
 
-
+    // main serial input processing loop 
     while (true) {
         if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
             input.append(buffer, bytesRead);
-            // WriteFile(hSerial, input.c_str(), (DWORD)input.size(), &bytesWritten, NULL);
-
+            // If carriage return detected...
             if (input.find("\r") != std::string::npos) {
+                // Generate [status] response
                 if (input.find("status") != std::string::npos) {
-                    DWORD bytesWritten;
+                    // Version    
+                    std::string version = std::string("NodeWinApp, ") + getVersionString() + "\r\n";
+                    WriteFile(hSerial, version.c_str(), (DWORD)version.size(), &bytesWritten, NULL);
+                    // Network 
                     std::string network = getNetworkAdaptersInfo();
                     WriteFile(hSerial, network.c_str(), (DWORD)network.size(), &bytesWritten, NULL);
+                    // User
                     std::string user = getLoggedInUser();
                     WriteFile(hSerial, user.c_str(), (DWORD)user.size(), &bytesWritten, NULL);
+                    // Hostname
                     std::string hostname = getHostName();
                     WriteFile(hSerial, hostname.c_str(), (DWORD)hostname.size(), &bytesWritten, NULL);
 
@@ -190,22 +204,8 @@ void serialThread() {
     CloseHandle(hSerial);
 }
 
-// Tray message handler
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (msg == WM_TRAYICON && lParam == WM_RBUTTONUP) {
-        POINT pt;
-        GetCursorPos(&pt);
-        SetForegroundWindow(hwnd);
-        TrackPopupMenu(hMenu, TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
-    } else if (msg == WM_COMMAND && LOWORD(wParam) == ID_TRAY_EXIT) {
-        Shell_NotifyIcon(NIM_DELETE, &nid);
-        PostQuitMessage(0);
-    } else if (msg == WM_DESTROY) {
-        Shell_NotifyIcon(NIM_DELETE, &nid);
-        PostQuitMessage(0);
-    }
-    return DefWindowProc(hwnd, msg, wParam, lParam);
-}
+// Forward declaration
+LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     WNDCLASS wc = {0};
@@ -214,7 +214,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     wc.lpszClassName = TEXT("TrayAppClass");
     RegisterClass(&wc);
 
-    HWND hwnd = CreateWindow(wc.lpszClassName, TEXT("AHK CoreStation"), 0, 0, 0, 0, 0,
+    HWND hwnd = CreateWindow(wc.lpszClassName, TEXT("AHK CoreStation HX"), 0, 0, 0, 0, 0,
                              NULL, NULL, hInstance, NULL);
 
     nid.cbSize = sizeof(NOTIFYICONDATA);
@@ -222,11 +222,15 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     nid.uID = 1;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_TRAYICON;
-    nid.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+
+    // Load the icon from an .ico file
+    nid.hIcon = (HICON)LoadImage(NULL, TEXT("ahk_white.ico"), IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
     lstrcpy(nid.szTip, TEXT("AHK CoreStation HX"));
     Shell_NotifyIcon(NIM_ADD, &nid);
 
     hMenu = CreatePopupMenu();
+    AppendMenu(hMenu, MF_STRING, ID_TRAY_ABOUT, TEXT("About"));
+    AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
     AppendMenu(hMenu, MF_STRING, ID_TRAY_EXIT, TEXT("Exit"));
 
     std::thread(serialThread).detach();
@@ -234,8 +238,42 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessage(&msg); 
     }
 
     return 0;
+}
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    switch (msg) {
+        case WM_TRAYICON:
+            if (LOWORD(lParam) == WM_RBUTTONUP) {
+                POINT pt;
+                GetCursorPos(&pt);
+                SetForegroundWindow(hwnd);
+                TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, hwnd, NULL);
+            }
+            break;
+        case WM_COMMAND:
+            switch (LOWORD(wParam)) {
+                case ID_TRAY_ABOUT: {
+                    std::wstring versionText = s2ws(getVersionString());
+
+                    std::wstring message = L"Version " + versionText;
+                    MessageBoxW(hwnd, message.c_str(), L"Amulet Hotkey CoreStation HX", MB_ICONINFORMATION);
+                    break;
+                }
+                case ID_TRAY_EXIT: {
+                    Shell_NotifyIcon(NIM_DELETE, &nid);
+                    PostQuitMessage(0);
+                    break;
+                }
+            }
+            break;
+        case WM_DESTROY:
+            Shell_NotifyIcon(NIM_DELETE, &nid);
+            PostQuitMessage(0);
+            break;
+    }
+    return DefWindowProc(hwnd, msg, wParam, lParam);
 }
