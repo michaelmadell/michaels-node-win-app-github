@@ -7,7 +7,8 @@
 #include <vector>
 #include <sstream>
 #include <iphlpapi.h>      // For GetAdaptersAddresses
-
+#include <lmcons.h>        // For UNLEN in getLoggedInUser
+#include <cstring>         // for strcpy_s
 #include <windows.h>
 #include <shellapi.h>
 #include <thread>
@@ -17,6 +18,8 @@
 #include <ws2tcpip.h>
 #include <locale>
 #include <codecvt>
+
+
 #include "version.h"
 
 #pragma comment(lib, "iphlpapi.lib")
@@ -34,6 +37,18 @@ HMENU hMenu;
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
+#include <string>
+#include <vector>
+#include <sstream>
+#include <iomanip>
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <ws2tcpip.h>
+#include <locale>
+#include <codecvt>
+
+#pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 std::string getNetworkAdaptersInfo() {
     DWORD size = 0;
@@ -47,11 +62,22 @@ std::string getNetworkAdaptersInfo() {
     if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, adapters, &size) == NO_ERROR) {
         for (IP_ADAPTER_ADDRESSES *adapter = adapters; adapter; adapter = adapter->Next) {
             if (adapter->IfType != IF_TYPE_ETHERNET_CSMACD) continue; // Skip non-Ethernet
+
+            // Convert FriendlyName from wide to UTF-8
             std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
             std::string name = adapter->FriendlyName ? converter.to_bytes(adapter->FriendlyName) : "Unknown";
+
             std::string status = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
+
+            // Format MAC address
+            std::ostringstream macStream;
+            for (ULONG i = 0; i < adapter->PhysicalAddressLength; i++) {
+                if (i != 0) macStream << ":";
+                macStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(adapter->PhysicalAddress[i]);
+            }
+            std::string macAddress = macStream.str();
 
             for (IP_ADAPTER_UNICAST_ADDRESS *addr = adapter->FirstUnicastAddress; addr; addr = addr->Next) {
                 char buffer[INET6_ADDRSTRLEN] = {0};
@@ -67,12 +93,38 @@ std::string getNetworkAdaptersInfo() {
                 }
             }
 
-            result << name << ", " << status << ", " << ipv6 << ", " << ipv4 << ", " << dhcp << "\r\n";
+            result << name << ", " << status << ", " << ipv6 << ", " << ipv4 << ", " << dhcp << ", " << macAddress << "\r\n";
         }
     }
 
     return result.str();
 }
+
+std::string getHostName() {
+    std::ostringstream result;
+    char hostname[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD hostnameLen = sizeof(hostname);
+    if (! GetComputerNameA(hostname, &hostnameLen)) {
+        strcpy_s(hostname, sizeof(hostname), "none");        
+    }
+    result << "hostname, " << std::string(hostname) << "\r\n";
+    return result.str();
+}
+
+
+std::string getLoggedInUser() {
+    std::ostringstream result;
+    
+    char username[UNLEN + 1];
+    DWORD usernameLen = sizeof(username);
+    if (! GetUserNameA(username, &usernameLen)) {
+        strcpy_s(username, sizeof(username), "none");        
+    }
+
+    result << "user, " << std::string(username) << "\r\n";
+    return result.str();
+}
+
 
 // Serial port thread
 void serialThread() {
@@ -120,9 +172,14 @@ void serialThread() {
 
             if (input.find("\r") != std::string::npos) {
                 if (input.find("status") != std::string::npos) {
-                    std::string network = getNetworkAdaptersInfo();
                     DWORD bytesWritten;
+                    std::string network = getNetworkAdaptersInfo();
                     WriteFile(hSerial, network.c_str(), (DWORD)network.size(), &bytesWritten, NULL);
+                    std::string user = getLoggedInUser();
+                    WriteFile(hSerial, user.c_str(), (DWORD)user.size(), &bytesWritten, NULL);
+                    std::string hostname = getHostName();
+                    WriteFile(hSerial, hostname.c_str(), (DWORD)hostname.size(), &bytesWritten, NULL);
+
                 }
                 input.clear();
             }
