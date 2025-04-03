@@ -69,6 +69,16 @@ std::wstring s2ws(const std::string& str) {
     return std::wstring(str.begin(), str.end());
 }
 
+std::string WideToUtf8(const std::wstring& wstr) {
+    if (wstr.empty()) return std::string();
+
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, NULL, NULL);
+    std::string result(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &result[0], size_needed, NULL, NULL);
+    result.resize(strlen(result.c_str()));  // Trim extra nulls
+    return result;
+}
+
 
 std::string getNetworkAdaptersInfo() {
     DWORD size = 0;
@@ -84,9 +94,7 @@ std::string getNetworkAdaptersInfo() {
             if (adapter->IfType != IF_TYPE_ETHERNET_CSMACD) continue; // Skip non-Ethernet
 
             // Convert FriendlyName from wide to UTF-8
-            std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-            std::string name = adapter->FriendlyName ? converter.to_bytes(adapter->FriendlyName) : "Unknown";
-
+            std::string name = adapter->FriendlyName ? WideToUtf8(adapter->FriendlyName) : "Unknown";
             std::string status = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
