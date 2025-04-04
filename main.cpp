@@ -28,8 +28,13 @@
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
-//#define SERIAL_PORT "\\\\.\\COM4"
+#define DEV_VERSION
+
+#ifdef DEV_VERSION
+#define SERIAL_PORT "\\\\.\\COM4"
+#else
 #define SERIAL_PORT "\\\\.\\COM1"
+#endif
 
 // Options on tray app 
 #define WM_TRAYICON (WM_USER + 1) 
@@ -47,7 +52,7 @@ HMENU hMenu;
 #pragma comment(lib, "ws2_32.lib")
 
 // Share power state string + mutex to pass from main windows into serial therad
-std::shared_ptr<std::string> powerState = std::make_shared<std::string>("unknown");
+std::shared_ptr<std::string> powerState = std::make_shared<std::string>("appStartup");
 std::mutex powerStateMutex;
 
 struct NetworkInterface {
@@ -419,7 +424,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
         case WM_QUERYENDSESSION:
             // System is asking if it's OK to shut down / log off
-            passPowerStateToSerial("Shutdown Requested");
+            passPowerStateToSerial("Logging off");
             return TRUE; // Return FALSE to cancel shutdown
 
         case WM_ENDSESSION:

@@ -16,6 +16,6 @@
 #define VERSION_RELEASE 1
 #define VERSION_EXTRAVERSION "adhoc"
 #define VERSION_RC_NO 2
-#define VERSION_ADHOC_NO 0
+#define VERSION_ADHOC_NO 1
 
 #endif
