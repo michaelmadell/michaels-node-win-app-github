@@ -25,7 +25,7 @@ This project was developed on a Win 11 Pro CoreStation Node
   - Reboot dev machine (to sort out paths etc)
   - Check it works via `clang-tidy --version`
 
-To allow cl.exe to work from the command line, `C:\Users\labtest\AppData\Roaming\Code\User\settings.json` should read as follows
+To allow cl.exe and dumpbin to work from the command line, `C:\Users\labtest\AppData\Roaming\Code\User\settings.json` should read as follows
 
 
   ```
@@ -36,7 +36,7 @@ To allow cl.exe to work from the command line, `C:\Users\labtest\AppData\Roaming
         "path": "C:\\Windows\\System32\\cmd.exe",
         "args": [
             "/k",
-            "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
+            "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat"
         ]
     },   
 

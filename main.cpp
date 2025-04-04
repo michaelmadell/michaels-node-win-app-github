@@ -3,6 +3,8 @@
 #include <windows.h>       // AFTER winsock2
 #include <shellapi.h>
 #include <thread>
+#include <mutex>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -18,7 +20,8 @@
 #include <locale>
 #include <codecvt>
 #include <iomanip>
- 
+#include <wtsapi32.h>    
+
 
 #include "version.h"
 
@@ -43,6 +46,9 @@ HMENU hMenu;
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
+// Share power state string + mutex to pass from main windows into serial therad
+std::shared_ptr<std::string> powerState = std::make_shared<std::string>("unknown");
+std::mutex powerStateMutex;
 
 struct NetworkInterface {
     std::string name;
@@ -160,8 +166,6 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
     std::vector<BYTE> data(size);
     IP_ADAPTER_ADDRESSES *adapters = reinterpret_cast<IP_ADAPTER_ADDRESSES *>(data.data());
 
-    std::ostringstream result;
-
     if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, adapters, &size) == NO_ERROR) {
         for (IP_ADAPTER_ADDRESSES *adapter = adapters; adapter; adapter = adapter->Next) {
             if (adapter->IfType != IF_TYPE_ETHERNET_CSMACD) continue; // Skip non-Ethernet
@@ -238,7 +242,6 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
 }
 
 void checkHostName(HANDLE hSerial, SystemState* currentState) {
-    std::ostringstream result;
     char hostnameChar[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD hostnameLen = sizeof(hostnameChar);
     if (! GetComputerNameA(hostnameChar, &hostnameLen)) {
@@ -252,8 +255,6 @@ void checkHostName(HANDLE hSerial, SystemState* currentState) {
 }
 
 void checkLoggedInUser(HANDLE hSerial, SystemState* currentState) {
-    std::ostringstream result;
-    
     char username[UNLEN + 1];
     DWORD usernameLen = sizeof(username);
     if (! GetUserNameA(username, &usernameLen)) {
@@ -263,6 +264,20 @@ void checkLoggedInUser(HANDLE hSerial, SystemState* currentState) {
     if (currentState->username !=std::string(username)) {
         currentState->username = std::string(username);
         sendLineToBmc(hSerial, "username, " +  currentState->username);
+    }
+}
+
+void checkPowerState(HANDLE hSerial, SystemState* currentState) {
+    // Get a local copy protected by mutex
+    std::string powerStateLocalCopy;
+    {
+        std::lock_guard<std::mutex> lock(powerStateMutex);
+        powerStateLocalCopy = *powerState;
+    }
+    // Check if it has changed since last pass
+    if (currentState->powerState != powerStateLocalCopy) {
+        currentState->powerState = powerStateLocalCopy;
+        sendLineToBmc(hSerial, "powerState, " +  currentState->powerState);
     }
 }
 
@@ -308,6 +323,9 @@ void serialThread() {
         checkNetworkAdapters(hSerial, &currentState);
         checkLoggedInUser(hSerial, &currentState);
         checkHostName(hSerial, &currentState);
+        checkPowerState(hSerial, & currentState);
+
+        
 
         // if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
         //     input.append(buffer, bytesRead);
@@ -339,11 +357,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     wc.lpszClassName = TEXT("TrayAppClass");
     RegisterClass(&wc);
 
-    HWND hwnd = CreateWindow(wc.lpszClassName, TEXT("AHK CoreStation HX"), 0, 0, 0, 0, 0,
+    HWND hWnd = CreateWindow(wc.lpszClassName, TEXT("AHK CoreStation HX"), 0, 0, 0, 0, 0,
                              NULL, NULL, hInstance, NULL);
 
     nid.cbSize = sizeof(NOTIFYICONDATA);
-    nid.hWnd = hwnd;
+    nid.hWnd = hWnd;
     nid.uID = 1;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_TRAYICON;
@@ -369,36 +387,86 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     return 0;
 }
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+
+void passPowerStateToSerial(std::string powerStateStr) {
+    std::lock_guard<std::mutex> lock(powerStateMutex);
+    *powerState = powerStateStr;
+}
+
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    // Watch for windows system messages and handle accordingly
     switch (msg) {
+
+        case WM_CREATE:
+            // Register for session notifications (logon/logoff)
+            WTSRegisterSessionNotification(hWnd, NOTIFY_FOR_THIS_SESSION);
+            break;
+
+        case WM_POWERBROADCAST:
+            if (wParam == PBT_APMSUSPEND) {
+                
+               passPowerStateToSerial("suspending");
+            } else if (wParam == PBT_APMRESUMEAUTOMATIC) {
+                passPowerStateToSerial("resumed");
+            }
+            break;
+
+        case WM_WTSSESSION_CHANGE:
+            if (wParam == WTS_SESSION_LOGON) {
+                passPowerStateToSerial("userLoggedIn");
+            }
+            break;
+
+        case WM_QUERYENDSESSION:
+            // System is asking if it's OK to shut down / log off
+            passPowerStateToSerial("Shutdown Requested");
+            return TRUE; // Return FALSE to cancel shutdown
+
+        case WM_ENDSESSION:
+            if (wParam) {
+                if (lParam & ENDSESSION_LOGOFF) {
+                    passPowerStateToSerial("userLoggedOff");
+                } else {
+                    passPowerStateToSerial("shuttingDown");
+                }
+            }
+            break;            
+
         case WM_TRAYICON:
             if (LOWORD(lParam) == WM_RBUTTONUP) {
                 POINT pt;
                 GetCursorPos(&pt);
-                SetForegroundWindow(hwnd);
-                TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, hwnd, NULL);
+                SetForegroundWindow(hWnd);
+                TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, hWnd, NULL);
             }
             break;
+
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
                 case ID_TRAY_ABOUT: {
                     std::wstring versionText = s2ws(getVersionString());
 
                     std::wstring message = L"Version " + versionText;
-                    MessageBoxW(hwnd, message.c_str(), L"Amulet Hotkey CoreStation HX", MB_ICONINFORMATION);
+                    MessageBoxW(hWnd, message.c_str(), L"Amulet Hotkey CoreStation HX", MB_ICONINFORMATION);
                     break;
                 }
                 case ID_TRAY_EXIT: {
+                    // Un-register interest in Session notifications
+                    passPowerStateToSerial("appExitingCmd");
+                    WTSUnRegisterSessionNotification(hWnd);
                     Shell_NotifyIcon(NIM_DELETE, &nid);
                     PostQuitMessage(0);
                     break;
                 }
             }
             break;
+
         case WM_DESTROY:
+            // Un-register interest in Session notifications
+            passPowerStateToSerial("appExitingDstry");
             Shell_NotifyIcon(NIM_DELETE, &nid);
             PostQuitMessage(0);
             break;
     }
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProc(hWnd, msg, wParam, lParam);
 }
