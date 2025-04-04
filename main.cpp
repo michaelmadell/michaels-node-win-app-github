@@ -458,6 +458,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 case ID_TRAY_EXIT: {
                     // Un-register interest in Session notifications
                     passPowerStateToSerial("appExitingCmd");
+                    Sleep(200);
                     WTSUnRegisterSessionNotification(hWnd);
                     Shell_NotifyIcon(NIM_DELETE, &nid);
                     PostQuitMessage(0);
@@ -469,6 +470,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_DESTROY:
             // Un-register interest in Session notifications
             passPowerStateToSerial("appExitingDstry");
+            Sleep(200);
             Shell_NotifyIcon(NIM_DELETE, &nid);
             PostQuitMessage(0);
             break;
