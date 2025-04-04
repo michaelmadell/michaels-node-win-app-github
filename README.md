@@ -25,11 +25,51 @@ This project was developed on a Win 11 Pro CoreStation Node
   - Reboot dev machine (to sort out paths etc)
   - Check it works via `clang-tidy --version`
 
+To allow cl.exe to work from the command line, `C:\Users\labtest\AppData\Roaming\Code\User\settings.json` should read as follows
+
+
+  ```
+  {
+    "git.confirmSync": false,
+    "terminal.integrated.profiles.windows": {
+    "Developer Command Prompt": {
+        "path": "C:\\Windows\\System32\\cmd.exe",
+        "args": [
+            "/k",
+            "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
+        ]
+    },   
+
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell"
+        },
+        "Command Prompt": {
+            "path": [
+                "${env:windir}\\Sysnative\\cmd.exe",
+                "${env:windir}\\System32\\cmd.exe"
+            ],
+            "args": [],
+            "icon": "terminal-cmd"
+        },
+        "Git Bash": {
+            "source": "Git Bash"
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "Developer Command Prompt"        
+
+}
+  ```
+
 
 # Day to Day use
 - Build `Ctrl+Shift+P` > `CMake: Build` or `F7`
 - Clang current file `Ctrl+Shift+P` > `Tasks: Run Task` > `Run Clang Tidy (Current File)`, Issues will be listed in PROBLEMS tab at bottom and 
-
+- To transfer exe to another machine from Win11 console
+  ```
+  cd  C:\Users\labtest\repos\node-win-app\build
+  scp *.exe user@node-jm:~
+  ```
 
 
 # Lint-ing

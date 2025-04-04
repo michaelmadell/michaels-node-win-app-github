@@ -18,17 +18,18 @@
 #include <locale>
 #include <codecvt>
 #include <iomanip>
-
+ 
 
 #include "version.h"
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
-#define SERIAL_PORT "\\\\.\\COM4"
+//#define SERIAL_PORT "\\\\.\\COM4"
+#define SERIAL_PORT "\\\\.\\COM1"
 
-// Options on tray app
-#define WM_TRAYICON (WM_USER + 1)
+// Options on tray app 
+#define WM_TRAYICON (WM_USER + 1) 
 #define ID_TRAY_EXIT 1001
 #define ID_TRAY_ABOUT 1002
 
