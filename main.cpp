@@ -47,25 +47,29 @@ struct NetworkInterface {
     std::string name;
     std::string ipv4;
     std::string ipv6;
-    std::string mode;    // "DHCP" or "Static"
-    std::string status;  // "Up" or "Down"
+    std::string dhcp;    // "DHCP" or "Static"
+    std::string linkStatus;  // "Up" or "Down"
+    std::string macAddress;
+    
 
     // overload the != to allow lines like if (net1 != net1) {...}  
     bool operator!=(const NetworkInterface& other) const {
-        return std::tie(ipv4, ipv6, mode, status) != std::tie(other.ipv4, other.ipv6, other.mode, other.status);
+        return std::tie(name, ipv4, ipv6, dhcp, linkStatus, macAddress) != 
+        std::tie(other.name, other.ipv4, other.ipv6, other.dhcp, other.linkStatus, other.macAddress);
     }
 
     bool operator==(const NetworkInterface& other) const {
-        return std::tie(ipv4, ipv6, mode, status) ==
-               std::tie(other.ipv4, other.ipv6, other.mode, other.status);
+        return std::tie(name, ipv4, ipv6, linkStatus, dhcp, macAddress) ==
+               std::tie(other.name, other.ipv4, other.ipv6, other.linkStatus,  other.dhcp, other.macAddress);
     }
 
     void Clear() {
         name.clear();
         ipv4.clear();
         ipv6.clear();
-        mode.clear();
-        status.clear();
+        dhcp.clear();
+        linkStatus.clear();
+        macAddress.clear();
     }
     
 };
@@ -90,6 +94,12 @@ struct SystemState {
         username.clear();
     }
 };
+
+void sendLineToBmc( HANDLE hSerial, const std::string& output_string) {
+    DWORD bytesWritten;
+    std::string str = output_string + "\r\n";
+    WriteFile(hSerial, str.c_str(), (DWORD)str.size(), &bytesWritten, NULL); 
+}
 
 
 std::string getVersionString() {
@@ -119,51 +129,6 @@ std::string WideToUtf8(const std::wstring& wstr) {
     return result;
 }
 
-/*
-So for compatablity, modern windows will report version 6.2.9200 (Win8) unless you enable and include
-a compatability manifest (app.manifest)
-In vscode, this is done by adding the following lines to the cppbuild task in the .vscode/tasks.json 
-    "/link",
-    "/manifest:embed",
-    "/manifestinput:${fileDirname}\\app.manifest"
-*/
-std::string GetWindowsEdition() {
-    HKEY hKey;
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                      "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                      0, KEY_READ, &hKey) != ERROR_SUCCESS) {
-        return "Unknown Edition";
-    }
-
-    char productName[256];
-    DWORD size = sizeof(productName);
-    if (RegQueryValueExA(hKey, "ProductName", nullptr, nullptr, (LPBYTE)productName, &size) != ERROR_SUCCESS) {
-        RegCloseKey(hKey);
-        return "Unknown Edition";
-    }
-
-    RegCloseKey(hKey);
-    return std::string(productName);
-}
-
-// std::string GetWindowsVersion() {
-//     OSVERSIONINFOEXW osvi = {};
-//     osvi.dwOSVersionInfoSize = sizeof(osvi);
-// #pragma warning(push)
-// #pragma warning(disable : 4996) // Disable warning about GetVersionEx being deprecated
-//     if (!GetVersionExW((OSVERSIONINFOW*)&osvi)) {
-//         return "Unknown Version";
-//     }
-// #pragma warning(pop)
-
-//     std::ostringstream versionStream;
-//     versionStream << osvi.dwMajorVersion << "."
-//                   << osvi.dwMinorVersion << "."
-//                   << osvi.dwBuildNumber
-//                   << " Build " << osvi.dwBuildNumber;
-
-//     return versionStream.str();
-// }
 typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
 std::string GetRealWindowsVersion() {
@@ -184,8 +149,11 @@ std::string GetRealWindowsVersion() {
             << " Build " << rovi.dwBuildNumber;
     return version.str();
 }
-std::string getNetworkAdaptersInfo() {
+
+void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
     DWORD size = 0;
+    NetworkInterface* currentNetworks[] = { &currentState->network1, &currentState->network2 };
+    int interfaceIndex = 0;
     GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, nullptr, &size);
 
     std::vector<BYTE> data(size);
@@ -199,7 +167,7 @@ std::string getNetworkAdaptersInfo() {
 
             // Convert FriendlyName from wide to UTF-8
             std::string name = adapter->FriendlyName ? WideToUtf8(adapter->FriendlyName) : "Unknown";
-            std::string status = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
+            std::string linkStatus = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
 
@@ -225,25 +193,64 @@ std::string getNetworkAdaptersInfo() {
                 }
             }
 
-            result << name << ", " << status << ", " << ipv6 << ", " << ipv4 << ", " << dhcp << ", " << macAddress << "\r\n";
+            // If only one port up, it will be returned first
+
+            // Check for changes    
+            bool valueChanged = false;
+            if (currentNetworks[interfaceIndex]->name != name ) {
+                currentNetworks[interfaceIndex]->name = name;
+                valueChanged = true;
+            }
+
+            if (currentNetworks[interfaceIndex]->ipv6 != ipv6 ) {
+                currentNetworks[interfaceIndex]->ipv6 = ipv6;
+                valueChanged = true;
+            }
+
+            if (currentNetworks[interfaceIndex]->ipv4 != ipv4 ) {
+                currentNetworks[interfaceIndex]->ipv4 = ipv4;
+                valueChanged = true;
+            }
+
+            if (currentNetworks[interfaceIndex]->dhcp != dhcp ) {
+                currentNetworks[interfaceIndex]->dhcp = dhcp;
+                valueChanged = true;
+            }
+
+            if (currentNetworks[interfaceIndex]->linkStatus != linkStatus ) {
+                currentNetworks[interfaceIndex]->linkStatus = linkStatus;
+                valueChanged = true;
+            }
+
+            // macAddress obviously wont change, but this gets the first value into the struct
+            if (currentNetworks[interfaceIndex]->macAddress != macAddress ) {
+                currentNetworks[interfaceIndex]->macAddress = macAddress;
+                valueChanged = true;
+            }
+            
+            if (valueChanged) {
+                sendLineToBmc(hSerial,  std::string(name) + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
+            }
+            interfaceIndex += 1;
         }
     }
-
-    return result.str();
 }
 
-std::string getHostName() {
+void checkHostName(HANDLE hSerial, SystemState* currentState) {
     std::ostringstream result;
-    char hostname[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD hostnameLen = sizeof(hostname);
-    if (! GetComputerNameA(hostname, &hostnameLen)) {
-        strcpy_s(hostname, sizeof(hostname), "none");        
+    char hostnameChar[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD hostnameLen = sizeof(hostnameChar);
+    if (! GetComputerNameA(hostnameChar, &hostnameLen)) {
+        strcpy_s(hostnameChar, sizeof(hostnameChar), "none");        
     }
-    result << "hostname, " << std::string(hostname) << "\r\n";
-    return result.str();
+
+    if (currentState->hostname !=std::string(hostnameChar)) {
+        currentState->hostname = std::string(hostnameChar);
+        sendLineToBmc(hSerial, "hostname, " +  currentState->hostname);
+    }
 }
 
-std::string getLoggedInUser() {
+void checkLoggedInUser(HANDLE hSerial, SystemState* currentState) {
     std::ostringstream result;
     
     char username[UNLEN + 1];
@@ -252,8 +259,10 @@ std::string getLoggedInUser() {
         strcpy_s(username, sizeof(username), "none");        
     }
 
-    result << "user, " << std::string(username) << "\r\n";
-    return result.str();
+    if (currentState->username !=std::string(username)) {
+        currentState->username = std::string(username);
+        sendLineToBmc(hSerial, "username, " +  currentState->username);
+    }
 }
 
 // Serial port thread
@@ -288,36 +297,31 @@ void serialThread() {
     // Send Running sting
     std::string out = std::string("\r\nstate, windowsRunning\r\n") +
                                   "appVersion, " + getVersionString() + "\r\n" +
-                                  "winEdition, " + GetWindowsEdition() + "\r\n" +
                                   "winVersion, " + GetRealWindowsVersion() + "\r\n" ;
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
 
 
     // main serial input processing loop 
     while (true) {
-        if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
-            input.append(buffer, bytesRead);
-            // If carriage return detected...
-            if (input.find("\r") != std::string::npos) {
-                // Generate [status] response
-                if (input.find("status") != std::string::npos) {
-                    // Version    
-                    std::string version = std::string("NodeWinApp, ") + getVersionString() + "\r\n";
-                    WriteFile(hSerial, version.c_str(), (DWORD)version.size(), &bytesWritten, NULL);
-                    // Network 
-                    std::string network = getNetworkAdaptersInfo();
-                    WriteFile(hSerial, network.c_str(), (DWORD)network.size(), &bytesWritten, NULL);
-                    // User
-                    std::string user = getLoggedInUser();
-                    WriteFile(hSerial, user.c_str(), (DWORD)user.size(), &bytesWritten, NULL);
-                    // Hostname
-                    std::string hostname = getHostName();
-                    WriteFile(hSerial, hostname.c_str(), (DWORD)hostname.size(), &bytesWritten, NULL);
+        // Get latest state and push any changes
+        checkNetworkAdapters(hSerial, &currentState);
+        checkLoggedInUser(hSerial, &currentState);
+        checkHostName(hSerial, &currentState);
 
-                }
-                input.clear();
-            }
-        }
+        // if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
+        //     input.append(buffer, bytesRead);
+        //     // If carriage return detected...
+        //     if (input.find("\r") != std::string::npos) {
+        //         // Generate [status] response
+        //         if (input.find("status") != std::string::npos) {
+
+        //             // Clear current status so all fields are re-sent
+        //             currentState.Clear();
+        //         }
+        //         input.clear();
+        //     }
+        // }
+
     }
     out = "serialThread closing...\r\n";
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
