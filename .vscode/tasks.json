@@ -9,7 +9,10 @@
                 "/EHsc",
                 "/nologo",
                 "/Fe${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "${file}"
+                "${file}",
+                "/link",
+                "/manifest:embed",
+                "/manifestinput:${fileDirname}\\app.manifest"                
             ],
             "options": {
                 "cwd": "${fileDirname}"

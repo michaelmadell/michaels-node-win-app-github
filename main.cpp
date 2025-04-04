@@ -4,6 +4,7 @@
 #include <shellapi.h>
 #include <thread>
 #include <string>
+#include <tuple>
 #include <vector>
 #include <sstream>
 #include <iphlpapi.h>      // For GetAdaptersAddresses
@@ -14,10 +15,9 @@
 #include <thread>
 #include <string>
 #include <vector>
-#include <iphlpapi.h>
-#include <ws2tcpip.h>
 #include <locale>
 #include <codecvt>
+#include <iomanip>
 
 
 #include "version.h"
@@ -39,18 +39,58 @@ HMENU hMenu;
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
-#include <string>
-#include <vector>
-#include <sstream>
-#include <iomanip>
-#include <winsock2.h>
-#include <iphlpapi.h>
-#include <ws2tcpip.h>
-#include <locale>
-#include <codecvt>
-
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
+
+
+struct NetworkInterface {
+    std::string name;
+    std::string ipv4;
+    std::string ipv6;
+    std::string mode;    // "DHCP" or "Static"
+    std::string status;  // "Up" or "Down"
+
+    // overload the != to allow lines like if (net1 != net1) {...}  
+    bool operator!=(const NetworkInterface& other) const {
+        return std::tie(ipv4, ipv6, mode, status) != std::tie(other.ipv4, other.ipv6, other.mode, other.status);
+    }
+
+    bool operator==(const NetworkInterface& other) const {
+        return std::tie(ipv4, ipv6, mode, status) ==
+               std::tie(other.ipv4, other.ipv6, other.mode, other.status);
+    }
+
+    void Clear() {
+        name.clear();
+        ipv4.clear();
+        ipv6.clear();
+        mode.clear();
+        status.clear();
+    }
+    
+};
+
+struct SystemState {
+    NetworkInterface network1;
+    NetworkInterface network2;
+    std::string hostname;
+    std::string powerState;
+    std::string username;
+
+    bool operator!=(const SystemState& other) const {
+        return std::tie(network1, network2, hostname, powerState, username) !=
+               std::tie(other.network1, other.network2, other.hostname, other.powerState, other.username);
+    }
+
+    void Clear() {
+        network1.Clear();
+        network2.Clear();
+        hostname.clear();
+        powerState.clear();
+        username.clear();
+    }
+};
+
 
 std::string getVersionString() {
     // Build version string
@@ -79,7 +119,71 @@ std::string WideToUtf8(const std::wstring& wstr) {
     return result;
 }
 
+/*
+So for compatablity, modern windows will report version 6.2.9200 (Win8) unless you enable and include
+a compatability manifest (app.manifest)
+In vscode, this is done by adding the following lines to the cppbuild task in the .vscode/tasks.json 
+    "/link",
+    "/manifest:embed",
+    "/manifestinput:${fileDirname}\\app.manifest"
+*/
+std::string GetWindowsEdition() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+                      "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                      0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+        return "Unknown Edition";
+    }
 
+    char productName[256];
+    DWORD size = sizeof(productName);
+    if (RegQueryValueExA(hKey, "ProductName", nullptr, nullptr, (LPBYTE)productName, &size) != ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        return "Unknown Edition";
+    }
+
+    RegCloseKey(hKey);
+    return std::string(productName);
+}
+
+// std::string GetWindowsVersion() {
+//     OSVERSIONINFOEXW osvi = {};
+//     osvi.dwOSVersionInfoSize = sizeof(osvi);
+// #pragma warning(push)
+// #pragma warning(disable : 4996) // Disable warning about GetVersionEx being deprecated
+//     if (!GetVersionExW((OSVERSIONINFOW*)&osvi)) {
+//         return "Unknown Version";
+//     }
+// #pragma warning(pop)
+
+//     std::ostringstream versionStream;
+//     versionStream << osvi.dwMajorVersion << "."
+//                   << osvi.dwMinorVersion << "."
+//                   << osvi.dwBuildNumber
+//                   << " Build " << osvi.dwBuildNumber;
+
+//     return versionStream.str();
+// }
+typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
+
+std::string GetRealWindowsVersion() {
+    HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
+    if (!hMod) return "Unknown Version";
+
+    RtlGetVersionPtr fn = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
+    if (!fn) return "Unknown Version";
+
+    RTL_OSVERSIONINFOW rovi = { 0 };
+    rovi.dwOSVersionInfoSize = sizeof(rovi);
+    if (fn(&rovi) != 0) return "Unknown Version";
+
+    std::ostringstream version;
+    version << rovi.dwMajorVersion << "."
+            << rovi.dwMinorVersion << "."
+            << rovi.dwBuildNumber
+            << " Build " << rovi.dwBuildNumber;
+    return version.str();
+}
 std::string getNetworkAdaptersInfo() {
     DWORD size = 0;
     GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, nullptr, &size);
@@ -154,6 +258,7 @@ std::string getLoggedInUser() {
 
 // Serial port thread
 void serialThread() {
+    // Setup serial port
     HANDLE hSerial = CreateFileA(SERIAL_PORT, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                                  OPEN_EXISTING, 0, NULL);
     if (hSerial == INVALID_HANDLE_VALUE) return;
@@ -177,9 +282,16 @@ void serialThread() {
     std::string input;
 
      
+    SystemState currentState;
+    currentState.Clear();
+    
     // Send Running sting
-    std::string out = std::string("\r\nNodeWinApp ") + getVersionString() + " running...\r\n";
+    std::string out = std::string("\r\nstate, windowsRunning\r\n") +
+                                  "appVersion, " + getVersionString() + "\r\n" +
+                                  "winEdition, " + GetWindowsEdition() + "\r\n" +
+                                  "winVersion, " + GetRealWindowsVersion() + "\r\n" ;
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
+
 
     // main serial input processing loop 
     while (true) {
