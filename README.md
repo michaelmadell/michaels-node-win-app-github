@@ -71,6 +71,12 @@ To allow cl.exe and dumpbin to work from the command line, `C:\Users\labtest\App
   scp *.exe user@node-jm:~
   ```
 
+  Build for release via
+    ```
+    cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /FeC:\Users\labtest\repos\node-win-app\main_release.exe C:\Users\labtest\repos\node-win-app\main.cpp /link user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib winmm.lib Wtsapi32.lib
+  main.cpp
+    ```
+
 
 # Lint-ing
 Research with chatGPT concluded that [*clang_tidy*](https://learn.microsoft.com/en-us/cpp/code-quality/clang-tidy?view=msvc-170) was best lint-er for this kind of project 
@@ -107,3 +113,14 @@ To enable pre-commit checks I created this file
     echo "⚠️ File '$SRC' not found. Skipping."
   fi
   ```
+
+
+
+# Future development 
+
+The first release is a windows service that can't have a GUI / tray icon etc. If this is required later, we
+will need to create a seperate Tray helper app that starts after a user logs in, shows a tray icon that can 
+be interacted with. Communciation between the two could be via Named Pies, Shared memroy, local sockets and/or
+Windows Messages via services hidden windows handle.
+
+The first development version of this (See tag 2025.4.1-adhoc1) was a pure tray app

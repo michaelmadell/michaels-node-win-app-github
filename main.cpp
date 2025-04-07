@@ -28,7 +28,7 @@
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
-#define DEV_VERSION
+// #define DEV_VERSION
 
 #ifdef DEV_VERSION
 #define SERIAL_PORT "\\\\.\\COM4"
