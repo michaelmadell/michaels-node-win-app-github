@@ -115,8 +115,12 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
 //... Windows service boiler plate functionality
 
 // Share power state string + mutex to pass from main windows into serial therad
-std::shared_ptr<std::string> powerState = std::make_shared<std::string>("appStartup");
+std::shared_ptr<std::string> powerState = std::make_shared<std::string>("");
 std::mutex powerStateMutex;
+
+std::shared_ptr<std::string> sessionState = std::make_shared<std::string>("");
+std::mutex sessionStateMutex;
+
 
 struct NetworkInterface {
     std::string name;
@@ -154,11 +158,12 @@ struct SystemState {
     NetworkInterface network2;
     std::string hostname;
     std::string powerState;
+    std::string sessionState;
     std::string username;
 
     bool operator!=(const SystemState& other) const {
-        return std::tie(network1, network2, hostname, powerState, username) !=
-               std::tie(other.network1, other.network2, other.hostname, other.powerState, other.username);
+        return std::tie(network1, network2, hostname, powerState, sessionState, username) !=
+               std::tie(other.network1, other.network2, other.hostname, other.powerState, other.sessionState, other.username);
     }
 
     void Clear() {
@@ -166,6 +171,7 @@ struct SystemState {
         network2.Clear();
         hostname.clear();
         powerState.clear();
+        sessionState.clear();
         username.clear();
     }
 };
@@ -323,15 +329,23 @@ void checkHostName(HANDLE hSerial, SystemState* currentState) {
 }
 
 void checkLoggedInUser(HANDLE hSerial, SystemState* currentState) {
-    char username[UNLEN + 1];
-    DWORD usernameLen = sizeof(username);
-    if (! GetUserNameA(username, &usernameLen)) {
-        strcpy_s(username, sizeof(username), "none");        
-    }
+    DWORD sessionId = WTSGetActiveConsoleSessionId();
+    LPTSTR buffer = NULL;
+    DWORD bytesReturned = 0;
 
-    if (currentState->username !=std::string(username)) {
-        currentState->username = std::string(username);
-        sendLineToBmc(hSerial, "username, " +  currentState->username);
+    if (WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, sessionId, WTSUserName, &buffer, &bytesReturned)) {
+        std::string username = buffer ? std::string(buffer) : "none";
+        WTSFreeMemory(buffer);
+
+        if (currentState->username != username) {
+            currentState->username = username;
+            if (username == "" ) {
+                sendLineToBmc(hSerial, "username, none");
+            } else {
+                sendLineToBmc(hSerial, "username, " + currentState->username);
+            }
+
+        }
     }
 }
 
@@ -349,6 +363,19 @@ void checkPowerState(HANDLE hSerial, SystemState* currentState) {
     }
 }
 
+void checkSessionState(HANDLE hSerial, SystemState* currentState) {
+    // Get a local copy protected by mutex
+    std::string sessionStateLocalCopy;
+    {
+        std::lock_guard<std::mutex> lock(sessionStateMutex);
+        sessionStateLocalCopy = *sessionState;
+    }
+    // Check if it has changed since last pass
+    if (currentState->sessionState != sessionStateLocalCopy) {
+        currentState->sessionState = sessionStateLocalCopy;
+        sendLineToBmc(hSerial, "sessionState, " +  currentState->powerState);
+    }
+}
 // Serial port thread
 void serialThread() {
     // Setup serial port
@@ -392,6 +419,7 @@ void serialThread() {
         checkLoggedInUser(hSerial, &currentState);
         checkHostName(hSerial, &currentState);
         checkPowerState(hSerial, & currentState);
+        Sleep(500);  // ms
 
         
 
@@ -455,39 +483,79 @@ void passPowerStateToSerial(std::string powerStateStr) {
     *powerState = powerStateStr;
 }
 
+void passSessionStateToSerial(std::string sessionStateStr) {
+    std::lock_guard<std::mutex> lock(sessionStateMutex);
+    *sessionState = sessionStateStr;
+}
+
+
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Watch for windows system messages and handle accordingly
     switch (msg) {
 
         case WM_POWERBROADCAST:
-            if (wParam == PBT_APMSUSPEND) {
-                
-               passPowerStateToSerial("suspending");
-            } else if (wParam == PBT_APMRESUMEAUTOMATIC) {
-                passPowerStateToSerial("resumed");
-            }
+            /*
+            #define PBT_APMQUERYSUSPEND             0x0000
+            #define PBT_APMQUERYSTANDBY             0x0001
+            #define PBT_APMQUERYSUSPENDFAILED       0x0002
+            #define PBT_APMQUERYSTANDBYFAILED       0x0003
+            #define PBT_APMSUSPEND                  0x0004
+            #define PBT_APMSTANDBY                  0x0005
+            #define PBT_APMRESUMECRITICAL           0x0006
+            #define PBT_APMRESUMESUSPEND            0x0007
+            #define PBT_APMRESUMESTANDBY            0x0008
+            #define PBTF_APMRESUMEFROMFAILURE       0x00000001
+            #define PBT_APMBATTERYLOW               0x0009
+            #define PBT_APMPOWERSTATUSCHANGE        0x000A
+            #define PBT_APMOEMEVENT                 0x000B
+            #define PBT_APMRESUMEAUTOMATIC          0x0012
+            #define PBT_POWERSETTINGCHANGE          0x8013
+            */
+            passPowerStateToSerial(std::to_string(static_cast<int>(wParam)));
             break;
 
         case WM_WTSSESSION_CHANGE:
-            if (wParam == WTS_SESSION_LOGON) {
-                passPowerStateToSerial("userLoggedIn");
-            }
-            break;
+            /* wParam defines the new state, defined in WinUser.h
+            C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um
+            
+            #define WTS_CONSOLE_CONNECT                0x1
+            #define WTS_CONSOLE_DISCONNECT             0x2
+            #define WTS_REMOTE_CONNECT                 0x3
+            #define WTS_REMOTE_DISCONNECT              0x4
+            #define WTS_SESSION_LOGON                  0x5
+            #define WTS_SESSION_LOGOFF                 0x6
+            #define WTS_SESSION_LOCK                   0x7
+            #define WTS_SESSION_UNLOCK                 0x8
+            #define WTS_SESSION_REMOTE_CONTROL         0x9
+            #define WTS_SESSION_CREATE                 0xa
+            #define WTS_SESSION_TERMINATE              0xb   */
+            
+            // convert powerstate to its integer value
+            passSessionStateToSerial(std::to_string(static_cast<int>(wParam)));
+            
+        break;
 
         case WM_QUERYENDSESSION:
             // System is asking if it's OK to shut down / log off
-            passPowerStateToSerial("Logging off");
+            passPowerStateToSerial("queryEndSession");
             return TRUE; // Return FALSE to cancel shutdown
 
         case WM_ENDSESSION:
             if (wParam) {
                 if (lParam & ENDSESSION_LOGOFF) {
                     passPowerStateToSerial("userLoggedOff");
+                } else if (lParam & ENDSESSION_CRITICAL) {
+                    // Forces shutdown; apps can't veto
+                    passPowerStateToSerial("criticalShutdown");  
                 } else {
                     passPowerStateToSerial("shuttingDown");
                 }
+            } else {
+                // Session was going to end but was cancelled
+                passPowerStateToSerial("logoffCanceled");  
             }
-            break;            
+            break; 
+            
 
         case WM_DESTROY:
             // Un-register interest in Session notifications

@@ -86,6 +86,8 @@ To allow cl.exe and dumpbin to work from the command line, `C:\Users\labtest\App
   [SC] CreateService SUCCESS
   ```
 - Start can be `auto` or `demand`
+- Can change with `sc.exe config CoreStationService start= auto`
+- `start.ps1` and `stop.ps1` helper scripts will open a admin shell and start or stop the service
 - Start sevice `sc.exe start CoreStationService`
   ```
   PS C:\Users\labtest> sc.exe start CoreStationService
