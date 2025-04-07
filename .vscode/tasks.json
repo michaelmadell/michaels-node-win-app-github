@@ -54,7 +54,7 @@
         {
             "label": "Run clang-tidy (Current File)",
             "type": "shell",
-            "command": "clang-tidy",
+            "command": "C:\\LLVM\\bin\\clang-tidy.exe",
             "args": [
               "${file}",
               "--",

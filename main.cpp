@@ -12,7 +12,6 @@
 #include <iphlpapi.h>      // For GetAdaptersAddresses
 #include <lmcons.h>        // For UNLEN in getLoggedInUser
 #include <cstring>         // for strcpy_s
-#include <windows.h>
 #include <shellapi.h>
 #include <thread>
 #include <string>
@@ -22,13 +21,13 @@
 #include <iomanip>
 #include <wtsapi32.h>    
 
-
 #include "version.h"
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Wtsapi32.lib")
 
-// #define DEV_VERSION
+#define DEV_VERSION
 
 #ifdef DEV_VERSION
 #define SERIAL_PORT "\\\\.\\COM4"
@@ -50,6 +49,70 @@ HMENU hMenu;
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Wtsapi32.lib")
+
+
+// Top level Windows service boiler plate functionality...
+SERVICE_STATUS        g_ServiceStatus = {};           // for passing status to windows
+SERVICE_STATUS_HANDLE g_StatusHandle = nullptr;
+HANDLE                g_StopEvent = nullptr;
+HWND                  g_hWnd = nullptr;
+
+void WINAPI ServiceMain(DWORD argc, LPTSTR *argv);
+void WINAPI ServiceCtrlHandler(DWORD);
+
+void RunMainWindow(); // We'll define this after
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+    SERVICE_TABLE_ENTRYW ServiceTable[] = {
+        { (LPWSTR)L"CoreStationService", (LPSERVICE_MAIN_FUNCTIONW)ServiceMain },
+        { NULL, NULL }
+    };
+        
+    if (!StartServiceCtrlDispatcherW(ServiceTable)) {
+        // Running interactively (for debugging)
+        RunMainWindow(); 
+    }
+
+    return 0;
+}
+
+
+// Called by the Service Control Manager (SCM) when service started via sc start or at system boot...
+void WINAPI ServiceMain(DWORD, LPTSTR *) {
+    
+    // Register handler for control events (e.g. stop, pause etc) name==sc create <name>
+    g_StatusHandle = RegisterServiceCtrlHandlerW(L"CoreStationService", ServiceCtrlHandler);
+
+    g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;    // stand alone process
+    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP;     // can handle stop events
+    g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;       // is starting up (not ready yet)
+    SetServiceStatus(g_StatusHandle, &g_ServiceStatus);           // tell windows our current status
+
+    g_StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);           // Create manual reset event object
+    g_ServiceStatus.dwCurrentState = SERVICE_RUNNING;             // tell windows we are now fully running
+    SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
+
+    // Launch window to receive session notifications, power events
+    RunMainWindow(); 
+
+    // When RunMainWindow exits:
+    g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;             // tell window we have stopped  
+    SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
+}
+
+// Called if Stop or Pause send by windows....
+void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
+    if (ctrlCode == SERVICE_CONTROL_STOP) {
+        g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;    // tell windows we are stopping
+        SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
+        SetEvent(g_StopEvent);                                    // Set our internal stop 
+    }
+}
+
+
+
+//... Windows service boiler plate functionality
 
 // Share power state string + mutex to pass from main windows into serial therad
 std::shared_ptr<std::string> powerState = std::make_shared<std::string>("appStartup");
@@ -349,47 +412,41 @@ void serialThread() {
     }
     out = "serialThread closing...\r\n";
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
-    CloseHandle(hSerial);
+    CloseHandle(hSerial) ;
 }
 
 // Forward declaration
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+
+// main...
+void RunMainWindow() {
     WNDCLASS wc = {0};
     wc.lpfnWndProc = WindowProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = TEXT("TrayAppClass");
+    wc.hInstance = GetModuleHandle(NULL);
+    wc.lpszClassName = TEXT("ServiceWindowClass");
     RegisterClass(&wc);
 
     HWND hWnd = CreateWindow(wc.lpszClassName, TEXT("AHK CoreStation HX"), 0, 0, 0, 0, 0,
-                             NULL, NULL, hInstance, NULL);
+                             HWND_MESSAGE, NULL, wc.hInstance, NULL);
 
-    nid.cbSize = sizeof(NOTIFYICONDATA);
-    nid.hWnd = hWnd;
-    nid.uID = 1;
-    nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-    nid.uCallbackMessage = WM_TRAYICON;
-
-    // Load the icon from an .ico file
-    nid.hIcon = (HICON)LoadImage(NULL, TEXT("ahk_white.ico"), IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
-    lstrcpy(nid.szTip, TEXT("AHK CoreStation HX"));
-    Shell_NotifyIcon(NIM_ADD, &nid);
-
-    hMenu = CreatePopupMenu();
-    AppendMenu(hMenu, MF_STRING, ID_TRAY_ABOUT, TEXT("About"));
-    AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-    AppendMenu(hMenu, MF_STRING, ID_TRAY_EXIT, TEXT("Exit"));
+    g_hWnd = hWnd;
+    WTSRegisterSessionNotification(hWnd, NOTIFY_FOR_ALL_SESSIONS);                             
 
     std::thread(serialThread).detach();
 
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg); 
+    // Look for incoming windows messages until service told to stop...
+    while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        Sleep(50);  // ms 
     }
 
-    return 0;
+    WTSUnRegisterSessionNotification(hWnd);
+    DestroyWindow(hWnd);
 }
 
 
@@ -401,11 +458,6 @@ void passPowerStateToSerial(std::string powerStateStr) {
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Watch for windows system messages and handle accordingly
     switch (msg) {
-
-        case WM_CREATE:
-            // Register for session notifications (logon/logoff)
-            WTSRegisterSessionNotification(hWnd, NOTIFY_FOR_THIS_SESSION);
-            break;
 
         case WM_POWERBROADCAST:
             if (wParam == PBT_APMSUSPEND) {
@@ -436,36 +488,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
             }
             break;            
-
-        case WM_TRAYICON:
-            if (LOWORD(lParam) == WM_RBUTTONUP) {
-                POINT pt;
-                GetCursorPos(&pt);
-                SetForegroundWindow(hWnd);
-                TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, hWnd, NULL);
-            }
-            break;
-
-        case WM_COMMAND:
-            switch (LOWORD(wParam)) {
-                case ID_TRAY_ABOUT: {
-                    std::wstring versionText = s2ws(getVersionString());
-
-                    std::wstring message = L"Version " + versionText;
-                    MessageBoxW(hWnd, message.c_str(), L"Amulet Hotkey CoreStation HX", MB_ICONINFORMATION);
-                    break;
-                }
-                case ID_TRAY_EXIT: {
-                    // Un-register interest in Session notifications
-                    passPowerStateToSerial("appExitingCmd");
-                    Sleep(200);
-                    WTSUnRegisterSessionNotification(hWnd);
-                    Shell_NotifyIcon(NIM_DELETE, &nid);
-                    PostQuitMessage(0);
-                    break;
-                }
-            }
-            break;
 
         case WM_DESTROY:
             // Un-register interest in Session notifications

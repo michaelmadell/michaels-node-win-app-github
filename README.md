@@ -78,6 +78,34 @@ To allow cl.exe and dumpbin to work from the command line, `C:\Users\labtest\App
     ```
 
 
+# Working with services
+- To register a window service (one-time) open an admin cmd window
+` sc.exe create CoreStationService  binPath= "C:\Users\labtest\repos\node-win-app\build\NodeWinApp.exe" start= demand  displayname= "AHK CoreStation Service`
+  ```
+  PS C:\Users\labtest> sc.exe create CoreStationService  binPath= "C:\Users\labtest\repos\node-win-app\build\NodeWinApp.exe" start= demand  displayname= "AHK CoreStation Service"
+  [SC] CreateService SUCCESS
+  ```
+- Start can be `auto` or `demand`
+- Start sevice `sc.exe start CoreStationService`
+  ```
+  PS C:\Users\labtest> sc.exe start CoreStationService
+
+  SERVICE_NAME: CoreStationService
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 4  RUNNING
+                                (STOPPABLE, NOT_PAUSABLE, IGNORES_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x0
+        PID                : 6640
+        FLAGS              :
+  ```
+
+  - You can check current status with  `sc.exe query CoreStationService`
+
+
+  
 # Lint-ing
 Research with chatGPT concluded that [*clang_tidy*](https://learn.microsoft.com/en-us/cpp/code-quality/clang-tidy?view=msvc-170) was best lint-er for this kind of project 
 
