@@ -123,7 +123,7 @@ void WINAPI ServiceMain(DWORD, LPTSTR *) {
 
 // Called if Stop or Pause send by windows....
 void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
-    
+    std::string val;    
     switch(ctrlCode)
     {
         case SERVICE_CONTROL_STOP: 
@@ -141,6 +141,8 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
             break;
 
         default:
+            val = std::to_string(static_cast<int>(ctrlCode));
+            passSessionStateToSerial(val);        
             break;
     }    
 }
@@ -546,23 +548,24 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             passPowerStateToSerial("queryEndSession");
             return TRUE; // Return FALSE to cancel shutdown
 
-        case WM_ENDSESSION:
-            if (wParam) {
-                if (lParam & ENDSESSION_LOGOFF) {
-                    passPowerStateToSerial("userLoggedOff");
-                } else if (lParam & ENDSESSION_CRITICAL) {
-                    // Forces shutdown; apps can't veto
-                    passPowerStateToSerial("criticalShutdown");  
-                } else {
-                    passPowerStateToSerial("shuttingDown");
-                }
-            } else {
-                // Session was going to end but was cancelled
-                passPowerStateToSerial("logoffCanceled");  
-            }
-            // Give time for message to get out
-            Sleep(500);
-            break; 
+        // // This is meant for user space oriented code
+        // case WM_ENDSESSION:
+        //     if (wParam) {
+        //         if (lParam & ENDSESSION_LOGOFF) {
+        //             passPowerStateToSerial("userLoggedOff");
+        //         } else if (lParam & ENDSESSION_CRITICAL) {
+        //             // Forces shutdown; apps can't veto
+        //             passPowerStateToSerial("criticalShutdown");  
+        //         } else {
+        //             passPowerStateToSerial("shuttingDown");
+        //         }
+        //     } else {
+        //         // Session was going to end but was cancelled
+        //         passPowerStateToSerial("logoffCanceled");  
+        //     }
+        //     // Give time for message to get out
+        //     Sleep(500);
+        //     break; 
             
 
         case WM_DESTROY:
