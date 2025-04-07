@@ -61,6 +61,25 @@ HWND                  g_hWnd = nullptr;
 void WINAPI ServiceMain(DWORD argc, LPTSTR *argv);
 void WINAPI ServiceCtrlHandler(DWORD);
 
+// Share power state string + mutex to pass from main windows into serial therad
+std::shared_ptr<std::string> powerState = std::make_shared<std::string>("");
+std::mutex powerStateMutex;
+
+std::shared_ptr<std::string> sessionState = std::make_shared<std::string>("");
+std::mutex sessionStateMutex;
+
+
+void passPowerStateToSerial(std::string powerStateStr) {
+    std::lock_guard<std::mutex> lock(powerStateMutex);
+    *powerState = powerStateStr;
+}
+
+void passSessionStateToSerial(std::string sessionStateStr) {
+    std::lock_guard<std::mutex> lock(sessionStateMutex);
+    *sessionState = sessionStateStr;
+}
+
+
 void RunMainWindow(); // We'll define this after
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
@@ -83,9 +102,10 @@ void WINAPI ServiceMain(DWORD, LPTSTR *) {
     
     // Register handler for control events (e.g. stop, pause etc) name==sc create <name>
     g_StatusHandle = RegisterServiceCtrlHandlerW(L"CoreStationService", ServiceCtrlHandler);
-
+    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN;
     g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;    // stand alone process
-    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP;     // can handle stop events
+    // Define what events can be handled
+    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP |SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN; 
     g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;       // is starting up (not ready yet)
     SetServiceStatus(g_StatusHandle, &g_ServiceStatus);           // tell windows our current status
 
@@ -103,23 +123,34 @@ void WINAPI ServiceMain(DWORD, LPTSTR *) {
 
 // Called if Stop or Pause send by windows....
 void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
-    if (ctrlCode == SERVICE_CONTROL_STOP) {
-        g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;    // tell windows we are stopping
-        SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
-        SetEvent(g_StopEvent);                                    // Set our internal stop 
-    }
+    
+    switch(ctrlCode)
+    {
+        case SERVICE_CONTROL_STOP: 
+            passPowerStateToSerial("controlStop");
+            g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;    // tell windows we are stopping
+            SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
+            SetEvent(g_StopEvent);                                    // Set our internal stop 
+
+        case SERVICE_CONTROL_PRESHUTDOWN:
+            passPowerStateToSerial("shutdownRequest");
+            break;
+
+        case SERVICE_CONTROL_SHUTDOWN:
+            passPowerStateToSerial("controlShutdown");
+            break;
+
+        default:
+            break;
+    }    
 }
 
 
 
 //... Windows service boiler plate functionality
 
-// Share power state string + mutex to pass from main windows into serial therad
-std::shared_ptr<std::string> powerState = std::make_shared<std::string>("");
-std::mutex powerStateMutex;
 
-std::shared_ptr<std::string> sessionState = std::make_shared<std::string>("");
-std::mutex sessionStateMutex;
+
 
 
 struct NetworkInterface {
@@ -408,8 +439,8 @@ void serialThread() {
     
     // Send Running sting
     std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
-                                  "winVersion, " + GetRealWindowsVersion() + "\r\n" +
-                                  "sessionState, 0\r\n");                              // send session state 0 - app running
+    "winVersion, " + GetRealWindowsVersion() + "\r\n" +
+    "sessionState, 0\r\n");                              // send session state 0 - app running
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
     
     
@@ -480,62 +511,31 @@ void RunMainWindow() {
 }
 
 
-void passPowerStateToSerial(std::string powerStateStr) {
-    std::lock_guard<std::mutex> lock(powerStateMutex);
-    *powerState = powerStateStr;
-}
-
-void passSessionStateToSerial(std::string sessionStateStr) {
-    std::lock_guard<std::mutex> lock(sessionStateMutex);
-    *sessionState = sessionStateStr;
-}
-
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Watch for windows system messages and handle accordingly
     std::string val;
     switch (msg) {
 
-        case WM_POWERBROADCAST:
-            /*
-            #define PBT_APMQUERYSUSPEND             0x0000
-            #define PBT_APMQUERYSTANDBY             0x0001
-            #define PBT_APMQUERYSUSPENDFAILED       0x0002
-            #define PBT_APMQUERYSTANDBYFAILED       0x0003
-            #define PBT_APMSUSPEND                  0x0004
-            #define PBT_APMSTANDBY                  0x0005
-            #define PBT_APMRESUMECRITICAL           0x0006
-            #define PBT_APMRESUMESUSPEND            0x0007
-            #define PBT_APMRESUMESTANDBY            0x0008
-            #define PBTF_APMRESUMEFROMFAILURE       0x00000001
-            #define PBT_APMBATTERYLOW               0x0009
-            #define PBT_APMPOWERSTATUSCHANGE        0x000A
-            #define PBT_APMOEMEVENT                 0x000B
-            #define PBT_APMRESUMEAUTOMATIC          0x0012
-            #define PBT_POWERSETTINGCHANGE          0x8013
-            */
-            val = std::to_string(static_cast<int>(wParam));
-            passPowerStateToSerial(val);
-            break;
 
         case WM_WTSSESSION_CHANGE:
             /* wParam defines the new state, defined in WinUser.h
             C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um
             
-                    APP_STARTING                       0x0
-            #define WTS_CONSOLE_CONNECT                0x1
-            #define WTS_CONSOLE_DISCONNECT             0x2
-            #define WTS_REMOTE_CONNECT                 0x3
-            #define WTS_REMOTE_DISCONNECT              0x4
-            #define WTS_SESSION_LOGON                  0x5
-            #define WTS_SESSION_LOGOFF                 0x6
-            #define WTS_SESSION_LOCK                   0x7
-            #define WTS_SESSION_UNLOCK                 0x8
-            #define WTS_SESSION_REMOTE_CONTROL         0x9
-            #define WTS_SESSION_CREATE                 0xa
-            #define WTS_SESSION_TERMINATE              0xb   */
+                    APP_STARTING                       0
+            #define WTS_CONSOLE_CONNECT                1
+            #define WTS_CONSOLE_DISCONNECT             2
+            #define WTS_REMOTE_CONNECT                 3
+            #define WTS_REMOTE_DISCONNECT              4
+            #define WTS_SESSION_LOGON                  5
+            #define WTS_SESSION_LOGOFF                 6
+            #define WTS_SESSION_LOCK                   7
+            #define WTS_SESSION_UNLOCK                 8
+            #define WTS_SESSION_REMOTE_CONTROL         9
+            #define WTS_SESSION_CREATE                 10
+            #define WTS_SESSION_TERMINATE              11   */
             
-            // convert powerstate to its integer value
+            // convert session state to its integer value
             val = std::to_string(static_cast<int>(wParam));
             passSessionStateToSerial(val);
             
@@ -544,7 +544,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_QUERYENDSESSION:
             // System is asking if it's OK to shut down / log off
             passPowerStateToSerial("queryEndSession");
-            Sleep (10);
             return TRUE; // Return FALSE to cancel shutdown
 
         case WM_ENDSESSION:
@@ -562,14 +561,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 passPowerStateToSerial("logoffCanceled");  
             }
             // Give time for message to get out
-            Sleep(200);
+            Sleep(500);
             break; 
             
 
         case WM_DESTROY:
             // Un-register interest in Session notifications
-            passPowerStateToSerial("appExitingDstry");
-            Sleep(200);
+            passPowerStateToSerial("appExit");
+            Sleep(500);
             Shell_NotifyIcon(NIM_DELETE, &nid);
             PostQuitMessage(0);
             break;
