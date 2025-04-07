@@ -373,7 +373,7 @@ void checkSessionState(HANDLE hSerial, SystemState* currentState) {
     // Check if it has changed since last pass
     if (currentState->sessionState != sessionStateLocalCopy) {
         currentState->sessionState = sessionStateLocalCopy;
-        sendLineToBmc(hSerial, "sessionState, " +  currentState->powerState);
+        sendLineToBmc(hSerial, "sessionState, " +  currentState->sessionState);
     }
 }
 // Serial port thread
@@ -405,16 +405,18 @@ void serialThread() {
     SystemState currentState;
     currentState.Clear();
     
+    
     // Send Running sting
-    std::string out = std::string("\r\nstate, windowsRunning\r\n") +
-                                  "appVersion, " + getVersionString() + "\r\n" +
-                                  "winVersion, " + GetRealWindowsVersion() + "\r\n" ;
+    std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
+                                  "winVersion, " + GetRealWindowsVersion() + "\r\n" +
+                                  "sessionState, 0\r\n");                              // send session state 0 - app running
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
-
-
+    
+    
     // main serial input processing loop 
     while (true) {
         // Get latest state and push any changes
+        checkSessionState(hSerial, & currentState);
         checkNetworkAdapters(hSerial, &currentState);
         checkLoggedInUser(hSerial, &currentState);
         checkHostName(hSerial, &currentState);
@@ -491,6 +493,7 @@ void passSessionStateToSerial(std::string sessionStateStr) {
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Watch for windows system messages and handle accordingly
+    std::string val;
     switch (msg) {
 
         case WM_POWERBROADCAST:
@@ -511,13 +514,15 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             #define PBT_APMRESUMEAUTOMATIC          0x0012
             #define PBT_POWERSETTINGCHANGE          0x8013
             */
-            passPowerStateToSerial(std::to_string(static_cast<int>(wParam)));
+            val = std::to_string(static_cast<int>(wParam));
+            passPowerStateToSerial(val);
             break;
 
         case WM_WTSSESSION_CHANGE:
             /* wParam defines the new state, defined in WinUser.h
             C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um
             
+                    APP_STARTING                       0x0
             #define WTS_CONSOLE_CONNECT                0x1
             #define WTS_CONSOLE_DISCONNECT             0x2
             #define WTS_REMOTE_CONNECT                 0x3
@@ -531,13 +536,15 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             #define WTS_SESSION_TERMINATE              0xb   */
             
             // convert powerstate to its integer value
-            passSessionStateToSerial(std::to_string(static_cast<int>(wParam)));
+            val = std::to_string(static_cast<int>(wParam));
+            passSessionStateToSerial(val);
             
         break;
 
         case WM_QUERYENDSESSION:
             // System is asking if it's OK to shut down / log off
             passPowerStateToSerial("queryEndSession");
+            Sleep (10);
             return TRUE; // Return FALSE to cancel shutdown
 
         case WM_ENDSESSION:
@@ -554,6 +561,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 // Session was going to end but was cancelled
                 passPowerStateToSerial("logoffCanceled");  
             }
+            // Give time for message to get out
+            Sleep(200);
             break; 
             
 
