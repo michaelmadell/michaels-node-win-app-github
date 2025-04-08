@@ -1,7 +1,13 @@
 @echo off
+setlocal enabledelayedexpansion
+REM check the target .exe is writeable (local machine might be running it)
+
+
+REM Attempt to open the file for appending without modifying it
+set "OUTPUT_EXE_FILE=C:\Users\labtest\repos\node-win-app\installer\nodeWinApp.exe"
 
 REM Gather git info and create git.h
-setlocal enabledelayedexpansion
+
 
 REM Get the current Git branch name
 for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD') do set "GIT_BRANCH=%%i"
@@ -40,11 +46,80 @@ echo Hash: !GIT_HASH!
 echo Modified: !MODIFICATIONS!
 echo Time: !BUILD_TIME!
 
-endlocal
-
 
 REM Copy release notes to output dir
 copy release-notes.txt installer 
 
 REM Build exe file to output dir
-cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /FeC:\Users\labtest\repos\node-win-app\installer\nodeWinApp.exe C:\Users\labtest\repos\node-win-app\main.cpp /link user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib winmm.lib Wtsapi32.lib
+cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"!OUTPUT_EXE_FILE!" C:\Users\labtest\repos\node-win-app\main.cpp /link user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib winmm.lib Wtsapi32.lib
+
+
+REM If a release branch 
+echo Branch = !GIT_BRANCH!
+REM Check if branch matches format *.*.*
+echo !GIT_BRANCH! | findstr /R "^[0-9]*\.[0-9]*\.[0-9]*" >nul
+if errorlevel 1 (
+    echo Not a release branch, finished
+    exit /b 0
+)
+
+
+REM Build version number string 
+set "VERSION_H=version.h"
+
+REM Initialize variables
+set "VERSION_YEAR="
+set "VERSION_MONTH="
+set "VERSION_RELEASE="
+set "VERSION_EXTRAVERSION="
+set "VERSION_RC_NO="
+set "VERSION_ADHOC_NO="
+
+REM Read each line of version.h
+for /f "usebackq tokens=1,2,3 delims= " %%A in ("%VERSION_H%") do (
+    if "%%A"=="#define" (
+        if "%%B"=="VERSION_YEAR" set "VERSION_YEAR=%%C"
+        if "%%B"=="VERSION_MONTH" set "VERSION_MONTH=%%C"
+        if "%%B"=="VERSION_RELEASE" set "VERSION_RELEASE=%%C"
+        if "%%B"=="VERSION_EXTRAVERSION" set "VERSION_EXTRAVERSION=%%~C"
+        if "%%B"=="VERSION_RC_NO" set "VERSION_RC_NO=%%C"
+        if "%%B"=="VERSION_ADHOC_NO" set "VERSION_ADHOC_NO=%%C"
+    )
+)
+
+REM Strip quotes from VERSION_EXTRAVERSION
+set "VERSION_EXTRAVERSION=!VERSION_EXTRAVERSION:"=!"
+
+REM Build the VERSION string
+if /i "!VERSION_EXTRAVERSION!"=="rc" (
+    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_rc!VERSION_RC_NO!"
+) else if /i "!VERSION_EXTRAVERSION!"=="adhoc" (
+    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_adhoc!VERSION_ADHOC_NO!"
+) else if /i "!VERSION_EXTRAVERSION!"=="ga" (
+    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_ga"
+) else (
+    echo Unknown VERSION_EXTRAVERSION: !VERSION_EXTRAVERSION!
+    exit /b 1
+)
+
+echo Version = %VERSION%
+
+set "REMOTE_MACHINE=user@ahkengbuild"
+set "REMOTE_DIR=~/builds/releases/node-win-app/%GIT_BRANCH%/%VERSION%"
+
+REM Use percent vars since they don't need delayed expansion and don't interfere with remote shell
+ssh %REMOTE_MACHINE% "DIR=%REMOTE_DIR%; if [ -d \"$DIR\" ]; then exit 1; else mkdir -p \"$DIR\"; fi"
+
+if errorlevel 1 (
+    echo Release %VERSION% already exists on build server
+    exit /b 1
+)
+
+echo Sorry, you need to enter the password again for scp...
+
+REM Now copy
+scp -r installer/* %REMOTE_MACHINE%:%REMOTE_DIR%/
+
+endlocal
+
+echo Deployment to build server complete.
