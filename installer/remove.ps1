@@ -8,7 +8,6 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 $serviceName = "CoreStationService"
-$exePath = "$PSScriptRoot\nodeWinApp.exe"
 
 Write-Host "Installing $serviceName..."
 $existingService = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
@@ -31,18 +30,3 @@ if ($existingService) {
 }
 
 
-# Create the service
-New-Service -Name $serviceName `
-            -BinaryPathName "`"$exePath`"" `
-            -DisplayName "CoreStation Management Service" `
-            -StartupType Automatic `
-            -Description "Pass network, session and power status to CoreStation management contoller " `
-            -ErrorAction Stop
-
-# Set service recovery options (restart on failure 1st/2nd/3rd+ time in ms)
-sc.exe failure $serviceName reset= 0 actions= restart/1000/restart/2000/restart/5000
-
-# Start the service
-Start-Service -Name $serviceName
-
-Write-Host "$serviceName installed and started successfully."

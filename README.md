@@ -3,6 +3,13 @@
 
 This project was developed on a Win 11 Pro CoreStation Node
 
+
+# To build
+- Run build.bat from windows cmd shell. This will populate the installer dir that can then be passed to a third party
+- As admin from PowerShell script run installer/install.ps1 to setup as windows service
+- Can be removed with remove.ps1
+
+
 # Build machine setup #
 - Install VSCode: [download](https://code.visualstudio.com/download) and pin to task bar
 - Install Cmake [4.0.0 Windows x64 Installer](https://cmake.org/download/) add to PATH
