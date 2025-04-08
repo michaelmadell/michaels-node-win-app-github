@@ -22,6 +22,7 @@
 #include <wtsapi32.h>    
 
 #include "version.h"
+#include "git_info.h"
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -441,8 +442,10 @@ void serialThread() {
     
     // Send Running sting
     std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
-    "winVersion, " + GetRealWindowsVersion() + "\r\n" +
-    "sessionState, 0\r\n");                              // send session state 0 - app running
+                                      "gitDetails, " + GitInfo::BRANCH + ", " + GitInfo::HASH + "\r\n" +
+                                      "buildTime, " + GitInfo::BUILD_TIME + "\r\n" +
+                                      "winVersion, " + GetRealWindowsVersion() + "\r\n" +
+                                      "sessionState, 0\r\n");                              // send session state 0 - app running
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
     
     

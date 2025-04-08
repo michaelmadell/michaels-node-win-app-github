@@ -8,14 +8,13 @@
 // Please do not modify unless necessary !!
 // no padded zeros in branch name or month e.g. 2025.4.1 not 2025.01.01
 // 
-#ifndef _version_h
 
-#define _version_h
+#pragma once
+
 #define VERSION_YEAR 2025
 #define VERSION_MONTH 4
-#define VERSION_RELEASE 1
+#define VERSION_RELEASE 2
 #define VERSION_EXTRAVERSION "adhoc"
-#define VERSION_RC_NO 2
-#define VERSION_ADHOC_NO 2
+#define VERSION_RC_NO 1
+#define VERSION_ADHOC_NO 0
 
-#endif

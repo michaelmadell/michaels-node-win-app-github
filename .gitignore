@@ -50,3 +50,6 @@ Thumbs.db
 *.wmv
 
 main.obj
+git_info.h
+outputs/release-notes.txt
+build.sh-example

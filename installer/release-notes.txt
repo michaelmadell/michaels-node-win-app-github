@@ -1,0 +1,16 @@
+# 2025-4-8
+# node-win-app Release notes
+# Modify at you own dicreation
+
+node-win-app Release notes
+
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+2025.4.2
+--------
+- First release that pushes following on change to COM 1 : 
+    - win version
+    - ethernet details
+    - username
+    - hostname
+    - session state
