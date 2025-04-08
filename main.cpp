@@ -28,14 +28,6 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
 
-#define DEV_VERSION
-
-#ifdef DEV_VERSION
-#define SERIAL_PORT "\\\\.\\COM4"
-#else
-#define SERIAL_PORT "\\\\.\\COM1"
-#endif
-
 // Options on tray app 
 #define WM_TRAYICON (WM_USER + 1) 
 #define ID_TRAY_EXIT 1001

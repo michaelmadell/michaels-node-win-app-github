@@ -14,7 +14,20 @@
 #define VERSION_YEAR 2025
 #define VERSION_MONTH 4
 #define VERSION_RELEASE 2
-#define VERSION_EXTRAVERSION "adhoc"
+#define VERSION_EXTRAVERSION "rc"
 #define VERSION_RC_NO 1
 #define VERSION_ADHOC_NO 0
+
+
+
+// Use this flag to determin which COM port to push to at 115,200 BAUD
+// #define DEV_VERSION
+
+#ifdef DEV_VERSION
+// USB serial cable for development
+#define SERIAL_PORT "\\\\.\\COM4"
+#else
+// MEC MBC serial port for development 
+#define SERIAL_PORT "\\\\.\\COM1"
+#endif
 

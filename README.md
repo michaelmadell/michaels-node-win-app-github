@@ -1,19 +1,19 @@
 # README #
 
-
 This project was developed on a Win 11 Pro CoreStation Node
 
 
 # To build
-- Run build.bat from windows cmd shell. This will populate the installer dir that can then be passed to a third party
-- As admin from PowerShell script run installer/install.ps1 to setup as windows service
-- Can be removed with remove.ps1
+- Update `version.h` with the desired release details **and COM port** and commit to git
+- Run `build.bat` from windows **cmd shell**. This will populate the installer dir that can then be passed to a third party
+- As admin from **PowerShell shell** run `installer/install.ps1` to setup as windows service. This will automatically stop and remove any previous versions before instalation 
+- `remove.ps1` can be used to remove the service
 
 
 # Build machine setup #
 - Install VSCode: [download](https://code.visualstudio.com/download) and pin to task bar
 - Install Cmake [4.0.0 Windows x64 Installer](https://cmake.org/download/) add to PATH
-- INstall MSVC Microsoft Studio Compiler [Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) Select Desktop development with C++ and ensure the following are checked:
+- Install MSVC Microsoft Studio Compiler [Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) Select Desktop development with C++ and ensure the following are checked:
   - MSVC v143 - VS 2022 C++ x64/x86 build tools
   - Windows 11 SDK (10.0.xxxxx.x)
   - C++ CMake tools for Windows 
@@ -33,7 +33,6 @@ This project was developed on a Win 11 Pro CoreStation Node
   - Check it works via `clang-tidy --version`
 
 To allow cl.exe and dumpbin to work from the command line, `C:\Users\labtest\AppData\Roaming\Code\User\settings.json` should read as follows
-
 
     {
       "git.confirmSync": false,
@@ -68,7 +67,7 @@ To allow cl.exe and dumpbin to work from the command line, `C:\Users\labtest\App
 
 
 # Day to Day use
-- Build `Ctrl+Shift+P` > `CMake: Build` or `F7`
+- To build open main.cpp and press `F7` (or `Ctrl+Shift+P` > `CMake: Build`)
 - Clang current file `Ctrl+Shift+P` > `Tasks: Run Task` > `Run Clang Tidy (Current File)`, Issues will be listed in PROBLEMS tab at bottom and 
 - To transfer exe to another machine from Win11 console
   ```
@@ -82,6 +81,18 @@ To allow cl.exe and dumpbin to work from the command line, `C:\Users\labtest\App
   main.cpp
     ```
 
+
+# How to sign and exe
+- Need 
+   - A Extended Validation (EV) Code Signing Certificate (Cloud, USB dongle or Hardware Security Module)
+   - AHK purhased a [Code Signing EV + Keylocker](https://docs.digicert.com/en/digicert-keylocker.html) annual subscription from digicert.com Apr 25 for £804
+   - signtool from Windows SDK / MSVC tools above
+DigiCert offer EV on USB Token £708 /year or Cloud based KeyLocker for £804
+- Sign into digiCert [account](https://accounts.digicert.com/) (DaveG/MattA/IT are admins)
+- [General Signer guide](https://docs.digicert.com/en/digicert-keylocker/get-started/signer-guide.html)
+- [Code Signing guide](https://docs.digicert.com/en/digicert-keylocker/code-signing/sign-with-digicert-signing-tools.html)
+
+ 
 
 # Working with services
 - Run `services.msc` from windows search bar
