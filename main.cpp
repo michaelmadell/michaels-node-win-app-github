@@ -12,7 +12,7 @@
 #include <iphlpapi.h>      // For GetAdaptersAddresses
 #include <lmcons.h>        // For UNLEN in getLoggedInUser
 #include <cstring>         // for strcpy_s
-#include <shellapi.h>
+#include <cfgmgr32.h>
 #include <thread>
 #include <string>
 #include <vector>
@@ -20,6 +20,7 @@
 #include <codecvt>
 #include <iomanip>
 #include <wtsapi32.h>    
+#include <SetupAPI.h>
 
 #include "version.h"
 #include "git_info.h"
@@ -27,6 +28,7 @@
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
+#pragma comment(lib, "setupapi.lib")
 
 // Options on tray app 
 #define WM_TRAYICON (WM_USER + 1) 
@@ -39,10 +41,6 @@ HMENU hMenu;
 // Helper functions to convert macro values to string
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
-
-#pragma comment(lib, "iphlpapi.lib")
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "Wtsapi32.lib")
 
 
 // Top level Windows service boiler plate functionality...
@@ -140,13 +138,7 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
     }    
 }
 
-
-
 //... Windows service boiler plate functionality
-
-
-
-
 
 struct NetworkInterface {
     std::string name;
@@ -238,6 +230,52 @@ std::string WideToUtf8(const std::wstring& wstr) {
 
 typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
+BOOL resetNetworkAdapter(const IP_ADAPTER_ADDRESSES* adapter) {
+
+    if (!adapter) return FALSE;
+
+    HDEVINFO hDevInfo = SetupDiGetClassDevsW(nullptr, L"PCI", nullptr, DIGCF_ALLCLASSES | DIGCF_PRESENT);
+
+    if (hDevInfo == INVALID_HANDLE_VALUE) {
+        return FALSE;
+    }
+
+    SP_DEVINFO_DATA devInfoData = {};
+    devInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+
+    for (DWORD i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, &devInfoData); i++) {
+        WCHAR desc[256] = {};
+        if (SetupDiGetDeviceRegistryPropertyW(hDevInfo, &devInfoData, SPDRP_FRIENDLYNAME, nullptr, (PBYTE)desc, sizeof(desc), nullptr)) {
+            if (wcsstr(desc, adapter->FriendlyName)) {
+                SP_PROPCHANGE_PARAMS params = {};
+                params.ClassInstallHeader.cbSize = sizeof(SP_CLASSINSTALL_HEADER);
+                params.ClassInstallHeader.InstallFunction = DIF_PROPERTYCHANGE;
+                params.Scope = DICS_FLAG_GLOBAL;
+                params.HwProfile = 0;
+
+                // Disable
+                params.StateChange = DICS_DISABLE;
+                SetupDiSetClassInstallParams(hDevInfo, &devInfoData, &params.ClassInstallHeader, sizeof(params));
+                SetupDiCallClassInstaller(DIF_PROPERTYCHANGE, hDevInfo, &devInfoData);
+                
+                Sleep(200);  //ms
+
+                // Enable
+                params.StateChange = DICS_ENABLE;
+                SetupDiSetClassInstallParams(hDevInfo, &devInfoData, &params.ClassInstallHeader, sizeof(params));
+                SetupDiCallClassInstaller(DIF_PROPERTYCHANGE, hDevInfo, &devInfoData);
+
+                SetupDiDestroyDeviceInfoList(hDevInfo);
+                return TRUE;
+            }
+        }
+    }
+
+    SetupDiDestroyDeviceInfoList(hDevInfo);
+    return FALSE;    
+
+}
+
 std::string GetRealWindowsVersion() {
     HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
     if (!hMod) return "Unknown Version";
@@ -269,7 +307,7 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
     if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, adapters, &size) == NO_ERROR) {
         for (IP_ADAPTER_ADDRESSES *adapter = adapters; adapter; adapter = adapter->Next) {
             if (adapter->IfType != IF_TYPE_ETHERNET_CSMACD) continue; // Skip non-Ethernet
-
+ 
             // Convert FriendlyName from wide to UTF-8
             std::string name = adapter->FriendlyName ? WideToUtf8(adapter->FriendlyName) : "Unknown";
             std::string linkStatus = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
@@ -323,6 +361,10 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             }
 
             if (currentNetworks[interfaceIndex]->linkStatus != linkStatus ) {
+                if (linkStatus == "down") {
+                    // link just transistioned to "down"
+                    resetNetworkAdapter(adapter);
+                }
                 currentNetworks[interfaceIndex]->linkStatus = linkStatus;
                 valueChanged = true;
             }
