@@ -144,20 +144,21 @@ struct NetworkInterface {
     std::string name;
     std::string ipv4;
     std::string ipv6;
-    std::string dhcp;    // "DHCP" or "Static"
-    std::string linkStatus;  // "Up" or "Down"
+    std::string dhcp;             // "dhcp" or "static"
+    std::string linkStatus;       // "up" or "down"
+    std::string adapterStatus;    // "enabled" or "disabled"
     std::string macAddress;
     
 
     // overload the != to allow lines like if (net1 != net1) {...}  
     bool operator!=(const NetworkInterface& other) const {
-        return std::tie(name, ipv4, ipv6, dhcp, linkStatus, macAddress) != 
-        std::tie(other.name, other.ipv4, other.ipv6, other.dhcp, other.linkStatus, other.macAddress);
+        return std::tie(name, ipv4, ipv6, dhcp, linkStatus, macAddress, adapterStatus) != 
+        std::tie(other.name, other.ipv4, other.ipv6, other.dhcp, other.linkStatus, other.macAddress, other.adapterStatus);
     }
 
     bool operator==(const NetworkInterface& other) const {
-        return std::tie(name, ipv4, ipv6, linkStatus, dhcp, macAddress) ==
-               std::tie(other.name, other.ipv4, other.ipv6, other.linkStatus,  other.dhcp, other.macAddress);
+        return std::tie(name, ipv4, ipv6, linkStatus, dhcp, macAddress, adapterStatus) ==
+               std::tie(other.name, other.ipv4, other.ipv6, other.linkStatus,  other.dhcp, other.macAddress, other.adapterStatus);
     }
 
     void Clear() {
@@ -167,6 +168,7 @@ struct NetworkInterface {
         dhcp.clear();
         linkStatus.clear();
         macAddress.clear();
+        adapterStatus.clear();
     }
     
 };
@@ -314,6 +316,16 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
 
+            // Work out if adapter is disabled?
+            std::string adapterStatus = "unknown";
+            MIB_IFROW ifRow;
+            memset(&ifRow, 0, sizeof(ifRow));
+            ifRow.dwIndex = adapter->IfIndex;
+
+            if (GetIfEntry(&ifRow) == NO_ERROR) {
+                std::string adapterStatus = (ifRow.dwAdminStatus == MIB_IF_ADMIN_STATUS_UP) ? "enabled" : "disabled";
+            }
+
             // Format MAC address
             std::ostringstream macStream;
             for (ULONG i = 0; i < adapter->PhysicalAddressLength; i++) {
@@ -360,6 +372,12 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
                 valueChanged = true;
             }
 
+            if (currentNetworks[interfaceIndex]->adapterStatus != adapterStatus ) {
+                currentNetworks[interfaceIndex]->adapterStatus = adapterStatus;
+                valueChanged = true;
+            }
+
+
             if (currentNetworks[interfaceIndex]->linkStatus != linkStatus ) {
                 if (linkStatus == "down") {
                     // link just transistioned to "down"
@@ -376,7 +394,7 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             }
             
             if (valueChanged) {
-                sendLineToBmc(hSerial,  std::string(name) + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
+                sendLineToBmc(hSerial,  std::string(name) + ", " + adapterStatus + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
             }
             interfaceIndex += 1;
         }
