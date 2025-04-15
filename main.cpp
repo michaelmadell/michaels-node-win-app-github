@@ -21,10 +21,12 @@
 #include <iomanip>
 #include <wtsapi32.h>    
 #include <SetupAPI.h>
+#include <netioapi.h>  // Needed for GetIfEntry2
 
 #include "version.h"
 #include "git_info.h"
 
+#pragma comment(lib, "netapi32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
@@ -144,20 +146,21 @@ struct NetworkInterface {
     std::string name;
     std::string ipv4;
     std::string ipv6;
-    std::string dhcp;    // "DHCP" or "Static"
-    std::string linkStatus;  // "Up" or "Down"
+    std::string dhcp;             // "dhcp" or "static"
+    std::string linkStatus;       // "up" or "down"
+    std::string adapterStatus;    // "enabled" or "disabled"
     std::string macAddress;
     
 
     // overload the != to allow lines like if (net1 != net1) {...}  
     bool operator!=(const NetworkInterface& other) const {
-        return std::tie(name, ipv4, ipv6, dhcp, linkStatus, macAddress) != 
-        std::tie(other.name, other.ipv4, other.ipv6, other.dhcp, other.linkStatus, other.macAddress);
+        return std::tie(name, ipv4, ipv6, dhcp, linkStatus, macAddress, adapterStatus) != 
+        std::tie(other.name, other.ipv4, other.ipv6, other.dhcp, other.linkStatus, other.macAddress, other.adapterStatus);
     }
 
     bool operator==(const NetworkInterface& other) const {
-        return std::tie(name, ipv4, ipv6, linkStatus, dhcp, macAddress) ==
-               std::tie(other.name, other.ipv4, other.ipv6, other.linkStatus,  other.dhcp, other.macAddress);
+        return std::tie(name, ipv4, ipv6, linkStatus, dhcp, macAddress, adapterStatus) ==
+               std::tie(other.name, other.ipv4, other.ipv6, other.linkStatus,  other.dhcp, other.macAddress, other.adapterStatus);
     }
 
     void Clear() {
@@ -167,6 +170,7 @@ struct NetworkInterface {
         dhcp.clear();
         linkStatus.clear();
         macAddress.clear();
+        adapterStatus.clear();
     }
     
 };
@@ -314,6 +318,21 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
 
+            // TODO Work out if adapter is disabled? see https://ahkeng.atlassian.net/browse/CSHD-977
+            // You can disable in Win11 via [View Network Connections]
+            // std::string adapterStatus = "unknown";
+           
+            // MIB_IF_ROW2 ifRow2 = {};
+            // ifRow2.InterfaceIndex = adapter->IfIndex ? adapter->IfIndex : adapter->Ipv6IfIndex;
+            
+            // if (GetIfEntry2(&ifRow2) == NO_ERROR) {
+            //     bool isEnabled = !(ifRow2.InterfaceAndOperStatusFlags.NotMediaConnected
+            //                     || ifRow2.InterfaceAndOperStatusFlags.Paused
+            //                     || ifRow2.InterfaceAndOperStatusFlags.LowPower);
+            
+            //     adapterStatus = isEnabled ? "enabled" : "disabled";
+            // }
+
             // Format MAC address
             std::ostringstream macStream;
             for (ULONG i = 0; i < adapter->PhysicalAddressLength; i++) {
@@ -360,6 +379,12 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
                 valueChanged = true;
             }
 
+            // if (currentNetworks[interfaceIndex]->adapterStatus != adapterStatus ) {
+            //     currentNetworks[interfaceIndex]->adapterStatus = adapterStatus;
+            //     valueChanged = true;
+            // }
+
+
             if (currentNetworks[interfaceIndex]->linkStatus != linkStatus ) {
                 if (linkStatus == "down") {
                     // link just transistioned to "down"
@@ -376,6 +401,7 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             }
             
             if (valueChanged) {
+                // sendLineToBmc(hSerial,  std::string(name) + ", " + adapterStatus + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
                 sendLineToBmc(hSerial,  std::string(name) + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
             }
             interfaceIndex += 1;
