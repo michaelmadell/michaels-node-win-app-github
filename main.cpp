@@ -21,10 +21,12 @@
 #include <iomanip>
 #include <wtsapi32.h>    
 #include <SetupAPI.h>
+#include <netioapi.h>  // Needed for GetIfEntry2
 
 #include "version.h"
 #include "git_info.h"
 
+#pragma comment(lib, "netapi32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
@@ -316,15 +318,20 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
 
-            // Work out if adapter is disabled?
-            std::string adapterStatus = "unknown";
-            MIB_IFROW ifRow;
-            memset(&ifRow, 0, sizeof(ifRow));
-            ifRow.dwIndex = adapter->IfIndex;
-
-            if (GetIfEntry(&ifRow) == NO_ERROR) {
-                std::string adapterStatus = (ifRow.dwAdminStatus == MIB_IF_ADMIN_STATUS_UP) ? "enabled" : "disabled";
-            }
+            // TODO Work out if adapter is disabled? see https://ahkeng.atlassian.net/browse/CSHD-977
+            // You can disable in Win11 via [View Network Connections]
+            // std::string adapterStatus = "unknown";
+           
+            // MIB_IF_ROW2 ifRow2 = {};
+            // ifRow2.InterfaceIndex = adapter->IfIndex ? adapter->IfIndex : adapter->Ipv6IfIndex;
+            
+            // if (GetIfEntry2(&ifRow2) == NO_ERROR) {
+            //     bool isEnabled = !(ifRow2.InterfaceAndOperStatusFlags.NotMediaConnected
+            //                     || ifRow2.InterfaceAndOperStatusFlags.Paused
+            //                     || ifRow2.InterfaceAndOperStatusFlags.LowPower);
+            
+            //     adapterStatus = isEnabled ? "enabled" : "disabled";
+            // }
 
             // Format MAC address
             std::ostringstream macStream;
@@ -372,10 +379,10 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
                 valueChanged = true;
             }
 
-            if (currentNetworks[interfaceIndex]->adapterStatus != adapterStatus ) {
-                currentNetworks[interfaceIndex]->adapterStatus = adapterStatus;
-                valueChanged = true;
-            }
+            // if (currentNetworks[interfaceIndex]->adapterStatus != adapterStatus ) {
+            //     currentNetworks[interfaceIndex]->adapterStatus = adapterStatus;
+            //     valueChanged = true;
+            // }
 
 
             if (currentNetworks[interfaceIndex]->linkStatus != linkStatus ) {
@@ -394,7 +401,8 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             }
             
             if (valueChanged) {
-                sendLineToBmc(hSerial,  std::string(name) + ", " + adapterStatus + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
+                // sendLineToBmc(hSerial,  std::string(name) + ", " + adapterStatus + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
+                sendLineToBmc(hSerial,  std::string(name) + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
             }
             interfaceIndex += 1;
         }
