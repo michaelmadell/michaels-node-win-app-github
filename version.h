@@ -21,7 +21,7 @@
 
 
 // Use this flag to determin which COM port to push to at 115,200 BAUD
-#define DEV_VERSION
+// #define DEV_VERSION
 
 #ifdef DEV_VERSION
 // USB serial cable for development
