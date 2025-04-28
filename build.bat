@@ -6,6 +6,17 @@ REM check the target .exe is writeable (local machine might be running it)
 REM Attempt to open the file for appending without modifying it
 set "OUTPUT_EXE_FILE=C:\Users\labtest\repos\node-win-app\installer\nodeWinApp.exe"
 
+REM Attempt to append (without modifying) to test writability
+>> "%OUTPUT_EXE_FILE%" (
+    REM If appending succeeds, do nothing
+) || (
+    echo File "%OUTPUT_EXE_FILE%" is not writable,
+    echo have you STOPPED the service?
+    exit /b 1
+)
+
+
+
 REM Gather git info and create git.h
 
 

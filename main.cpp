@@ -402,7 +402,7 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             
             if (valueChanged) {
                 // sendLineToBmc(hSerial,  std::string(name) + ", " + adapterStatus + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
-                sendLineToBmc(hSerial,  std::string(name) + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
+                sendLineToBmc(hSerial, "network, " + macAddress + ", " + linkStatus + ", "+ ipv4 + ", " + ipv6 + ", " + dhcp + ", "  + std::string(name)  );
             }
             interfaceIndex += 1;
         }
