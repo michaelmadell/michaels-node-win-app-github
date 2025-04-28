@@ -209,11 +209,11 @@ Session state are defined in WinUser.h `C:\Program Files (x86)\Windows Kits\10\I
 ## System power up 
 If user previously powered down from a session, both network cables connected
   ```
-  appVersion, 2025.4.1_adhoc2
+  appVersion, 2025.4.2.rc2
   winVersion, 10.0.26100 Build 26100
   sessionState, 0
-  Ethernet, up, fe80::1451:e373:4c26:e165, 192.168.203.52, dhcp, 74:fe:48:a3:fe:8d
-  Ethernet 2, up, fe80::98d7:656:a39:8ad3, 192.168.203.51, dhcp, 00:17:fd:60:02:e1
+  network, 74:fe:48:a3:fe:8d, up, 192.168.203.86, fe80::1451:e373:4c26:e165, dhcp, Ethernet
+  network, 00:17:fd:60:02:e1, up, 192.168.203.82, fe80::98d7:656:a39:8ad3, dhcp, Ethernet 2
   username, labtest
   hostname, NODE-30042-0023
   ```
@@ -239,6 +239,6 @@ The network changes come several seconds later just before power off, note stati
   ```
   sessionState, 11
   username, none
-  Ethernet, up, fe80::1451:e373:4c26:e165, 192.168.203.52, static, 74:fe:48:a3:fe:8d
-  Ethernet 2, up, fe80::98d7:656:a39:8ad3, 192.168.203.51, static, 00:17:fd:60:02:e1
+  network, 74:fe:48:a3:fe:8d, up, 192.168.203.52, fe80::1451:e373:4c26:e165, static, Ethernet
+  network, 00:17:fd:60:02:e1, up, 192.168.203.51, fe80::98d7:656:a39:8ad3,  static,  Ethernet 2
   ```  
