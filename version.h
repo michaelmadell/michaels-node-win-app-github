@@ -16,12 +16,12 @@
 #define VERSION_RELEASE 2
 #define VERSION_EXTRAVERSION "adhoc"
 #define VERSION_RC_NO 3
-#define VERSION_ADHOC_NO 3
+#define VERSION_ADHOC_NO 4
 
 
 
 // Use this flag to determin which COM port to push to at 115,200 BAUD
-// #define DEV_VERSION
+#define DEV_VERSION
 
 #ifdef DEV_VERSION
 // USB serial cable for development
