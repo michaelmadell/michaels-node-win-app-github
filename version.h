@@ -12,11 +12,11 @@
 #pragma once
 
 #define VERSION_YEAR 2025
-#define VERSION_MONTH 4
+#define VERSION_MONTH 5
 #define VERSION_RELEASE 2
-#define VERSION_EXTRAVERSION "rc"
-#define VERSION_RC_NO 3
-#define VERSION_ADHOC_NO 4
+#define VERSION_EXTRAVERSION "adhoc"
+#define VERSION_RC_NO 1
+#define VERSION_ADHOC_NO 1
 
 
 
@@ -27,7 +27,7 @@
 // USB serial cable for development
 #define SERIAL_PORT "\\\\.\\COM4"
 #else
-// MEC MBC serial port for development 
-#define SERIAL_PORT "\\\\.\\COM1"
+// Congatec--MEC MBC serial port
+#define SERIAL_PORT "\\\\.\\COM3"
 #endif
 
