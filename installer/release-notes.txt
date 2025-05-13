@@ -1,10 +1,15 @@
-# 2025-4-14
+# 2025-5-13
 # node-win-app Release notes
 # Modify at you own dicreation
 
 node-win-app Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+2025.5.2
+--------
+- Switch port to COM3 to support MVP congatec COM, Advantec will need COM1 moving to COM3
+
 
 2025.4.2
 --------

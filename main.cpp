@@ -22,6 +22,9 @@
 #include <wtsapi32.h>    
 #include <SetupAPI.h>
 #include <netioapi.h>  // Needed for GetIfEntry2
+#include <fstream>
+#include <algorithm>
+#include <iostream>
 
 #include "version.h"
 #include "git_info.h"
@@ -61,6 +64,48 @@ std::mutex powerStateMutex;
 std::shared_ptr<std::string> sessionState = std::make_shared<std::string>("");
 std::mutex sessionStateMutex;
 
+
+// Helper function to work out if running a ga version
+bool IsGaBuild() {
+    return _stricmp(VERSION_EXTRAVERSION, "ga") == 0;
+}
+
+
+
+
+
+void LogMessage(const std::string& message) {
+    
+    if (IsGaBuild()) {
+        return;  // Skip logging if it's "ga" or "GA"
+    }
+
+    const wchar_t* dirPath = L"C:\\ProgramData\\ahk";
+    const wchar_t* logPath = L"C:\\ProgramData\\ahk\\node-win-app.log";
+    
+        DWORD fileAttr = GetFileAttributesW(dirPath);
+    
+        if (fileAttr == INVALID_FILE_ATTRIBUTES || !(fileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
+            if (!CreateDirectoryW(dirPath, NULL)) {
+                DWORD error = GetLastError();
+                if (error != ERROR_ALREADY_EXISTS) {
+                    std::wcerr << L"Failed to create log directory. Error code: " << error << std::endl;
+                }
+            }
+        }
+    
+    std::ofstream logFile(logPath, std::ios::app);
+    if (logFile.is_open()) {
+        SYSTEMTIME time;
+        GetLocalTime(&time);
+
+        logFile << "[" << time.wYear << "-" << time.wMonth << "-" << time.wDay << " "
+                << time.wHour << ":" << time.wMinute << ":" << time.wSecond << "] "
+                << message << std::endl;
+
+        logFile.close();
+    }
+}
 
 void passPowerStateToSerial(std::string powerStateStr) {
     std::lock_guard<std::mutex> lock(powerStateMutex);
@@ -201,6 +246,7 @@ struct SystemState {
 void sendLineToBmc( HANDLE hSerial, const std::string& output_string) {
     DWORD bytesWritten;
     std::string str = output_string + "\r\n";
+    LogMessage(output_string);
     WriteFile(hSerial, str.c_str(), (DWORD)str.size(), &bytesWritten, NULL); 
 }
 
@@ -473,6 +519,11 @@ void checkSessionState(HANDLE hSerial, SystemState* currentState) {
 // Serial port thread
 void serialThread() {
     // Setup serial port
+    LogMessage("------------------------------------------------------------------------------------------------");
+    std::ostringstream logStr;
+    logStr << "Starting service with "  << SERIAL_PORT;
+    LogMessage(logStr.str());
+
     HANDLE hSerial = CreateFileA(SERIAL_PORT, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                                  OPEN_EXISTING, 0, NULL);
     if (hSerial == INVALID_HANDLE_VALUE) return;
@@ -506,6 +557,7 @@ void serialThread() {
                                       "buildTime, " + GitInfo::BUILD_TIME + "\r\n" +
                                       "winVersion, " + GetRealWindowsVersion() + "\r\n" +
                                       "sessionState, 0\r\n");                              // send session state 0 - app running
+    LogMessage(out.c_str());                                      
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
     
     
