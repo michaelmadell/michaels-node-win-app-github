@@ -115,8 +115,8 @@ if /i "!VERSION_EXTRAVERSION!"=="rc" (
 
 echo Version = %VERSION%
 
-set "REMOTE_MACHINE=user@ahkengbuild"
-set "REMOTE_DIR=~/builds/releases/node-win-app/%GIT_BRANCH%/%VERSION%"
+set "REMOTE_MACHINE=ci.user@ahkengbuild"
+set "REMOTE_DIR=/srv/build_server/builds/releases/node-win-app/%GIT_BRANCH%/%VERSION%"
 
 REM Use percent vars since they don't need delayed expansion and don't interfere with remote shell
 ssh %REMOTE_MACHINE% "DIR=%REMOTE_DIR%; if [ -d \"$DIR\" ]; then exit 1; else mkdir -p \"$DIR\"; fi"
