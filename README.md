@@ -3,6 +3,10 @@
 This project was developed on a Win 11 Pro CoreStation Node
 
 
+# Debug output
+Unless the build version is a GA, all output to the serial port will also be stored in `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`
+
+
 # To build
 - Update `version.h` with the desired release details **and COM port** and commit to git
 - Run `build.bat` from windows **cmd shell**. This will populate the installer dir that can then be passed to a third party
