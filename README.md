@@ -3,6 +3,20 @@
 This project was developed on a Win 11 Pro CoreStation Node
 
 
+# User guide
+
+- Ensure the COM port that links to the BMC MEC is configured as **COM3**. This should be the default for the Congatec COM but will need modifying for
+ the Advantec deveopment units
+![App Screenshot](serialPorts.png)
+- You can change the COM port via **Device Manager > Ports > Right Click > Properties > Port Settings > Advanced > COM Port Number
+![App Screenshot](changeSerialPort.png)
+- The `./build.sh` script will push RC and GA to [ahkengbuild](http://ahkengbuild/versions) 
+- Run `install.ps1` from a Administrator powershell terminat. This script will remove any previous version, install and then run the service 
+- The service will appear as `CoreStation Management Service` in the Windows Service Manager
+- You can use the `remove.ps1` powershell script to remove the service
+
+
+
 # Debug output
 Unless the build version is a GA, all output to the serial port will also be stored in `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`
 
