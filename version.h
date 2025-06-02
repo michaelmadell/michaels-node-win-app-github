@@ -14,9 +14,9 @@
 #define VERSION_YEAR 2025
 #define VERSION_MONTH 5
 #define VERSION_RELEASE 2
-#define VERSION_EXTRAVERSION "adhoc"
-#define VERSION_RC_NO 1
-#define VERSION_ADHOC_NO 1
+#define VERSION_EXTRAVERSION "rc"
+#define VERSION_RC_NO 2
+#define VERSION_ADHOC_NO 2
 
 
 
