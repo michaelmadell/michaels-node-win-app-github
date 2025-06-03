@@ -78,7 +78,7 @@ set /p userChoice=Do you want to sign the .exe file? (y/n):
 
 if /i "%userChoice%"=="y" (
     echo   
-    smctl sign --keypair-alias key_1269013793 --input C:\Users\labtest\repos\node-win-app\build\nodeWinApp.exe
+    smctl sign --keypair-alias key_1269013793 --input "!OUTPUT_EXE_FILE!"
     echo   
     echo If signing failed, try running 'smctl healthcheck' or check [C:\Users\labtest\.signingmanager\logs\smctl.log]
 ) else (    
