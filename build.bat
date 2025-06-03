@@ -76,7 +76,7 @@ if errorlevel 1 (
 
 set /p userChoice=Do you want to sign the .exe file and push to ahkengbuild? (y/n): 
 
-if /i "%userChoice%"!="y" (
+if /i not "%userChoice%"=="y" (
     echo skipping siging and transfer steps
     exit /b 0
 )
