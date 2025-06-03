@@ -77,20 +77,20 @@ if errorlevel 1 (
 set /p userChoice=Do you want to sign the .exe file? (y/n): 
 
 if /i "%userChoice%"=="y" (
-    echo   
+    echo.
     smctl sign --keypair-alias key_1269013793 --input "!OUTPUT_EXE_FILE!"
-    echo   
+    echo.
     echo If signing failed, try running 'smctl healthcheck' or check [C:\Users\labtest\.signingmanager\logs\smctl.log]
 ) else (    
     echo skipping siging and transfer steps
 
 )
-echo   
+echo.
 set /p userChoice=Do you want to push to ahkengbuild? (y/n): 
 
 if /i not "%userChoice%"=="y" (
     echo skipping transfer steps
-    echo   
+    echo.
     exit /b 0
 )
 
@@ -153,3 +153,4 @@ scp -r installer/* %REMOTE_MACHINE%:%REMOTE_DIR%/
 endlocal
 
 echo Deployment to build server complete.
+echo.
