@@ -469,23 +469,35 @@ void checkHostName(HANDLE hSerial, SystemState* currentState) {
 }
 
 void checkLoggedInUser(HANDLE hSerial, SystemState* currentState) {
-    DWORD sessionId = WTSGetActiveConsoleSessionId();
-    LPTSTR buffer = NULL;
-    DWORD bytesReturned = 0;
+    PWTS_SESSION_INFO pSessionInfo = NULL;
+    DWORD sessionCount = 0;
 
-    if (WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, sessionId, WTSUserName, &buffer, &bytesReturned)) {
-        std::string username = buffer ? std::string(buffer) : "none";
-        WTSFreeMemory(buffer);
+    if (WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pSessionInfo, &sessionCount)) {
+        for (DWORD i = 0; i < sessionCount; ++i) {
+            WTS_SESSION_INFO session = pSessionInfo[i];
 
-        if (currentState->username != username) {
-            currentState->username = username;
-            if (username == "" ) {
-                sendLineToBmc(hSerial, "username, none");
-            } else {
-                sendLineToBmc(hSerial, "username, " + currentState->username);
+            // Only consider active sessions
+            if (session.State == WTSActive) {
+                LPTSTR buffer = NULL;
+                DWORD bytesReturned = 0;
+
+                if (WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, session.SessionId, WTSUserName, &buffer, &bytesReturned)) {
+                    std::string username = buffer ? std::string(buffer) : "none";
+                    WTSFreeMemory(buffer);
+
+                    if (!username.empty() && currentState->username != username) {
+                        currentState->username = username;
+                        sendLineToBmc(hSerial, "username, " + currentState->username);
+                        break; // Exit after finding first active user
+                    } else if (username.empty() && currentState->username != "none") {
+                        currentState->username = "none";
+                        sendLineToBmc(hSerial, "username, none");
+                        break;
+                    }
+                }
             }
-
         }
+        WTSFreeMemory(pSessionInfo);
     }
 }
 
@@ -632,6 +644,146 @@ void RunMainWindow() {
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Watch for windows system messages and handle accordingly
     std::string val;
+    
+    std::string logEntry = "WindowProc() with msg " + std::to_string(msg) + 
+       " wParam " + std::to_string(wParam) +
+       " lParam " + std::to_string(lParam)  ;
+    LogMessage(logEntry);
+
+/*
+
+
+# direct lock
+[2025-6-3 16:2:5] WindowProc() with msg 689 wParam 7 lParam 3
+[2025-6-3 16:2:6] sessionState, 7
+# unlock
+[2025-6-3 16:2:14] WindowProc() with msg 689 wParam 8 lParam 3
+[2025-6-3 16:2:15] sessionState, 8
+
+
+# Start RDP session 
+[2025-6-3 16:3:37] WindowProc() with msg 689 wParam 2 lParam 3
+[2025-6-3 16:3:37] sessionState, 2    WTS_CONSOLE_DISCONNECT
+[2025-6-3 16:3:37] username, none
+[2025-6-3 16:3:37] WindowProc() with msg 689 wParam 10 lParam 4
+[2025-6-3 16:3:37] WindowProc() with msg 689 wParam 1 lParam 4
+
+[2025-6-3 16:3:38] sessionState, 1   WTS_CONSOLE_CONNECT
+[2025-6-3 16:3:38] WindowProc() with msg 689 wParam 3 lParam 3
+
+[2025-6-3 16:3:38] WindowProc() with msg 689 wParam 7 lParam 3
+[2025-6-3 16:3:38] sessionState, 7   WTS_SESSION_LOCK
+
+[2025-6-3 16:3:39] WindowProc() with msg 689 wParam 8 lParam 3
+[2025-6-3 16:3:39] sessionState, 8   WTS_SESSION_UNLOCK
+
+
+# Terminate RDP
+[2025-6-3 16:22:55] WindowProc() with msg 689 wParam 4 lParam 3
+[2025-6-3 16:22:55] sessionState, 4     WTS_REMOTE_DISCONNECT
+[2025-6-3 16:22:55] WindowProc() with msg 689 wParam 7 lParam 3
+[2025-6-3 16:22:55] sessionState, 7     WTS_SESSION_LOCK
+
+Start RDP
+[2025-6-3 16:23:8] WindowProc() with msg 689 wParam 3 lParam 3
+[2025-6-3 16:23:9] sessionState, 3     WTS_REMOTE_CONNECT
+[2025-6-3 16:23:9] WindowProc() with msg 689 wParam 8 lParam 3
+[2025-6-3 16:23:9] sessionState, 8     WTS_SESSION_UNLOCK
+
+
+Stop RDP
+[2025-6-3 16:26:18] WindowProc() with msg 689 wParam 4 lParam 3
+[2025-6-3 16:26:18] WindowProc() with msg 689 wParam 7 lParam 3
+[2025-6-3 16:26:18] sessionState, 7
+
+
+Start console session
+[2025-6-3 16:26:31] WindowProc() with msg 689 wParam 2 lParam 4     WTS_CONSOLE_DISCONNECT
+[2025-6-3 16:26:32] WindowProc() with msg 689 wParam 1 lParam 3     WTS_CONSOLE_CONNECT 
+[2025-6-3 16:26:32] WindowProc() with msg 689 wParam 11 lParam 4    WTS_SESSION_TERMINATE
+[2025-6-3 16:26:32] sessionState, 11
+[2025-6-3 16:26:32] username, labtest
+[2025-6-3 16:26:32] WindowProc() with msg 689 wParam 8 lParam 3      WTS_SESSION_UNLOCK
+[2025-6-3 16:26:32] sessionState, 8
+
+
+[2025-6-3 16:37:16] Starting service with \\.\COM3
+[2025-6-3 16:37:16] 
+
+appVersion, 2025.6.1_adhoc1
+
+gitDetails, cshd-1044_report_rdp, 71f4d01-mods
+
+buildTime, 2025-06-03_16:37:07
+
+winVersion, 10.0.26100 Build 26100
+
+sessionState, 0
+
+
+[2025-6-3 16:37:16] network, 00:17:fd:60:02:e1, down, 169.254.174.107, fe80::98d7:656:a39:8ad3, dhcp, Ethernet 2
+[2025-6-3 16:37:16] network, 74:fe:48:a3:fe:8d, up, 192.168.200.134, fe80::1451:e373:4c26:e165, dhcp, Ethernet
+[2025-6-3 16:37:16] username, labtest
+[2025-6-3 16:37:16] hostname, NODE-30042-0023
+[2025-6-3 16:37:55] WindowProc() with msg 689 wParam 2 lParam 3
+[2025-6-3 16:37:55] WindowProc() with msg 689 wParam 10 lParam 4
+[2025-6-3 16:37:55] WindowProc() with msg 689 wParam 1 lParam 4
+[2025-6-3 16:37:55] WindowProc() with msg 689 wParam 3 lParam 3
+[2025-6-3 16:37:55] WindowProc() with msg 689 wParam 7 lParam 3
+[2025-6-3 16:37:55] sessionState, 7
+[2025-6-3 16:37:56] WindowProc() with msg 689 wParam 8 lParam 3
+[2025-6-3 16:37:56] sessionState, 8
+[2025-6-3 16:38:26] WindowProc() with msg 689 wParam 4 lParam 3
+[2025-6-3 16:38:26] WindowProc() with msg 689 wParam 7 lParam 3
+[2025-6-3 16:38:26] sessionState, 7
+[2025-6-3 16:38:40] WindowProc() with msg 689 wParam 2 lParam 4
+[2025-6-3 16:38:40] WindowProc() with msg 689 wParam 1 lParam 3
+[2025-6-3 16:38:40] WindowProc() with msg 689 wParam 11 lParam 4
+[2025-6-3 16:38:40] sessionState, 11
+[2025-6-3 16:38:40] WindowProc() with msg 689 wParam 8 lParam 3
+[2025-6-3 16:38:41] sessionState, 8
+
+
+
+[2025-6-3 16:42:43] WindowProc() with msg 689 wParam 6 lParam 3
+[2025-6-3 16:42:44] WindowProc() with msg 689 wParam 2 lParam 3
+[2025-6-3 16:42:44] WindowProc() with msg 689 wParam 11 lParam 3
+[2025-6-3 16:42:44] WindowProc() with msg 689 wParam 10 lParam 4
+[2025-6-3 16:42:44] sessionState, 10
+[2025-6-3 16:42:44] WindowProc() with msg 689 wParam 1 lParam 4
+[2025-6-3 16:42:44] sessionState, 1
+[2025-6-3 16:42:52] WindowProc() with msg 689 wParam 5 lParam 4
+[2025-6-3 16:42:53] sessionState, 5
+[2025-6-3 16:42:53] username, user2
+
+
+[2025-6-3 16:45:54] WindowProc() with msg 689 wParam 10 lParam 5
+[2025-6-3 16:45:54] sessionState, 10
+[2025-6-3 16:45:55] WindowProc() with msg 689 wParam 3 lParam 5
+[2025-6-3 16:45:55] sessionState, 3
+
+# Start RDP
+[2025-6-3 16:46:11] WindowProc() with msg 689 wParam 2 lParam 4
+[2025-6-3 16:46:11] WindowProc() with msg 689 wParam 10 lParam 6
+[2025-6-3 16:46:11] WindowProc() with msg 689 wParam 5 lParam 5
+[2025-6-3 16:46:11] WindowProc() with msg 689 wParam 1 lParam 6
+[2025-6-3 16:46:11] sessionState, 1
+[2025-6-3 16:46:11] username, labtest
+[2025-6-3 16:46:11] WindowProc() with msg 689 wParam 7 lParam 4
+[2025-6-3 16:46:12] sessionState, 7
+
+
+# Terminate RDP
+[2025-6-3 17:9:42] WindowProc() with msg 689 wParam 4 lParam 5
+[2025-6-3 17:9:42] WindowProc() with msg 689 wParam 7 lParam 5
+
+# Start RDP
+[2025-6-3 17:9:56] WindowProc() with msg 689 wParam 3 lParam 5
+[2025-6-3 17:9:56] sessionState, 3
+[2025-6-3 17:9:56] WindowProc() with msg 689 wParam 8 lParam 5
+[2025-6-3 17:9:56] sessionState, 8
+*/
+
     switch (msg) {
 
 
