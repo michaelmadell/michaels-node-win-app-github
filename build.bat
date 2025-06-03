@@ -77,23 +77,20 @@ if errorlevel 1 (
 set /p userChoice=Do you want to sign the .exe file? (y/n): 
 
 if /i "%userChoice%"=="y" (
-    smctl healthcheck
-    echo "----------------------------------------------------------------------"
-    echo
+    echo   
     smctl sign --keypair-alias key_1269013793 --input C:\Users\labtest\repos\node-win-app\build\nodeWinApp.exe
-    echo
+    echo   
     echo If signing failed, try running 'smctl healthcheck' or check [C:\Users\labtest\.signingmanager\logs\smctl.log]
-    echo
 ) else (    
     echo skipping siging and transfer steps
 
 )
-echo
+echo   
 set /p userChoice=Do you want to push to ahkengbuild? (y/n): 
 
 if /i not "%userChoice%"=="y" (
     echo skipping transfer steps
-    echo
+    echo   
     exit /b 0
 )
 
