@@ -15,7 +15,7 @@
 #define VERSION_MONTH 5
 #define VERSION_RELEASE 2
 #define VERSION_EXTRAVERSION "rc"
-#define VERSION_RC_NO 4
+#define VERSION_RC_NO 5
 #define VERSION_ADHOC_NO 2
 
 
