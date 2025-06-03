@@ -74,6 +74,19 @@ if errorlevel 1 (
     exit /b 0
 )
 
+set /p userChoice=Do you want to sign the .exe file and push to ahkengbuild? (y/n): 
+
+if /i "%userChoice%"!="y" (
+    echo skipping siging and transfer steps
+    exit /b 0
+)
+
+smctl sign --keypair-alias key_1269013793 --input C:\Users\labtest\repos\node-win-app\build\NodeWinApp.exe
+rem Check if it was successful
+if %ERRORLEVEL% neq 0 (
+    echo smctl sign failed. Exiting.
+    exit /b %ERRORLEVEL%
+)
 
 REM Build version number string 
 set "VERSION_H=version.h"
