@@ -64,14 +64,10 @@ std::mutex powerStateMutex;
 std::shared_ptr<std::string> sessionState = std::make_shared<std::string>("");
 std::mutex sessionStateMutex;
 
-
 // Helper function to work out if running a ga version
 bool IsGaBuild() {
     return _stricmp(VERSION_EXTRAVERSION, "ga") == 0;
 }
-
-
-
 
 
 void LogMessage(const std::string& message) {
@@ -100,7 +96,7 @@ void LogMessage(const std::string& message) {
         GetLocalTime(&time);
 
         logFile << "[" << time.wYear << "-" << time.wMonth << "-" << time.wDay << " "
-                << time.wHour << ":" << time.wMinute << ":" << time.wSecond << "] "
+                << time.wHour << ":" << time.wMinute << ":" << time.wSecond << "." << time.wMilliseconds << "] "
                 << message << std::endl;
 
         logFile.close();
@@ -469,23 +465,35 @@ void checkHostName(HANDLE hSerial, SystemState* currentState) {
 }
 
 void checkLoggedInUser(HANDLE hSerial, SystemState* currentState) {
-    DWORD sessionId = WTSGetActiveConsoleSessionId();
-    LPTSTR buffer = NULL;
-    DWORD bytesReturned = 0;
+    PWTS_SESSION_INFO pSessionInfo = NULL;
+    DWORD sessionCount = 0;
 
-    if (WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, sessionId, WTSUserName, &buffer, &bytesReturned)) {
-        std::string username = buffer ? std::string(buffer) : "none";
-        WTSFreeMemory(buffer);
+    if (WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pSessionInfo, &sessionCount)) {
+        for (DWORD i = 0; i < sessionCount; ++i) {
+            WTS_SESSION_INFO session = pSessionInfo[i];
 
-        if (currentState->username != username) {
-            currentState->username = username;
-            if (username == "" ) {
-                sendLineToBmc(hSerial, "username, none");
-            } else {
-                sendLineToBmc(hSerial, "username, " + currentState->username);
+            // Only consider active sessions
+            if (session.State == WTSActive) {
+                LPTSTR buffer = NULL;
+                DWORD bytesReturned = 0;
+
+                if (WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, session.SessionId, WTSUserName, &buffer, &bytesReturned)) {
+                    std::string username = buffer ? std::string(buffer) : "none";
+                    WTSFreeMemory(buffer);
+
+                    if (!username.empty() && currentState->username != username) {
+                        currentState->username = username;
+                        sendLineToBmc(hSerial, "username, " + currentState->username);
+                        break; // Exit after finding first active user
+                    } else if (username.empty() && currentState->username != "none") {
+                        currentState->username = "none";
+                        sendLineToBmc(hSerial, "username, none");
+                        break;
+                    }
+                }
             }
-
         }
+        WTSFreeMemory(pSessionInfo);
     }
 }
 
@@ -514,6 +522,12 @@ void checkSessionState(HANDLE hSerial, SystemState* currentState) {
     if (currentState->sessionState != sessionStateLocalCopy) {
         currentState->sessionState = sessionStateLocalCopy;
         sendLineToBmc(hSerial, "sessionState, " +  currentState->sessionState);
+
+        // If WTS_SESSION_LOGOFF, clear user name 
+        if (sessionStateLocalCopy == "6") {
+            currentState->username = "none";
+            sendLineToBmc(hSerial, "username, none");
+        }
     }
 }
 // Serial port thread
@@ -569,7 +583,7 @@ void serialThread() {
         checkLoggedInUser(hSerial, &currentState);
         checkHostName(hSerial, &currentState);
         checkPowerState(hSerial, & currentState);
-        Sleep(500);  // ms
+        Sleep(50);  // ms
 
         
 
@@ -632,6 +646,15 @@ void RunMainWindow() {
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Watch for windows system messages and handle accordingly
     std::string val;
+   
+    
+    std::stringstream ss;
+    ss << "WindowProc() with msg 0x" << std::hex << msg
+    << " wParam 0x" << std::hex << wParam
+    << " lParam session ID 0x" << std::hex << lParam;
+
+    LogMessage(ss.str());
+
     switch (msg) {
 
 

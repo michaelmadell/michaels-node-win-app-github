@@ -1,10 +1,17 @@
-# 2025-6-3
+# 2025-6-5
 # node-win-app Release notes
 # Modify at you own dicreation
 
 node-win-app Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+2025.6.1
+--------
+- Report username for RDP sessions
+- Reduced main loop time from 500 to 50 ms to enusure all session state changes are captured
+- Added milli-seconds to log timestamp
+
 
 2025.5.2
 --------
