@@ -95,9 +95,15 @@ void LogMessage(const std::string& message) {
         SYSTEMTIME time;
         GetLocalTime(&time);
 
-        logFile << "[" << time.wYear << "-" << time.wMonth << "-" << time.wDay << " "
-                << time.wHour << ":" << time.wMinute << ":" << time.wSecond << "." << time.wMilliseconds << "] "
+        logFile << "[" << time.wYear << "-"
+                << std::setw(2) << std::setfill('0') << time.wMonth << "-"
+                << std::setw(2) << std::setfill('0') << time.wDay << " "
+                << std::setw(2) << std::setfill('0') << time.wHour << ":"
+                << std::setw(2) << std::setfill('0') << time.wMinute << ":"
+                << std::setw(2) << std::setfill('0') << time.wSecond << "."
+                << std::setw(3) << std::setfill('0') << time.wMilliseconds << "] "
                 << message << std::endl;
+
 
         logFile.close();
     }
@@ -646,13 +652,35 @@ void RunMainWindow() {
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Watch for windows system messages and handle accordingly
     std::string val;
-   
-    
+    std::string stateStr;
     std::stringstream ss;
-    ss << "WindowProc() with msg 0x" << std::hex << msg
-    << " wParam 0x" << std::hex << wParam
-    << " lParam session ID 0x" << std::hex << lParam;
+    
+    if (msg == WM_WTSSESSION_CHANGE) {
 
+        switch (wParam) {
+            case WTS_CONSOLE_CONNECT : stateStr = "WTS_CONSOLE_CONNECT"; break;
+            case WTS_CONSOLE_DISCONNECT : stateStr = "WTS_CONSOLE_DISCONNECT"; break;
+            case WTS_REMOTE_CONNECT : stateStr = "WTS_REMOTE_CONNECT"; break;
+            case WTS_REMOTE_DISCONNECT: stateStr = "WTS_REMOTE_DISCONNECT"; break;
+            case  WTS_SESSION_LOGON : stateStr = "WTS_SESSION_LOGON"; break;
+            case WTS_SESSION_LOGOFF : stateStr = "WTS_SESSION_LOGOFF"; break;
+            case WTS_SESSION_LOCK : stateStr = "WTS_SESSION_LOCK"; break;
+            case WTS_SESSION_UNLOCK : stateStr = "WTS_SESSION_UNLOCK"; break;
+            case WTS_SESSION_REMOTE_CONTROL : stateStr = "WTS_SESSION_REMOTE_CONTROL"; break;
+            case WTS_SESSION_CREATE : stateStr = "WTS_SESSION_CREATE"; break;
+            case  WTS_SESSION_TERMINATE: stateStr = "WTS_SESSION_TERMINATE"; break;
+            default : stateStr = "unknown"; break;
+               
+        }
+
+        ss << "WM_WTSSESSION_CHANGE: session(" + std::to_string(lParam) + ") " +  std::to_string(wParam)  + " " + stateStr ;
+
+    } else {
+
+        ss << "WindowProc() with msg 0x" << std::hex << msg
+        << " wParam 0x" << std::hex << wParam
+        << " lParam session ID 0x" << std::hex << lParam;
+    }
     LogMessage(ss.str());
 
     switch (msg) {

@@ -9,6 +9,7 @@ node-win-app Release notes
 2025.6.1
 --------
 - Report username for RDP sessions
+- Set username to "none" if WTS_SESSION_LOGOFF detected
 - Reduced main loop time from 500 to 50 ms to enusure all session state changes are captured
 - Added milli-seconds to log timestamp
 
