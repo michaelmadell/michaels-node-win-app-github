@@ -61,7 +61,10 @@
       "xlocnum": "cpp",
       "xloctime": "cpp",
       "codecvt": "cpp",
-      "mutex": "cpp"
+      "mutex": "cpp",
+      "fstream": "cpp",
+      "iostream": "cpp",
+      "ostream": "cpp"
     }
   }
   
