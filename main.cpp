@@ -14,7 +14,6 @@
 #include <cstring>         // for strcpy_s
 #include <cfgmgr32.h>
 #include <thread>
-#include <string>
 #include <vector>
 #include <locale>
 #include <codecvt>
@@ -25,10 +24,13 @@
 #include <fstream>
 #include <algorithm>
 #include <iostream>
+#include <Wbemidl.h>
+#include <comdef.h>
 
 #include "version.h"
 #include "git_info.h"
 
+#pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "netapi32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -328,6 +330,99 @@ BOOL resetNetworkAdapter(const IP_ADAPTER_ADDRESSES* adapter) {
 
 }
 
+std::string GetFriendlyOSName() {
+    HRESULT hres;
+
+    // Initialize COM
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres)) return "COM Init Failed";
+
+    // Set security levels
+    hres = CoInitializeSecurity(
+        NULL, -1, NULL, NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE, NULL
+    );
+    if (FAILED(hres)) {
+        CoUninitialize();
+        return "Security Init Failed";
+    }
+
+    // Obtain WMI locator
+    IWbemLocator* pLoc = NULL;
+    hres = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+                            IID_IWbemLocator, (LPVOID*)&pLoc);
+    if (FAILED(hres)) {
+        CoUninitialize();
+        return "WbemLocator Failed";
+    }
+
+    // Connect to WMI namespace
+    IWbemServices* pSvc = NULL;
+    hres = pLoc->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &pSvc
+    );
+    if (FAILED(hres)) {
+        pLoc->Release();
+        CoUninitialize();
+        return "WMI Connect Failed";
+    }
+
+    // Set proxy security
+    hres = CoSetProxyBlanket(
+        pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE
+    );
+    if (FAILED(hres)) {
+        pSvc->Release(); pLoc->Release();
+        CoUninitialize();
+        return "Proxy Blanket Failed";
+    }
+
+    // Execute WMI query
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hres = pSvc->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t("SELECT Caption FROM Win32_OperatingSystem"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL, &pEnumerator
+    );
+    if (FAILED(hres)) {
+        pSvc->Release(); pLoc->Release(); CoUninitialize();
+        return "Query Failed";
+    }
+
+    // Get result
+    IWbemClassObject* pclsObj = NULL;
+    ULONG uReturn = 0;
+    std::string result = "Unknown OS";
+
+    if (pEnumerator) {
+        while (pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn) == S_OK) {
+            VARIANT vtProp;
+            VariantInit(&vtProp);
+            if (SUCCEEDED(pclsObj->Get(L"Caption", 0, &vtProp, 0, 0))) {
+                result = _bstr_t(vtProp.bstrVal);
+                VariantClear(&vtProp);
+            }
+            pclsObj->Release();
+        }
+        pEnumerator->Release();
+    }
+
+    // Cleanup
+    pSvc->Release();
+    pLoc->Release();
+    CoUninitialize();
+
+    return result;
+}
+
+
+
+
 std::string GetRealWindowsVersion() {
     HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
     if (!hMod) return "Unknown Version";
@@ -575,7 +670,7 @@ void serialThread() {
     std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
                                       "gitDetails, " + GitInfo::BRANCH + ", " + GitInfo::HASH + "\r\n" +
                                       "buildTime, " + GitInfo::BUILD_TIME + "\r\n" +
-                                      "winVersion, " + GetRealWindowsVersion() + "\r\n" +
+                                      "winVersion, " + GetFriendlyOSName() + "\r\n" +
                                       "sessionState, 0\r\n");                              // send session state 0 - app running
     LogMessage(out.c_str());                                      
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
