@@ -147,7 +147,8 @@ void WINAPI ServiceMain(DWORD, LPTSTR *) {
     g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN;
     g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;    // stand alone process
     // Define what events can be handled
-    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP |SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN; 
+    // g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP |SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN; 
+    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN; 
     g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;       // is starting up (not ready yet)
     SetServiceStatus(g_StatusHandle, &g_ServiceStatus);           // tell windows our current status
 
@@ -172,7 +173,7 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
             passPowerStateToSerial("controlStop");
             g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;    // tell windows we are stopping
             SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
-            SetEvent(g_StopEvent);                                    // Set our internal stop 
+            SetEvent(g_StopEvent);
             break;
 
         // This case is called if windows shutdown is kicked off...
@@ -181,12 +182,12 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
             g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
             SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
             passPowerStateToSerial("shutdownRequest");
-            SetEvent(g_StopEvent);  // This causes RunMainWindow to exit
+            SetEvent(g_StopEvent);
             break;
 
         case SERVICE_CONTROL_SHUTDOWN:
             LogMessage("Shutdown");
-
+            SetEvent(g_StopEvent);
             passPowerStateToSerial("controlShutdown");
             break;
 
@@ -685,7 +686,13 @@ void serialThread() {
     
     
     // main serial input processing loop 
-    while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
+    while (true) {
+
+        if (WaitForSingleObject(g_StopEvent, 0) == WAIT_OBJECT_0) {
+            LogMessage("Serial thread exiting due to stop signal");
+            break;
+        }
+
         // Get latest state and push any changes
         checkSessionState(hSerial, & currentState);
         checkNetworkAdapters(hSerial, &currentState);
@@ -693,8 +700,6 @@ void serialThread() {
         checkHostName(hSerial, &currentState);
         checkPowerState(hSerial, & currentState);
         Sleep(50);  // ms
-
-        
 
         // if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
         //     input.append(buffer, bytesRead);
