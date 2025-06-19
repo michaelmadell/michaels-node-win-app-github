@@ -173,12 +173,20 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
             g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;    // tell windows we are stopping
             SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
             SetEvent(g_StopEvent);                                    // Set our internal stop 
+            break;
 
+        // This case is called if windows shutdown is kicked off...
         case SERVICE_CONTROL_PRESHUTDOWN:
+            LogMessage("PreShutdown");
+            g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+            SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
             passPowerStateToSerial("shutdownRequest");
+            SetEvent(g_StopEvent);  // This causes RunMainWindow to exit
             break;
 
         case SERVICE_CONTROL_SHUTDOWN:
+            LogMessage("Shutdown");
+
             passPowerStateToSerial("controlShutdown");
             break;
 
@@ -677,7 +685,7 @@ void serialThread() {
     
     
     // main serial input processing loop 
-    while (true) {
+    while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
         // Get latest state and push any changes
         checkSessionState(hSerial, & currentState);
         checkNetworkAdapters(hSerial, &currentState);
@@ -729,6 +737,7 @@ void RunMainWindow() {
     std::thread(serialThread).detach();
 
     MSG msg;
+    LogMessage("Main loop starting");
     // Look for incoming windows messages until service told to stop...
     while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -738,6 +747,7 @@ void RunMainWindow() {
         Sleep(50);  // ms 
     }
 
+    LogMessage("Main loop shuting down");    
     WTSUnRegisterSessionNotification(hWnd);
     DestroyWindow(hWnd);
 }
