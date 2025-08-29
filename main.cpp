@@ -74,7 +74,7 @@ bool IsGaBuild() {
     return _stricmp(VERSION_EXTRAVERSION, "ga") == 0;
 }
 
-double GetFileAgeInSeconds(const wchar_t* filePath) {
+double GetFileAgeInDays(const wchar_t* filePath) {
     WIN32_FILE_ATTRIBUTE_DATA fileinfo;
 
     if (!GetFileAttributesExW(filePath, GetFileExInfoStandard, &fileinfo)) {
@@ -98,22 +98,23 @@ double GetFileAgeInSeconds(const wchar_t* filePath) {
     long long diff = currentTime_100ns - fileTime_100ns;
 
     double seconds = static_cast<double>(diff) / 10000000.0;
+    double days = seconds / (60.0 * 60.0 * 24.0);
 
-    return seconds;
+    return days;
 }
 
 void PerformLogRotationInternal() {
     const wchar_t* logPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.log";
     const wchar_t* oldLogPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.old.log";
 
-    double oldLogAge = GetFileAgeInSeconds(oldLogPath);
-    if (oldLogAge != -1.0 && oldLogAge >= 30.0) {
+    double oldLogAge = GetFileAgeInDays(oldLogPath);
+    if (oldLogAge != -1.0 && oldLogAge >= 14.0) {
         DeleteFileW(oldLogPath);
     }
 
-    double currentLogAge = GetFileAgeInSeconds(logPath);
-    if (currentLogAge != -1.0 && currentLogAge >= 15.0) {
-        if (GetFileAgeInSeconds(oldLogPath) != -1.0 )
+    double currentLogAge = GetFileAgeInDays(logPath);
+    if (currentLogAge != -1.0 && currentLogAge >= 7.0) {
+        if (GetFileAgeInDays(oldLogPath) != -1.0 )
         {
             DeleteFileW(oldLogPath);
         }
@@ -753,7 +754,7 @@ void serialThread() {
     while (WaitForSingleObject(g_StopEvent, 1000) != WAIT_OBJECT_0) 
     {
         auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - g_lastRotationTime); //Seconds for debug. TODO: Change to hours
+        auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - g_lastRotationTime);
 
         if (elapsed.count() >= 4) {
             CheckAndRotateLogs();
