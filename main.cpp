@@ -28,7 +28,6 @@
 #include <comdef.h>
 
 #include "version.h"
-#include "git_info.h"
 
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "netapi32.lib")
@@ -41,6 +40,9 @@
 #define WM_TRAYICON (WM_USER + 1) 
 #define ID_TRAY_EXIT 1001
 #define ID_TRAY_ABOUT 1002
+
+std::ofstream g_logFile;
+std::mutex g_logMutex;
 
 NOTIFYICONDATA nid = {0};
 HMENU hMenu;
@@ -71,44 +73,49 @@ bool IsGaBuild() {
     return _stricmp(VERSION_EXTRAVERSION, "ga") == 0;
 }
 
-
-void LogMessage(const std::string& message) {
-    
+void InitLogging() {
     if (IsGaBuild()) {
-        return;  // Skip logging if it's "ga" or "GA"
+        return;
     }
 
     const wchar_t* dirPath = L"C:\\ProgramData\\ahk";
-    const wchar_t* logPath = L"C:\\ProgramData\\ahk\\node-win-app.log";
-    
-        DWORD fileAttr = GetFileAttributesW(dirPath);
-    
-        if (fileAttr == INVALID_FILE_ATTRIBUTES || !(fileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
-            if (!CreateDirectoryW(dirPath, NULL)) {
-                DWORD error = GetLastError();
-                if (error != ERROR_ALREADY_EXISTS) {
-                    std::wcerr << L"Failed to create log directory. Error code: " << error << std::endl;
-                }
-            }
+    const wchar_t* logPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.log";
+
+    DWORD fileAttr = GetFileAttributesW(dirPath);
+    if (fileAttr == INVALID_FILE_ATTRIBUTES) {
+        if (!CreateDirectoryW(dirPath, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+            return;
         }
-    
-    std::ofstream logFile(logPath, std::ios::app);
-    if (logFile.is_open()) {
-        SYSTEMTIME time;
-        GetLocalTime(&time);
-
-        logFile << "[" << time.wYear << "-"
-                << std::setw(2) << std::setfill('0') << time.wMonth << "-"
-                << std::setw(2) << std::setfill('0') << time.wDay << " "
-                << std::setw(2) << std::setfill('0') << time.wHour << ":"
-                << std::setw(2) << std::setfill('0') << time.wMinute << ":"
-                << std::setw(2) << std::setfill('0') << time.wSecond << "."
-                << std::setw(3) << std::setfill('0') << time.wMilliseconds << "] "
-                << message << std::endl;
-
-
-        logFile.close();
     }
+
+    g_logFile.open(logPath, std::ios::out | std::ios::app);
+}
+
+void ShutdownLogging() {
+    if (g_logFile.is_open()) {
+        g_logFile.close();
+    }
+}
+
+void LogMessage(const std::string& message) {
+    
+    if (!g_logFile.is_open()) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(g_logMutex);
+    
+    SYSTEMTIME time;
+    GetLocalTime(&time);
+
+    g_logFile << "[" << time.wYear << "-"
+            << std::setw(2) << std::setfill('0') << time.wMonth << "-"
+            << std::setw(2) << std::setfill('0') << time.wDay << " "
+            << std::setw(2) << std::setfill('0') << time.wHour << ":"
+            << std::setw(2) << std::setfill('0') << time.wMinute << ":"
+            << std::setw(2) << std::setfill('0') << time.wSecond << "."
+            << std::setw(3) << std::setfill('0') << time.wMilliseconds << "] "
+            << message << std::endl;
 }
 
 void passPowerStateToSerial(std::string powerStateStr) {
@@ -452,13 +459,18 @@ std::string GetRealWindowsVersion() {
 }
 
 void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
+    static std::vector<BYTE> data;
     DWORD size = 0;
+
     NetworkInterface* currentNetworks[] = { &currentState->network1, &currentState->network2 };
     int interfaceIndex = 0;
-    GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, nullptr, &size);
+    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, nullptr, &size) == ERROR_BUFFER_OVERFLOW) {
+        data.resize(size);
+    } else {
+        return;
+    }
 
-    std::vector<BYTE> data(size);
-    IP_ADAPTER_ADDRESSES *adapters = reinterpret_cast<IP_ADAPTER_ADDRESSES *>(data.data());
+    IP_ADAPTER_ADDRESSES* adapters = reinterpret_cast<IP_ADAPTER_ADDRESSES *>(data.data());
 
     if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, adapters, &size) == NO_ERROR) {
         for (IP_ADAPTER_ADDRESSES *adapter = adapters; adapter; adapter = adapter->Next) {
@@ -642,6 +654,7 @@ void checkSessionState(HANDLE hSerial, SystemState* currentState) {
 }
 // Serial port thread
 void serialThread() {
+    InitLogging();
     // Setup serial port
     LogMessage("------------------------------------------------------------------------------------------------");
     std::ostringstream logStr;
@@ -650,7 +663,11 @@ void serialThread() {
 
     HANDLE hSerial = CreateFileA(SERIAL_PORT, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                                  OPEN_EXISTING, 0, NULL);
-    if (hSerial == INVALID_HANDLE_VALUE) return;
+    if (hSerial == INVALID_HANDLE_VALUE) {
+        LogMessage("Failed to open serial port. Thread Exiting...");
+        ShutdownLogging();
+        return;
+    }
 
     DCB dcbSerialParams = {0};
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
@@ -664,61 +681,36 @@ void serialThread() {
     COMMTIMEOUTS timeouts = {0};
     timeouts.ReadIntervalTimeout = 50;
     SetCommTimeouts(hSerial, &timeouts);
-
-    char buffer[256];
-    DWORD bytesRead;
-    DWORD bytesWritten;
-    std::string input;
-
      
     SystemState currentState;
     currentState.Clear();
     
-    
     // Send Running sting
     std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
-                                      "gitDetails, " + GitInfo::BRANCH + ", " + GitInfo::HASH + "\r\n" +
-                                      "buildTime, " + GitInfo::BUILD_TIME + "\r\n" +
                                       "winVersion, " + GetFriendlyOSName() + "\r\n" +
                                       "sessionState, 0\r\n");                              // send session state 0 - app running
-    LogMessage(out.c_str());                                      
+    LogMessage(out.c_str());   
+    DWORD bytesWritten;                                   
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
     
-    
     // main serial input processing loop 
-    while (true) {
-
-        if (WaitForSingleObject(g_StopEvent, 0) == WAIT_OBJECT_0) {
-            LogMessage("Serial thread exiting due to stop signal");
-            break;
-        }
-
+    while (WaitForSingleObject(g_StopEvent, 50) != WAIT_OBJECT_0) 
+    {
         // Get latest state and push any changes
         checkSessionState(hSerial, & currentState);
         checkNetworkAdapters(hSerial, &currentState);
         checkLoggedInUser(hSerial, &currentState);
         checkHostName(hSerial, &currentState);
         checkPowerState(hSerial, & currentState);
-        Sleep(50);  // ms
-
-        // if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
-        //     input.append(buffer, bytesRead);
-        //     // If carriage return detected...
-        //     if (input.find("\r") != std::string::npos) {
-        //         // Generate [status] response
-        //         if (input.find("status") != std::string::npos) {
-
-        //             // Clear current status so all fields are re-sent
-        //             currentState.Clear();
-        //         }
-        //         input.clear();
-        //     }
-        // }
-
+        Sleep(1000);
     }
-    out = "serialThread closing...\r\n";
+
+    LogMessage("Stop event received, serialThread closing...");
+    out = "appClosing, service stopping...\r\n";
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
-    CloseHandle(hSerial) ;
+
+    CloseHandle(hSerial);
+    ShutdownLogging();
 }
 
 // Forward declaration

@@ -12,22 +12,11 @@
 #pragma once
 
 #define VERSION_YEAR 2025
-#define VERSION_MONTH 6
+#define VERSION_MONTH 8
 #define VERSION_RELEASE 1
-#define VERSION_EXTRAVERSION "ga"
-#define VERSION_RC_NO 3
+#define VERSION_EXTRAVERSION "rc"
+#define VERSION_RC_NO 1
 #define VERSION_ADHOC_NO 1
 
-
-
-// Use this flag to determin which COM port to push to at 115,200 BAUD
-// #define DEV_VERSION
-
-#ifdef DEV_VERSION
-// USB serial cable for development
-#define SERIAL_PORT "\\\\.\\COM4"
-#else
-// Congatec--MEC MBC serial port
 #define SERIAL_PORT "\\\\.\\COM3"
-#endif
 
