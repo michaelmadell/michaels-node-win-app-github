@@ -14,7 +14,6 @@
 #include <cstring>         // for strcpy_s
 #include <cfgmgr32.h>
 #include <thread>
-#include <string>
 #include <vector>
 #include <locale>
 #include <codecvt>
@@ -25,10 +24,13 @@
 #include <fstream>
 #include <algorithm>
 #include <iostream>
+#include <Wbemidl.h>
+#include <comdef.h>
 
 #include "version.h"
 #include "git_info.h"
 
+#pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "netapi32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -95,9 +97,15 @@ void LogMessage(const std::string& message) {
         SYSTEMTIME time;
         GetLocalTime(&time);
 
-        logFile << "[" << time.wYear << "-" << time.wMonth << "-" << time.wDay << " "
-                << time.wHour << ":" << time.wMinute << ":" << time.wSecond << "." << time.wMilliseconds << "] "
+        logFile << "[" << time.wYear << "-"
+                << std::setw(2) << std::setfill('0') << time.wMonth << "-"
+                << std::setw(2) << std::setfill('0') << time.wDay << " "
+                << std::setw(2) << std::setfill('0') << time.wHour << ":"
+                << std::setw(2) << std::setfill('0') << time.wMinute << ":"
+                << std::setw(2) << std::setfill('0') << time.wSecond << "."
+                << std::setw(3) << std::setfill('0') << time.wMilliseconds << "] "
                 << message << std::endl;
+
 
         logFile.close();
     }
@@ -139,7 +147,8 @@ void WINAPI ServiceMain(DWORD, LPTSTR *) {
     g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN;
     g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;    // stand alone process
     // Define what events can be handled
-    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP |SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN; 
+    // g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP |SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN; 
+    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN; 
     g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;       // is starting up (not ready yet)
     SetServiceStatus(g_StatusHandle, &g_ServiceStatus);           // tell windows our current status
 
@@ -164,13 +173,21 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
             passPowerStateToSerial("controlStop");
             g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;    // tell windows we are stopping
             SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
-            SetEvent(g_StopEvent);                                    // Set our internal stop 
+            SetEvent(g_StopEvent);
+            break;
 
+        // This case is called if windows shutdown is kicked off...
         case SERVICE_CONTROL_PRESHUTDOWN:
+            LogMessage("PreShutdown");
+            g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+            SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
             passPowerStateToSerial("shutdownRequest");
+            SetEvent(g_StopEvent);
             break;
 
         case SERVICE_CONTROL_SHUTDOWN:
+            LogMessage("Shutdown");
+            SetEvent(g_StopEvent);
             passPowerStateToSerial("controlShutdown");
             break;
 
@@ -321,6 +338,99 @@ BOOL resetNetworkAdapter(const IP_ADAPTER_ADDRESSES* adapter) {
     return FALSE;    
 
 }
+
+std::string GetFriendlyOSName() {
+    HRESULT hres;
+
+    // Initialize COM
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres)) return "COM Init Failed";
+
+    // Set security levels
+    hres = CoInitializeSecurity(
+        NULL, -1, NULL, NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE, NULL
+    );
+    if (FAILED(hres)) {
+        CoUninitialize();
+        return "Security Init Failed";
+    }
+
+    // Obtain WMI locator
+    IWbemLocator* pLoc = NULL;
+    hres = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+                            IID_IWbemLocator, (LPVOID*)&pLoc);
+    if (FAILED(hres)) {
+        CoUninitialize();
+        return "WbemLocator Failed";
+    }
+
+    // Connect to WMI namespace
+    IWbemServices* pSvc = NULL;
+    hres = pLoc->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &pSvc
+    );
+    if (FAILED(hres)) {
+        pLoc->Release();
+        CoUninitialize();
+        return "WMI Connect Failed";
+    }
+
+    // Set proxy security
+    hres = CoSetProxyBlanket(
+        pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE
+    );
+    if (FAILED(hres)) {
+        pSvc->Release(); pLoc->Release();
+        CoUninitialize();
+        return "Proxy Blanket Failed";
+    }
+
+    // Execute WMI query
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hres = pSvc->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t("SELECT Caption FROM Win32_OperatingSystem"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL, &pEnumerator
+    );
+    if (FAILED(hres)) {
+        pSvc->Release(); pLoc->Release(); CoUninitialize();
+        return "Query Failed";
+    }
+
+    // Get result
+    IWbemClassObject* pclsObj = NULL;
+    ULONG uReturn = 0;
+    std::string result = "Unknown OS";
+
+    if (pEnumerator) {
+        while (pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn) == S_OK) {
+            VARIANT vtProp;
+            VariantInit(&vtProp);
+            if (SUCCEEDED(pclsObj->Get(L"Caption", 0, &vtProp, 0, 0))) {
+                result = _bstr_t(vtProp.bstrVal);
+                VariantClear(&vtProp);
+            }
+            pclsObj->Release();
+        }
+        pEnumerator->Release();
+    }
+
+    // Cleanup
+    pSvc->Release();
+    pLoc->Release();
+    CoUninitialize();
+
+    return result;
+}
+
+
+
 
 std::string GetRealWindowsVersion() {
     HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
@@ -569,7 +679,7 @@ void serialThread() {
     std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
                                       "gitDetails, " + GitInfo::BRANCH + ", " + GitInfo::HASH + "\r\n" +
                                       "buildTime, " + GitInfo::BUILD_TIME + "\r\n" +
-                                      "winVersion, " + GetRealWindowsVersion() + "\r\n" +
+                                      "winVersion, " + GetFriendlyOSName() + "\r\n" +
                                       "sessionState, 0\r\n");                              // send session state 0 - app running
     LogMessage(out.c_str());                                      
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
@@ -577,6 +687,12 @@ void serialThread() {
     
     // main serial input processing loop 
     while (true) {
+
+        if (WaitForSingleObject(g_StopEvent, 0) == WAIT_OBJECT_0) {
+            LogMessage("Serial thread exiting due to stop signal");
+            break;
+        }
+
         // Get latest state and push any changes
         checkSessionState(hSerial, & currentState);
         checkNetworkAdapters(hSerial, &currentState);
@@ -584,8 +700,6 @@ void serialThread() {
         checkHostName(hSerial, &currentState);
         checkPowerState(hSerial, & currentState);
         Sleep(50);  // ms
-
-        
 
         // if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
         //     input.append(buffer, bytesRead);
@@ -628,6 +742,7 @@ void RunMainWindow() {
     std::thread(serialThread).detach();
 
     MSG msg;
+    LogMessage("Main loop starting");
     // Look for incoming windows messages until service told to stop...
     while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -637,6 +752,7 @@ void RunMainWindow() {
         Sleep(50);  // ms 
     }
 
+    LogMessage("Main loop shuting down");    
     WTSUnRegisterSessionNotification(hWnd);
     DestroyWindow(hWnd);
 }
@@ -646,13 +762,35 @@ void RunMainWindow() {
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Watch for windows system messages and handle accordingly
     std::string val;
-   
-    
+    std::string stateStr;
     std::stringstream ss;
-    ss << "WindowProc() with msg 0x" << std::hex << msg
-    << " wParam 0x" << std::hex << wParam
-    << " lParam session ID 0x" << std::hex << lParam;
+    
+    if (msg == WM_WTSSESSION_CHANGE) {
 
+        switch (wParam) {
+            case WTS_CONSOLE_CONNECT : stateStr = "WTS_CONSOLE_CONNECT"; break;
+            case WTS_CONSOLE_DISCONNECT : stateStr = "WTS_CONSOLE_DISCONNECT"; break;
+            case WTS_REMOTE_CONNECT : stateStr = "WTS_REMOTE_CONNECT"; break;
+            case WTS_REMOTE_DISCONNECT: stateStr = "WTS_REMOTE_DISCONNECT"; break;
+            case  WTS_SESSION_LOGON : stateStr = "WTS_SESSION_LOGON"; break;
+            case WTS_SESSION_LOGOFF : stateStr = "WTS_SESSION_LOGOFF"; break;
+            case WTS_SESSION_LOCK : stateStr = "WTS_SESSION_LOCK"; break;
+            case WTS_SESSION_UNLOCK : stateStr = "WTS_SESSION_UNLOCK"; break;
+            case WTS_SESSION_REMOTE_CONTROL : stateStr = "WTS_SESSION_REMOTE_CONTROL"; break;
+            case WTS_SESSION_CREATE : stateStr = "WTS_SESSION_CREATE"; break;
+            case  WTS_SESSION_TERMINATE: stateStr = "WTS_SESSION_TERMINATE"; break;
+            default : stateStr = "unknown"; break;
+               
+        }
+
+        ss << "WM_WTSSESSION_CHANGE: session(" + std::to_string(lParam) + ") " +  std::to_string(wParam)  + " " + stateStr ;
+
+    } else {
+
+        ss << "WindowProc() with msg 0x" << std::hex << msg
+        << " wParam 0x" << std::hex << wParam
+        << " lParam session ID 0x" << std::hex << lParam;
+    }
     LogMessage(ss.str());
 
     switch (msg) {
