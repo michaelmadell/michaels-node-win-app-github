@@ -1,7 +1,6 @@
-#include <exception>
-#include <winsock2.h>      // Modern Winsock (must come before windows.h)
-#include <ws2tcpip.h>      // IPv4 helpers
-#include <windows.h>       // AFTER winsock2
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <Windows.h>
 #include <shellapi.h>
 #include <thread>
 #include <mutex>
@@ -10,22 +9,18 @@
 #include <tuple>
 #include <vector>
 #include <sstream>
-#include <iphlpapi.h>      // For GetAdaptersAddresses
-#include <lmcons.h>        // For UNLEN in getLoggedInUser
-#include <cstring>         // for strcpy_s
+#include <iphlpapi.h>
+#include <lmcons.h>
+#include <cstring>
 #include <cfgmgr32.h>
-#include <thread>
-#include <vector>
-#include <locale>
-#include <codecvt>
+#include <locale.h>
 #include <iomanip>
-#include <wtsapi32.h>    
+#include <WtsApi32.h>
 #include <SetupAPI.h>
-#include <netioapi.h>  // Needed for GetIfEntry2
+#include <netioapi.h>
 #include <fstream>
-#include <algorithm>
 #include <iostream>
-#include <Wbemidl.h>
+#include <WbemIdl.h>
 #include <comdef.h>
 #include <chrono>
 
@@ -37,6 +32,8 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
 #pragma comment(lib, "setupapi.lib")
+#pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "advapi32.lib")
 
 // Options on tray app 
 #define WM_TRAYICON (WM_USER + 1) 
@@ -77,13 +74,14 @@ bool IsGaBuild() {
     return _stricmp(VERSION_EXTRAVERSION, "ga") == 0;
 }
 
-double GetFileAgeInDays(const wchar_t* filePath) {
-    WIN32_FILE_ATTRIBUTE_DATA fileInfo;
-    if (GetFileAttributesExW(filePath, GetFileExInfoStandard, &fileInfo)) {
-        return -1;
+double GetFileAgeInSeconds(const wchar_t* filePath) {
+    WIN32_FILE_ATTRIBUTE_DATA fileinfo;
+
+    if (!GetFileAttributesExW(filePath, GetFileExInfoStandard, &fileinfo)) {
+        return -1.0;
     }
 
-    FILETIME ft = fileInfo.ftCreationTime;
+    FILETIME ft = fileinfo.ftCreationTime;
 
     ULARGE_INTEGER uli;
     uli.LowPart = ft.dwLowDateTime;
@@ -99,38 +97,24 @@ double GetFileAgeInDays(const wchar_t* filePath) {
 
     long long diff = currentTime_100ns - fileTime_100ns;
 
-    double seconds = diff / 10000000.0;
-    // double days = seconds / (60.0 * 60.0 * 24.0);
+    double seconds = static_cast<double>(diff) / 10000000.0;
 
-    return seconds;  // TODO: Change to days for release, seconds is to test the rotation works
+    return seconds;
 }
 
 void PerformLogRotationInternal() {
     const wchar_t* logPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.log";
     const wchar_t* oldLogPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.old.log";
 
-    // double oldLogAge = GetFileAgeInDays(oldLogPath);
-    // if (oldLogAge > 30.0) {
-    //     DeleteFileW(oldLogPath);
-    // }
-
-    // double currentLogAge = GetFileAgeInDays(logPath);
-    // if (currentLogAge > 15.0) {
-    //     if (GetFileAgeInDays(oldLogPath) != -1) {
-    //         DeleteFileW(oldLogPath);
-    //     }
-
-    //     MoveFileW(logPath, oldLogPath);
-    // }
-
-    double oldLogAge = GetFileAgeInDays(oldLogPath);
-    if (oldLogAge != -1 && oldLogAge > 30.0) {
+    double oldLogAge = GetFileAgeInSeconds(oldLogPath);
+    if (oldLogAge != -1.0 && oldLogAge >= 30.0) {
         DeleteFileW(oldLogPath);
     }
 
-    double currentLogAge = GetFileAgeInDays(logPath);
-    if (currentLogAge != -1 && currentLogAge > 15.0) {
-        if (GetFileAgeInDays(oldLogPath) != -1 ){
+    double currentLogAge = GetFileAgeInSeconds(logPath);
+    if (currentLogAge != -1.0 && currentLogAge >= 15.0) {
+        if (GetFileAgeInSeconds(oldLogPath) != -1.0 )
+        {
             DeleteFileW(oldLogPath);
         }
 
@@ -766,7 +750,7 @@ void serialThread() {
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
     
     // main serial input processing loop 
-    while (WaitForSingleObject(g_StopEvent, 500) != WAIT_OBJECT_0) 
+    while (WaitForSingleObject(g_StopEvent, 1000) != WAIT_OBJECT_0) 
     {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - g_lastRotationTime); //Seconds for debug. TODO: Change to hours
@@ -782,7 +766,6 @@ void serialThread() {
         checkLoggedInUser(hSerial, &currentState);
         checkHostName(hSerial, &currentState);
         checkPowerState(hSerial, & currentState);
-        Sleep(1000);
     }
 
     LogMessage("Stop event received, serialThread closing...");
