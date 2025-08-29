@@ -26,6 +26,7 @@
 #include <iostream>
 #include <Wbemidl.h>
 #include <comdef.h>
+#include <chrono>
 
 #include "version.h"
 
@@ -73,10 +74,60 @@ bool IsGaBuild() {
     return _stricmp(VERSION_EXTRAVERSION, "ga") == 0;
 }
 
+double GetFileAgeInDays(const wchar_t* filePath) {
+    WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+    if (GetFileAttributesExW(filePath, GetFileExInfoStandard, &fileInfo)) {
+        return -1;
+    }
+
+    FILETIME ft = fileInfo.ftLastWriteTime;
+
+    ULARGE_INTEGER uli;
+    uli.LowPart = ft.dwLowDateTime;
+    uli.HighPart = ft.dwHighDateTime;
+    long long fileTime_100ns = uli.QuadPart;
+
+    FILETIME CurrentFt;
+    GetSystemTimeAsFileTime(&CurrentFt);
+    ULARGE_INTEGER currentUli;
+    currentUli.LowPart = CurrentFt.dwLowDateTime;
+    currentUli.HighPart = CurrentFt.dwHighDateTime;
+    long long currentTime_100ns = currentUli.QuadPart;
+
+    long long diff = currentTime_100ns - fileTime_100ns;
+
+    double seconds = diff / 10000000.0;
+    double days = seconds / (60.0 * 60.0 * 24.0);
+
+    return days;
+}
+
+void PerformLogRotation() {
+    const wchar_t* dirPath = L"C:\\ProgramData\\ahk";
+    const wchar_t* logPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.log";
+    const wchar_t* oldLogPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.old.log";
+
+    double oldLogAge = GetFileAgeInDays(oldLogPath);
+    if (oldLogAge > 14.0) {
+        DeleteFileW(oldLogPath);
+    }
+
+    double currentLogAge = GetFileAgeInDays(logPath);
+    if (currentLogAge > 7.0) {
+        if (GetFileAgeInDays(oldLogPath) != -1) {
+            DeleteFileW(oldLogPath);
+        }
+
+        MoveFileW(logPath, oldLogPath);
+    }
+}
+
 void InitLogging() {
     if (IsGaBuild()) {
         return;
     }
+
+    PerformLogRotation();
 
     const wchar_t* dirPath = L"C:\\ProgramData\\ahk";
     const wchar_t* logPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.log";
@@ -481,21 +532,6 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             std::string linkStatus = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
-
-            // TODO Work out if adapter is disabled? see https://ahkeng.atlassian.net/browse/CSHD-977
-            // You can disable in Win11 via [View Network Connections]
-            // std::string adapterStatus = "unknown";
-           
-            // MIB_IF_ROW2 ifRow2 = {};
-            // ifRow2.InterfaceIndex = adapter->IfIndex ? adapter->IfIndex : adapter->Ipv6IfIndex;
-            
-            // if (GetIfEntry2(&ifRow2) == NO_ERROR) {
-            //     bool isEnabled = !(ifRow2.InterfaceAndOperStatusFlags.NotMediaConnected
-            //                     || ifRow2.InterfaceAndOperStatusFlags.Paused
-            //                     || ifRow2.InterfaceAndOperStatusFlags.LowPower);
-            
-            //     adapterStatus = isEnabled ? "enabled" : "disabled";
-            // }
 
             // Format MAC address
             std::ostringstream macStream;
