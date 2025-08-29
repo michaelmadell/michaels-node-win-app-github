@@ -45,6 +45,8 @@
 std::ofstream g_logFile;
 std::mutex g_logMutex;
 
+std::chrono::steady_clock::time_point g_lastRotationTime;
+
 NOTIFYICONDATA nid = {0};
 HMENU hMenu;
 
@@ -99,21 +101,20 @@ double GetFileAgeInDays(const wchar_t* filePath) {
     double seconds = diff / 10000000.0;
     double days = seconds / (60.0 * 60.0 * 24.0);
 
-    return days;
+    return seconds;  // TODO: Change to days for release, seconds is to test the rotation works
 }
 
-void PerformLogRotation() {
-    const wchar_t* dirPath = L"C:\\ProgramData\\ahk";
+void PerformLogRotationInternal() {
     const wchar_t* logPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.log";
     const wchar_t* oldLogPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.old.log";
 
     double oldLogAge = GetFileAgeInDays(oldLogPath);
-    if (oldLogAge > 14.0) {
+    if (oldLogAge > 30.0) {
         DeleteFileW(oldLogPath);
     }
 
     double currentLogAge = GetFileAgeInDays(logPath);
-    if (currentLogAge > 7.0) {
+    if (currentLogAge > 15.0) {
         if (GetFileAgeInDays(oldLogPath) != -1) {
             DeleteFileW(oldLogPath);
         }
@@ -122,12 +123,13 @@ void PerformLogRotation() {
     }
 }
 
+
 void InitLogging() {
     if (IsGaBuild()) {
         return;
     }
 
-    PerformLogRotation();
+    PerformLogRotationInternal();
 
     const wchar_t* dirPath = L"C:\\ProgramData\\ahk";
     const wchar_t* logPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.log";
@@ -140,6 +142,7 @@ void InitLogging() {
     }
 
     g_logFile.open(logPath, std::ios::out | std::ios::app);
+    g_lastRotationTime = std::chrono::steady_clock::now();
 }
 
 void ShutdownLogging() {
@@ -167,6 +170,25 @@ void LogMessage(const std::string& message) {
             << std::setw(2) << std::setfill('0') << time.wSecond << "."
             << std::setw(3) << std::setfill('0') << time.wMilliseconds << "] "
             << message << std::endl;
+}
+
+void CheckAndRotateLogs() {
+    LogMessage("Performing periodic log rotation check...");
+    
+    {
+        std::lock_guard<std::mutex> lock(g_logMutex);
+
+        if (g_logFile.is_open()) {
+            g_logFile.close();
+        }
+
+        PerformLogRotationInternal();
+
+        const wchar_t* logPath = L"C:\\ProgramData\\ahk\\CoreStation_Management_Service.log";
+        g_logFile.open(logPath, std::ios::out | std::ios::app);
+    }
+
+    LogMessage(":pg Rotation check finished.");
 }
 
 void passPowerStateToSerial(std::string powerStateStr) {
@@ -730,8 +752,18 @@ void serialThread() {
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
     
     // main serial input processing loop 
-    while (WaitForSingleObject(g_StopEvent, 50) != WAIT_OBJECT_0) 
+    while (WaitForSingleObject(g_StopEvent, 500) != WAIT_OBJECT_0) 
     {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - g_lastRotationTime);
+
+        // if (elapsed.count() >= 4) {
+        //     CheckAndRotateLogs();
+        //     g_lastRotationTime = now;
+        // }
+
+        CheckAndRotateLogs();
+
         // Get latest state and push any changes
         checkSessionState(hSerial, & currentState);
         checkNetworkAdapters(hSerial, &currentState);
