@@ -2,13 +2,18 @@
 setlocal enabledelayedexpansion
 
 REM --- Define output files and source locations ---
-set "SOURCE_DIR=C:\Users\labtest\Documents\michaels-node-win-app"
-set "INSTALLER_DIR=%SOURCE_DIR%\installer"
+set "SOURCE_DIR=C:\Users\michael.madell\source\repos\michaels-node-win-app"
+set "INSTALLER_DIR=%SOURCE_DIR%\dist"
 set "SERVICE_EXE_FILE=%INSTALLER_DIR%\nodeWinApp.exe"
 set "TRAY_APP_EXE_FILE=%INSTALLER_DIR%\CoreStationTray.exe"
 set "SERVICE_SOURCE=%SOURCE_DIR%\main.cpp"
 set "TRAY_APP_SOURCE=%SOURCE_DIR%\TrayApp.cpp"
 
+if exist "C:\Users\michael.madell\source\repos\michaels-node-win-app\dist" (
+    echo Yes
+) else (
+    mkdir "C:\Users\michael.madell\source\repos\michaels-node-win-app\dist" 2> NUL
+)
 
 REM --- Check if the service .exe is writeable (might be running) ---
 >> "%SERVICE_EXE_FILE%" (
@@ -64,14 +69,20 @@ copy release-notes.txt "%INSTALLER_DIR%"
 
 
 REM --- Build executables to output dir ---
-echo.
 echo Building Service: %SERVICE_EXE_FILE%
 cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%SERVICE_EXE_FILE%" "%SERVICE_SOURCE%" /link wbemuuid.lib netapi32.lib iphlpapi.lib ws2_32.lib Wtsapi32.lib setupapi.lib shell32.lib advapi32.lib user32.lib Ole32.lib OleAut32.lib
+if errorlevel 1 (
+    echo ##### SERVICE COMPILATION FAILED #####
+    exit /b 1
+)
 
 echo.
 echo Building Tray App: %TRAY_APP_EXE_FILE%
 cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%TRAY_APP_EXE_FILE%" "%TRAY_APP_SOURCE%" /link user32.lib shell32.lib
-
+if errorlevel 1 (
+    echo ##### TRAY APP COMPILATION FAILED #####
+    exit /b 1
+)
 
 REM --- Check if it is a release branch ---
 echo.

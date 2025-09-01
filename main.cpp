@@ -61,6 +61,65 @@ std::mutex powerStateMutex;
 std::shared_ptr<std::string> sessionState = std::make_shared<std::string>("");
 std::mutex sessionStateMutex;
 
+struct NetworkInterface;
+struct SystemState;
+
+struct NetworkInterface {
+    std::string name;
+    std::string ipv4;
+    std::string ipv6;
+    std::string dhcp;             // "dhcp" or "static"
+    std::string linkStatus;       // "up" or "down"
+    std::string adapterStatus;    // "enabled" or "disabled"
+    std::string macAddress;
+    
+
+    // overload the != to allow lines like if (net1 != net1) {...}  
+    bool operator!=(const NetworkInterface& other) const {
+        return std::tie(name, ipv4, ipv6, dhcp, linkStatus, macAddress, adapterStatus) != 
+        std::tie(other.name, other.ipv4, other.ipv6, other.dhcp, other.linkStatus, other.macAddress, other.adapterStatus);
+    }
+
+    bool operator==(const NetworkInterface& other) const {
+        return std::tie(name, ipv4, ipv6, linkStatus, dhcp, macAddress, adapterStatus) ==
+               std::tie(other.name, other.ipv4, other.ipv6, other.linkStatus,  other.dhcp, other.macAddress, other.adapterStatus);
+    }
+
+    void Clear() {
+        name.clear();
+        ipv4.clear();
+        ipv6.clear();
+        dhcp.clear();
+        linkStatus.clear();
+        macAddress.clear();
+        adapterStatus.clear();
+    }
+    
+};
+
+struct SystemState {
+    NetworkInterface network1;
+    NetworkInterface network2;
+    std::string hostname;
+    std::string powerState;
+    std::string sessionState;
+    std::string username;
+
+    bool operator!=(const SystemState& other) const {
+        return std::tie(network1, network2, hostname, powerState, sessionState, username) !=
+               std::tie(other.network1, other.network2, other.hostname, other.powerState, other.sessionState, other.username);
+    }
+
+    void Clear() {
+        network1.Clear();
+        network2.Clear();
+        hostname.clear();
+        powerState.clear();
+        sessionState.clear();
+        username.clear();
+    }
+};
+
 SystemState g_CurrentState;
 std::mutex g_stateMutex;
 
@@ -274,61 +333,9 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
 
 //... Windows service boiler plate functionality
 
-struct NetworkInterface {
-    std::string name;
-    std::string ipv4;
-    std::string ipv6;
-    std::string dhcp;             // "dhcp" or "static"
-    std::string linkStatus;       // "up" or "down"
-    std::string adapterStatus;    // "enabled" or "disabled"
-    std::string macAddress;
-    
 
-    // overload the != to allow lines like if (net1 != net1) {...}  
-    bool operator!=(const NetworkInterface& other) const {
-        return std::tie(name, ipv4, ipv6, dhcp, linkStatus, macAddress, adapterStatus) != 
-        std::tie(other.name, other.ipv4, other.ipv6, other.dhcp, other.linkStatus, other.macAddress, other.adapterStatus);
-    }
 
-    bool operator==(const NetworkInterface& other) const {
-        return std::tie(name, ipv4, ipv6, linkStatus, dhcp, macAddress, adapterStatus) ==
-               std::tie(other.name, other.ipv4, other.ipv6, other.linkStatus,  other.dhcp, other.macAddress, other.adapterStatus);
-    }
 
-    void Clear() {
-        name.clear();
-        ipv4.clear();
-        ipv6.clear();
-        dhcp.clear();
-        linkStatus.clear();
-        macAddress.clear();
-        adapterStatus.clear();
-    }
-    
-};
-
-struct SystemState {
-    NetworkInterface network1;
-    NetworkInterface network2;
-    std::string hostname;
-    std::string powerState;
-    std::string sessionState;
-    std::string username;
-
-    bool operator!=(const SystemState& other) const {
-        return std::tie(network1, network2, hostname, powerState, sessionState, username) !=
-               std::tie(other.network1, other.network2, other.hostname, other.powerState, other.sessionState, other.username);
-    }
-
-    void Clear() {
-        network1.Clear();
-        network2.Clear();
-        hostname.clear();
-        powerState.clear();
-        sessionState.clear();
-        username.clear();
-    }
-};
 
 void sendLineToBmc( HANDLE hSerial, const std::string& output_string) {
     DWORD bytesWritten;
