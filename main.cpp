@@ -576,7 +576,7 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             std::string name = adapter->FriendlyName ? WideToUtf8(std::wstring(adapter->FriendlyName)) : "Unknown";
             std::string linkStatus = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
             std::string ipv4 = "none", ipv6 = "none";
-            std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";;
+            std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
 
             for (IP_ADAPTER_UNICAST_ADDRESS *addr = adapter->FirstUnicastAddress; addr; addr = addr->Next) {
                 char buffer[INET6_ADDRSTRLEN] = {0};
