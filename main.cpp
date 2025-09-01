@@ -35,18 +35,10 @@
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "advapi32.lib")
 
-// Options on tray app 
-#define WM_TRAYICON (WM_USER + 1) 
-#define ID_TRAY_EXIT 1001
-#define ID_TRAY_ABOUT 1002
-
 std::ofstream g_logFile;
 std::mutex g_logMutex;
 
 std::chrono::steady_clock::time_point g_lastRotationTime;
-
-NOTIFYICONDATA nid = {0};
-HMENU hMenu;
 
 // Helper functions to convert macro values to string
 #define STRINGIFY(x) #x
@@ -68,6 +60,9 @@ std::mutex powerStateMutex;
 
 std::shared_ptr<std::string> sessionState = std::make_shared<std::string>("");
 std::mutex sessionStateMutex;
+
+SystemState g_CurrentState;
+std::mutex g_stateMutex;
 
 // Helper function to work out if running a ga version
 bool IsGaBuild() {
@@ -508,9 +503,6 @@ std::string GetFriendlyOSName() {
     return result;
 }
 
-
-
-
 std::string GetRealWindowsVersion() {
     HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
     if (!hMod) return "Unknown Version";
@@ -738,9 +730,11 @@ void serialThread() {
     COMMTIMEOUTS timeouts = {0};
     timeouts.ReadIntervalTimeout = 50;
     SetCommTimeouts(hSerial, &timeouts);
-     
-    SystemState currentState;
-    currentState.Clear();
+    
+    {
+        std::lock_guard<std::mutex> lock(g_stateMutex);
+        g_CurrentState.Clear();
+    }
     
     // Send Running sting
     std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
@@ -761,12 +755,14 @@ void serialThread() {
             g_lastRotationTime = now;
         }
 
-        // Get latest state and push any changes
-        checkSessionState(hSerial, & currentState);
-        checkNetworkAdapters(hSerial, &currentState);
-        checkLoggedInUser(hSerial, &currentState);
-        checkHostName(hSerial, &currentState);
-        checkPowerState(hSerial, & currentState);
+        {
+            std::lock_guard<std::mutex> lock(g_stateMutex);
+            checkSessionState(hSerial, &g_CurrentState);
+            checkNetworkAdapters(hSerial, &g_CurrentState);
+            checkLoggedInUser(hSerial, &g_CurrentState);
+            checkHostName(hSerial, &g_CurrentState);
+            checkPowerState(hSerial, &g_CurrentState);
+        }
     }
 
     LogMessage("Stop event received, serialThread closing...");
@@ -775,6 +771,58 @@ void serialThread() {
 
     CloseHandle(hSerial);
     ShutdownLogging();
+}
+
+void namedPipeServerThread() {
+    LogMessage("Named pipe server thread starting...");
+    const wchar_t* pipeName = L"\\\\.\\pipe\\CoreStationInfoPipe";
+    HANDLE hPipe = INVALID_HANDLE_VALUE;
+
+    while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
+        hPipe = CreateNamedPipeW(
+            pipeName,
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+            1,
+            1024,
+            1024,
+            0,
+            NULL
+        );
+
+        if (hPipe == INVALID_HANDLE_VALUE) {
+            LogMessage("Failed to create named pipe. retrying in 5s.");
+            Sleep(5000);
+            continue;
+        }
+
+        if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED)) {
+            LogMessage("Client Connected to named pipe.");
+
+            std::string stateData;
+            {
+                std::lock_guard<std::mutex> lock(g_stateMutex);
+                std::stringstream ss;
+                ss << "hostname=" << g_CurrentState.hostname << "\n";
+                ss << "ipv4_1=" << g_CurrentState.network1.ipv4 << "\n";
+                ss << "ipv4_2=" << g_CurrentState.network2.ipv4 << "\n";
+                stateData == ss.str();
+            }
+
+            DWORD bytesWritten;
+            if (!WriteFile(hPipe, stateData.c_str(), (DWORD)stateData.length(), &bytesWritten, NULL)) {
+                LogMessage("Failed to write to named pipe.");
+            } else {
+                LogMessage("Send data to client: " + stateData);
+            }
+        } else {
+            LogMessage("Client failed to connect to named pipe.");
+        }
+
+        DisconnectNamedPipe(hPipe);
+        CloseHandle(hPipe);
+    }
+    LogMessage("Named pipe server thread shutting down.");
 }
 
 // Forward declaration
@@ -796,6 +844,7 @@ void RunMainWindow() {
     WTSRegisterSessionNotification(hWnd, NOTIFY_FOR_ALL_SESSIONS);                             
 
     std::thread(serialThread).detach();
+    std::thread(namedPipeServerThread).detach();
 
     MSG msg;
     LogMessage("Main loop starting");
@@ -904,7 +953,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             // Un-register interest in Session notifications
             passPowerStateToSerial("appExit");
             Sleep(500);
-            Shell_NotifyIcon(NIM_DELETE, &nid);
             PostQuitMessage(0);
             break;
     }

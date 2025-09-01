@@ -1,25 +1,26 @@
 @echo off
 setlocal enabledelayedexpansion
-REM check the target .exe is writeable (local machine might be running it)
+
+REM --- Define output files and source locations ---
+set "SOURCE_DIR=C:\Users\labtest\Documents\michaels-node-win-app"
+set "INSTALLER_DIR=%SOURCE_DIR%\installer"
+set "SERVICE_EXE_FILE=%INSTALLER_DIR%\nodeWinApp.exe"
+set "TRAY_APP_EXE_FILE=%INSTALLER_DIR%\CoreStationTray.exe"
+set "SERVICE_SOURCE=%SOURCE_DIR%\main.cpp"
+set "TRAY_APP_SOURCE=%SOURCE_DIR%\TrayApp.cpp"
 
 
-REM Attempt to open the file for appending without modifying it
-set "OUTPUT_EXE_FILE=C:\Users\labtest\Documents\michaels-node-win-app\installer\nodeWinApp.exe"
-
-REM Attempt to append (without modifying) to test writability
->> "%OUTPUT_EXE_FILE%" (
+REM --- Check if the service .exe is writeable (might be running) ---
+>> "%SERVICE_EXE_FILE%" (
     REM If appending succeeds, do nothing
 ) || (
-    echo File "%OUTPUT_EXE_FILE%" is not writable,
+    echo File "%SERVICE_EXE_FILE%" is not writable,
     echo have you STOPPED the service?
     exit /b 1
 )
 
 
-
-REM Gather git info and create git.h
-
-
+REM --- Gather git info and create git.h ---
 REM Get the current Git branch name
 for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD') do set "GIT_BRANCH=%%i"
 
@@ -58,14 +59,22 @@ echo Modified: !MODIFICATIONS!
 echo Time: !BUILD_TIME!
 
 
-REM Copy release notes to output dir
-copy release-notes.txt installer 
-
-REM Build exe file to output dir
-cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"!OUTPUT_EXE_FILE!" C:\Users\labtest\Documents\michaels-node-win-app\main.cpp /link user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib winmm.lib Wtsapi32.lib
+REM --- Copy release notes to output dir ---
+copy release-notes.txt "%INSTALLER_DIR%"
 
 
-REM If a release branch 
+REM --- Build executables to output dir ---
+echo.
+echo Building Service: %SERVICE_EXE_FILE%
+cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%SERVICE_EXE_FILE%" "%SERVICE_SOURCE%" /link wbemuuid.lib netapi32.lib iphlpapi.lib ws2_32.lib Wtsapi32.lib setupapi.lib shell32.lib advapi32.lib user32.lib Ole32.lib OleAut32.lib
+
+echo.
+echo Building Tray App: %TRAY_APP_EXE_FILE%
+cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%TRAY_APP_EXE_FILE%" "%TRAY_APP_SOURCE%" /link user32.lib shell32.lib
+
+
+REM --- Check if it is a release branch ---
+echo.
 echo Branch = !GIT_BRANCH!
 REM Check if branch matches format *.*.*
 echo !GIT_BRANCH! | findstr /R "^[0-9]*\.[0-9]*\.[0-9]*" >nul
@@ -74,16 +83,19 @@ if errorlevel 1 (
     exit /b 0
 )
 
-set /p userChoice=Do you want to sign the .exe file? (y/n): 
+set /p userChoice=Do you want to sign the .exe files? (y/n): 
 
 if /i "%userChoice%"=="y" (
     echo.
-    smctl sign --keypair-alias key_1269013793 --input "!OUTPUT_EXE_FILE!"
+    echo Signing the Service executable...
+    smctl sign --keypair-alias key_1269013793 --input "!SERVICE_EXE_FILE!"
+    echo.
+    echo Signing the Tray App executable...
+    smctl sign --keypair-alias key_1269013793 --input "!TRAY_APP_EXE_FILE!"
     echo.
     echo If signing failed, try running 'smctl healthcheck' or check [C:\Users\labtest\.signingmanager\logs\smctl.log]
 ) else (    
-    echo skipping siging and transfer steps
-
+    echo skipping signing and transfer steps
 )
 echo.
 set /p userChoice=Do you want to push to ahkengbuild? (y/n): 
@@ -94,7 +106,7 @@ if /i not "%userChoice%"=="y" (
     exit /b 0
 )
 
-REM Build version number string 
+REM --- Build version number string ---
 set "VERSION_H=version.h"
 
 REM Initialize variables
@@ -134,6 +146,8 @@ if /i "!VERSION_EXTRAVERSION!"=="rc" (
 
 echo Version = %VERSION%
 
+
+REM --- Transfer to build server ---
 set "REMOTE_MACHINE=ci.user@ahkengbuild"
 set "REMOTE_DIR=/srv/build_server/builds/releases/node-win-app/%GIT_BRANCH%/%VERSION%"
 
@@ -148,7 +162,7 @@ if errorlevel 1 (
 echo Sorry, you need to enter the password again for scp...
 
 REM Now copy
-scp -r installer/* %REMOTE_MACHINE%:%REMOTE_DIR%/
+scp -r "%INSTALLER_DIR%"/* %REMOTE_MACHINE%:%REMOTE_DIR%/
 
 endlocal
 
