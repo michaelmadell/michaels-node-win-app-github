@@ -25,6 +25,7 @@
 #include <chrono>
 
 #include "version.h"
+#include "git_info.h"
 
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "netapi32.lib")
@@ -277,11 +278,9 @@ void WINAPI ServiceMain(DWORD, LPTSTR *) {
     
     // Register handler for control events (e.g. stop, pause etc) name==sc create <name>
     g_StatusHandle = RegisterServiceCtrlHandlerW(L"CoreStationService", ServiceCtrlHandler);
-    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN;
     g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;    // stand alone process
     // Define what events can be handled
-    // g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP |SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_SHUTDOWN; 
-    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN; 
+    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_PRESHUTDOWN; 
     g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;       // is starting up (not ready yet)
     SetServiceStatus(g_StatusHandle, &g_ServiceStatus);           // tell windows our current status
 
@@ -365,10 +364,21 @@ std::wstring s2ws(const std::string& str) {
 std::string WideToUtf8(const std::wstring& wstr) {
     if (wstr.empty()) return std::string();
 
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, NULL, NULL);
+    // Determine the required buffer size (including the null terminator).
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (size_needed <= 0) {
+        // An error occurred.
+        return "";
+    }
+
     std::string result(size_needed, 0);
-    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &result[0], size_needed, NULL, NULL);
-    result.resize(strlen(result.c_str()));  // Trim extra nulls
+    // Perform the conversion.
+    int bytes_written = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &result[0], size_needed, nullptr, nullptr);
+    if (bytes_written > 0) {
+        result.resize(bytes_written - 1); // Remove the null terminator from the string's size.
+    } else {
+        result.clear(); // Conversion failed.
+    }
     return result;
 }
 
@@ -546,9 +556,13 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
     if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, adapters, &size) == NO_ERROR) {
         for (IP_ADAPTER_ADDRESSES *adapter = adapters; adapter; adapter = adapter->Next) {
             if (adapter->IfType != IF_TYPE_ETHERNET_CSMACD) continue; // Skip non-Ethernet
+
+            // We only handle a fixed number of network interfaces.
+            if (interfaceIndex >= std::size(currentNetworks)) break;
  
             // Convert FriendlyName from wide to UTF-8
-            std::string name = adapter->FriendlyName ? WideToUtf8(adapter->FriendlyName) : "Unknown";
+            // Explicitly construct a wstring from the PWCHAR.
+            std::string name = adapter->FriendlyName ? WideToUtf8(std::wstring(adapter->FriendlyName)) : "Unknown";
             std::string linkStatus = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
@@ -652,11 +666,12 @@ void checkLoggedInUser(HANDLE hSerial, SystemState* currentState) {
 
             // Only consider active sessions
             if (session.State == WTSActive) {
-                LPTSTR buffer = NULL;
+                LPWSTR buffer = NULL;
                 DWORD bytesReturned = 0;
 
-                if (WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, session.SessionId, WTSUserName, &buffer, &bytesReturned)) {
-                    std::string username = buffer ? std::string(buffer) : "none";
+                if (WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, session.SessionId, WTSUserName, &buffer, &bytesReturned)) {
+                    // buffer is now LPWSTR (wchar_t*), so we can construct a wstring.
+                    std::string username = buffer ? WideToUtf8(std::wstring(buffer)) : "none";
                     WTSFreeMemory(buffer);
 
                     if (!username.empty() && currentState->username != username) {
@@ -720,8 +735,10 @@ void serialThread() {
     HANDLE hSerial = CreateFileA(SERIAL_PORT, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                                  OPEN_EXISTING, 0, NULL);
     if (hSerial == INVALID_HANDLE_VALUE) {
-        LogMessage("Failed to open serial port. Thread Exiting...");
+        LogMessage("FATAL: Failed to open serial port. Service will stop.");
         ShutdownLogging();
+        // Signal the main service to stop because we can't function.
+        SetEvent(g_StopEvent);
         return;
     }
 
@@ -745,6 +762,8 @@ void serialThread() {
     
     // Send Running sting
     std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
+                                      "realWindowsVersion, " + GetRealWindowsVersion() + "\r\n" +
+                                      "gitDetails, " + GitInfo::BRANCH + ", " + GitInfo::HASH + "\r\n"+
                                       "winVersion, " + GetFriendlyOSName() + "\r\n" +
                                       "sessionState, 0\r\n");                              // send session state 0 - app running
     LogMessage(out.c_str());   
@@ -813,7 +832,7 @@ void namedPipeServerThread() {
                 ss << "hostname=" << g_CurrentState.hostname << "\n";
                 ss << "ipv4_1=" << g_CurrentState.network1.ipv4 << "\n";
                 ss << "ipv4_2=" << g_CurrentState.network2.ipv4 << "\n";
-                stateData == ss.str();
+                stateData = ss.str();
             }
 
             DWORD bytesWritten;

@@ -2,17 +2,17 @@
 setlocal enabledelayedexpansion
 
 REM --- Define output files and source locations ---
-set "SOURCE_DIR=C:\Users\michael.madell\source\repos\michaels-node-win-app"
+set "SOURCE_DIR=C:\Users\labtest\Documents\winapp"
 set "INSTALLER_DIR=%SOURCE_DIR%\dist"
 set "SERVICE_EXE_FILE=%INSTALLER_DIR%\nodeWinApp.exe"
 set "TRAY_APP_EXE_FILE=%INSTALLER_DIR%\CoreStationTray.exe"
 set "SERVICE_SOURCE=%SOURCE_DIR%\main.cpp"
 set "TRAY_APP_SOURCE=%SOURCE_DIR%\TrayApp.cpp"
 
-if exist "C:\Users\michael.madell\source\repos\michaels-node-win-app\dist" (
+if exist %INSTALLER_DIR% (
     echo Yes
 ) else (
-    mkdir "C:\Users\michael.madell\source\repos\michaels-node-win-app\dist" 2> NUL
+    mkdir %INSTALLER_DIR% 2> NUL
 )
 
 REM --- Check if the service .exe is writeable (might be running) ---
