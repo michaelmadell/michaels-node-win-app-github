@@ -5,7 +5,6 @@
 #include <map>
 
 #define WM_TRAYICON (WM_USER + 1)
-#define ID_TRAY_EXIT 1001
 
 // Global variables
 NOTIFYICONDATAW nid = {}; // Use the wide-character version
@@ -83,16 +82,17 @@ void ShowContextMenu() {
     HMENU hMenu = CreatePopupMenu();
     
     // CHANGE: Construct wstrings for the menu
+    std::wstring titleStr = L"CoreStation HX Agent";
     std::wstring hostMenuStr = L"Hostname: " + g_hostname;
     std::wstring ip1MenuStr = L"IP Address 1: " + g_ipv4_1;
     std::wstring ip2MenuStr = L"IP Address 2: " + g_ipv4_2;
 
     // CHANGE: Use AppendMenuW (or the generic AppendMenu)
-    AppendMenuW(hMenu, MF_STRING | MF_GRAYED, 0, hostMenuStr.c_str());
-    AppendMenuW(hMenu, MF_STRING | MF_GRAYED, 0, ip1MenuStr.c_str());
-    AppendMenuW(hMenu, MF_STRING | MF_GRAYED, 0, ip2MenuStr.c_str());
+    AppendMenuW(hMenu, MF_STRING, 0, titleStr.c_str());
     AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-    AppendMenuW(hMenu, MF_STRING, ID_TRAY_EXIT, L"Exit");
+    AppendMenuW(hMenu, MF_STRING, 0, hostMenuStr.c_str());
+    AppendMenuW(hMenu, MF_STRING, 0, ip1MenuStr.c_str());
+    AppendMenuW(hMenu, MF_STRING, 0, ip2MenuStr.c_str());
 
     SetForegroundWindow(g_hWnd);
 
@@ -118,12 +118,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (lParam == WM_RBUTTONUP) {
                 QueryServiceForInfo();
                 ShowContextMenu();
-            }
-            break;
-
-        case WM_COMMAND:
-            if (LOWORD(wParam) == ID_TRAY_EXIT) {
-                DestroyWindow(hWnd);
             }
             break;
 
