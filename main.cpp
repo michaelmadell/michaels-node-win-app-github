@@ -557,6 +557,17 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
         for (IP_ADAPTER_ADDRESSES *adapter = adapters; adapter; adapter = adapter->Next) {
             if (adapter->IfType != IF_TYPE_ETHERNET_CSMACD) continue; // Skip non-Ethernet
 
+            std::ostringstream macStream;
+            for (ULONG i = 0; i < adapter->PhysicalAddressLength; i++) {
+                if (i != 0) macStream << ":";
+                macStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(adapter->PhysicalAddress[i]);
+            }
+            std::string macAddress = macStream.str();
+
+            if (macAddress.rfind("00:17:fd", 0) != 0 && macAddress.rfind("00:13:95", 0) != 0) {
+                continue;
+            }
+
             // We only handle a fixed number of network interfaces.
             if (interfaceIndex >= std::size(currentNetworks)) break;
  
@@ -566,14 +577,6 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             std::string linkStatus = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
             std::string ipv4 = "none", ipv6 = "none";
             std::string dhcp = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
-
-            // Format MAC address
-            std::ostringstream macStream;
-            for (ULONG i = 0; i < adapter->PhysicalAddressLength; i++) {
-                if (i != 0) macStream << ":";
-                macStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(adapter->PhysicalAddress[i]);
-            }
-            std::string macAddress = macStream.str();
 
             for (IP_ADAPTER_UNICAST_ADDRESS *addr = adapter->FirstUnicastAddress; addr; addr = addr->Next) {
                 char buffer[INET6_ADDRSTRLEN] = {0};
