@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include "resource.h"
 
 #define WM_TRAYICON (WM_USER + 1)
 
@@ -153,9 +154,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     nid.uID = 100;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_TRAYICON;
-    nid.hIcon = LoadIcon(NULL, IDI_INFORMATION);
+    nid.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TRAYICON));
     // CHANGE: Use wcscpy_s for wide strings and the L"" literal prefix
-    wcscpy_s(nid.szTip, L"CoreStation Info");
+    wcscpy_s(nid.szTip, L"CoreStation HX Agent");
 
     Shell_NotifyIconW(NIM_ADD, &nid); // Use the wide-character version
 

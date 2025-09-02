@@ -346,7 +346,7 @@ void sendLineToBmc( HANDLE hSerial, const std::string& output_string) {
 
 std::string getVersionString() {
     // Build version string
-    std::string versionString = std::string(TOSTRING(VERSION_YEAR) "." TOSTRING(VERSION_MONTH) "." TOSTRING(VERSION_RELEASE) "_" VERSION_EXTRAVERSION);
+    std::string versionString = std::string(TOSTRING(VERSION_YEAR_1) "." TOSTRING(VERSION_YEAR_2) "." TOSTRING(VERSION_MONTH) "." TOSTRING(VERSION_RELEASE) "_" VERSION_EXTRAVERSION);
     if (std::string(VERSION_EXTRAVERSION) == "rc") {
         versionString += TOSTRING(VERSION_RC_NO);
     }
@@ -765,10 +765,10 @@ void serialThread() {
     
     // Send Running sting
     std::string out = std::string("\r\nappVersion, " + getVersionString() + "\r\n" +
-                                      "realWindowsVersion, " + GetRealWindowsVersion() + "\r\n" +
-                                      "gitDetails, " + GitInfo::BRANCH + ", " + GitInfo::HASH + "\r\n"+
+                                      "gitDetails, " + GitInfo::BRANCH + ", " + GitInfo::HASH + "\r\n" +
+                                      "buildTime, " + GitInfo::BUILD_TIME + "\r\n" +
                                       "winVersion, " + GetFriendlyOSName() + "\r\n" +
-                                      "sessionState, 0\r\n");                              // send session state 0 - app running
+                                      "sessionState, 0\r\n");                            // send session state 0 - app running
     LogMessage(out.c_str());   
     DWORD bytesWritten;                                   
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
@@ -954,32 +954,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         break;
 
         case WM_QUERYENDSESSION:
-            // System is asking if it's OK to shut down / log off
             passPowerStateToSerial("queryEndSession");
-            return TRUE; // Return FALSE to cancel shutdown
-
-        // // This is meant for user space oriented code
-        // case WM_ENDSESSION:
-        //     if (wParam) {
-        //         if (lParam & ENDSESSION_LOGOFF) {
-        //             passPowerStateToSerial("userLoggedOff");
-        //         } else if (lParam & ENDSESSION_CRITICAL) {
-        //             // Forces shutdown; apps can't veto
-        //             passPowerStateToSerial("criticalShutdown");  
-        //         } else {
-        //             passPowerStateToSerial("shuttingDown");
-        //         }
-        //     } else {
-        //         // Session was going to end but was cancelled
-        //         passPowerStateToSerial("logoffCanceled");  
-        //     }
-        //     // Give time for message to get out
-        //     Sleep(500);
-        //     break; 
-            
+            return TRUE;
 
         case WM_DESTROY:
-            // Un-register interest in Session notifications
             passPowerStateToSerial("appExit");
             Sleep(500);
             PostQuitMessage(0);

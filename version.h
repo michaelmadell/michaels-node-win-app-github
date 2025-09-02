@@ -11,7 +11,8 @@
 
 #pragma once
 
-#define VERSION_YEAR 2025
+#define VERSION_YEAR_1 20
+#define VERSION_YEAR_2 25
 #define VERSION_MONTH 8
 #define VERSION_RELEASE 1
 #define VERSION_EXTRAVERSION "rc"

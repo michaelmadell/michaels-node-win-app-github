@@ -3,11 +3,17 @@ setlocal enabledelayedexpansion
 
 REM --- Define output files and source locations ---
 set "SOURCE_DIR=C:\Users\labtest\Documents\winapp"
-set "INSTALLER_DIR=%SOURCE_DIR%\dist"
-set "SERVICE_EXE_FILE=%INSTALLER_DIR%\nodeWinApp.exe"
-set "TRAY_APP_EXE_FILE=%INSTALLER_DIR%\CoreStationTray.exe"
+set "INSTALLER_DIR=%SOURCE_DIR%\install"
+set "SERVICE_EXE_FILE=%INSTALLER_DIR%\CoreStation_HX_Agent.exe"
+set "TRAY_APP_EXE_FILE=%INSTALLER_DIR%\CoreStation_HX_Agent_Tray.exe"
 set "SERVICE_SOURCE=%SOURCE_DIR%\main.cpp"
 set "TRAY_APP_SOURCE=%SOURCE_DIR%\TrayApp.cpp"
+
+REM --- MODIFIED: Point to the new trayapp.rc and define service resource files ---
+set "SERVICE_RC=%SOURCE_DIR%\service.rc"
+set "SERVICE_RES=%SOURCE_DIR%\service.res"
+set "TRAY_APP_RC=%SOURCE_DIR%\trayapp.rc"
+set "TRAY_APP_RES=%SOURCE_DIR%\TrayApp.res"
 
 if exist %INSTALLER_DIR% (
     echo Yes
@@ -67,18 +73,34 @@ echo Time: !BUILD_TIME!
 REM --- Copy release notes to output dir ---
 copy release-notes.txt "%INSTALLER_DIR%"
 
+REM --- ADDED: Build service resources ---
+echo.
+echo Compiling Service resources...
+rc.exe /fo "%SERVICE_RES%" "%SERVICE_RC%"
+if errorlevel 1 (
+    echo ##### SERVICE RESOURCES COMPILATION FAILED #####
+    exit /b 1
+)
 
 REM --- Build executables to output dir ---
 echo Building Service: %SERVICE_EXE_FILE%
-cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%SERVICE_EXE_FILE%" "%SERVICE_SOURCE%" /link wbemuuid.lib netapi32.lib iphlpapi.lib ws2_32.lib Wtsapi32.lib setupapi.lib shell32.lib advapi32.lib user32.lib Ole32.lib OleAut32.lib
+cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%SERVICE_EXE_FILE%" "%SERVICE_SOURCE%" "%SERVICE_RES%" /link wbemuuid.lib netapi32.lib iphlpapi.lib ws2_32.lib Wtsapi32.lib setupapi.lib shell32.lib advapi32.lib user32.lib Ole32.lib OleAut32.lib
 if errorlevel 1 (
     echo ##### SERVICE COMPILATION FAILED #####
     exit /b 1
 )
 
 echo.
+echo Compiling Tray app resources...
+rc.exe /fo "%TRAY_APP_RES%" "%TRAY_APP_RC%"
+if errorlevel 1 (
+    echo ##### TRAY APP RESOURCES COMPILATION FAILED #####
+    exit /b 1
+)
+
+echo.
 echo Building Tray App: %TRAY_APP_EXE_FILE%
-cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%TRAY_APP_EXE_FILE%" "%TRAY_APP_SOURCE%" /link user32.lib shell32.lib
+cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%TRAY_APP_EXE_FILE%" "%TRAY_APP_SOURCE%" "%TRAY_APP_RES%" /link user32.lib shell32.lib
 if errorlevel 1 (
     echo ##### TRAY APP COMPILATION FAILED #####
     exit /b 1
