@@ -1,6 +1,12 @@
+#define WIN32_LEAN_AND_MEAN      // Excludes old WinSock from Windows.h
+#define _WIN32_WINNT 0x0601      // Sets target to Windows 7 or later
+
+// STEP 2: Include the headers in the correct order.
+#include <Windows.h>
 #include <WinSock2.h>
 #include <WS2tcpip.h>
-#include <Windows.h>
+
+// STEP 3: Include all other necessary headers.
 #include <shellapi.h>
 #include <thread>
 #include <mutex>
@@ -51,6 +57,11 @@ SERVICE_STATUS        g_ServiceStatus = {};           // for passing status to w
 SERVICE_STATUS_HANDLE g_StatusHandle = nullptr;
 HANDLE                g_StopEvent = nullptr;
 HWND                  g_hWnd = nullptr;
+
+std::thread g_mainWindowThread;
+std::thread g_serialThread;
+std::thread g_namedPipeServerThread;
+
 
 void WINAPI ServiceMain(DWORD argc, LPTSTR *argv);
 void WINAPI ServiceCtrlHandler(DWORD);
@@ -275,53 +286,71 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 // Called by the Service Control Manager (SCM) when service started via sc start or at system boot...
 void WINAPI ServiceMain(DWORD, LPTSTR *) {
-    
-    // Register handler for control events (e.g. stop, pause etc) name==sc create <name>
     g_StatusHandle = RegisterServiceCtrlHandlerW(L"CoreStationService", ServiceCtrlHandler);
-    g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;    // stand alone process
-    // Define what events can be handled
-    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_PRESHUTDOWN; 
-    g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;       // is starting up (not ready yet)
-    SetServiceStatus(g_StatusHandle, &g_ServiceStatus);           // tell windows our current status
-
-    g_StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);           // Create manual reset event object
-    g_ServiceStatus.dwCurrentState = SERVICE_RUNNING;             // tell windows we are now fully running
+    g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+    g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_PRESHUTDOWN;
+    g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
     SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
 
-    // Launch window to receive session notifications, power events
-    RunMainWindow(); 
+    g_StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    
+    InitLogging();
+    LogMessage("Service starting...");
 
-    // When RunMainWindow exits:
-    g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;             // tell window we have stopped  
+    g_mainWindowThread = std::thread(RunMainWindow);
+
+    g_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
     SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
+    LogMessage("Service is running.");
+
+    // Wait indefinitely for the shutdown signal.
+    WaitForSingleObject(g_StopEvent, INFINITE);
+    
+    // Stop signal received, begin cleanup.
+    LogMessage("Stop event received, starting shutdown procedure.");
+    
+    if (g_hWnd) {
+        PostMessage(g_hWnd, WM_QUIT, 0, 0);
+    }
+
+    if (g_mainWindowThread.joinable()) {
+        g_mainWindowThread.join();
+        LogMessage("Main window thread joined.");
+    }
+    if (g_serialThread.joinable()) {
+        g_serialThread.join();
+        LogMessage("Serial thread joined.");
+    }
+    if (g_namedPipeServerThread.joinable()) {
+        g_namedPipeServerThread.join();
+        LogMessage("Named pipe thread joined.");
+    }
+    
+    ShutdownLogging();
+
+    // Step 3: Now that cleanup is complete, tell the SCM that the service has stopped.
+    g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+    SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
+    LogMessage("Service has stopped successfully.");
 }
 
 // Called if Stop or Pause send by windows....
 void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
     std::string val;    
-    switch(ctrlCode)
-    {
-        case SERVICE_CONTROL_STOP: 
-            passPowerStateToSerial("controlStop");
-            g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;    // tell windows we are stopping
-            SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
-            SetEvent(g_StopEvent);
-            break;
-
-        // This case is called if windows shutdown is kicked off...
-        case SERVICE_CONTROL_PRESHUTDOWN:
-            LogMessage("PreShutdown");
-            g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-            SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
-            passPowerStateToSerial("shutdownRequest");
-            SetEvent(g_StopEvent);
-            break;
-
+    switch (ctrlCode) {
+        case SERVICE_CONTROL_STOP:
         case SERVICE_CONTROL_SHUTDOWN:
-            LogMessage("Shutdown");
+        case SERVICE_CONTROL_PRESHUTDOWN:
+            // Step 1: Tell the SCM that the service is in the process of stopping.
+            g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+            g_ServiceStatus.dwCheckPoint = 0;
+            g_ServiceStatus.dwWaitHint = 30000; // 30 seconds wait hint
+            SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
+
+            // Step 2: Signal all threads to terminate by setting the stop event.
+            LogMessage("Shutdown signal received. Setting stop event.");
             SetEvent(g_StopEvent);
-            passPowerStateToSerial("controlShutdown");
-            break;
+            return;
 
         default:
             val = std::to_string(static_cast<int>(ctrlCode));
@@ -757,7 +786,7 @@ void serialThread() {
     WriteFile(hSerial, out.c_str(), (DWORD)out.size(), &bytesWritten, NULL);
     
     // main serial input processing loop 
-    while (WaitForSingleObject(g_StopEvent, 1000) != WAIT_OBJECT_0) 
+    while (WaitForSingleObject(g_StopEvent, 100) != WAIT_OBJECT_0) 
     {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - g_lastRotationTime);
@@ -790,50 +819,90 @@ void namedPipeServerThread() {
     const wchar_t* pipeName = L"\\\\.\\pipe\\CoreStationInfoPipe";
     HANDLE hPipe = INVALID_HANDLE_VALUE;
 
-    while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
+    // Setup for Overlapped I/O
+    OVERLAPPED overlapped = {};
+    overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (overlapped.hEvent == NULL) {
+        LogMessage("FATAL: Could not create overlapped event for pipe.");
+        SetEvent(g_StopEvent); // Signal service to stop
+        return;
+    }
+
+    HANDLE waitHandles[2];
+    waitHandles[0] = g_StopEvent;           // Wait for the service to stop
+    waitHandles[1] = overlapped.hEvent;     // Wait for a pipe connection
+
+    while (true) { // Loop will be controlled by WaitForMultipleObjects
         hPipe = CreateNamedPipeW(
             pipeName,
-            PIPE_ACCESS_DUPLEX,
+            PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, // Add OVERLAPPED flag
             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-            1,
-            1024,
-            1024,
-            0,
-            NULL
-        );
+            1, 1024, 1024, 0, NULL);
 
         if (hPipe == INVALID_HANDLE_VALUE) {
-            LogMessage("Failed to create named pipe. retrying in 5s.");
-            Sleep(5000);
+            LogMessage("Failed to create named pipe instance. Retrying in 5s.");
+            if (WaitForSingleObject(g_StopEvent, 5000) == WAIT_OBJECT_0) {
+                break; // Exit if stop event is signaled during wait
+            }
             continue;
         }
 
-        if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED)) {
-            LogMessage("Client Connected to named pipe.");
+        // Asynchronously wait for a client to connect
+        if (ConnectNamedPipe(hPipe, &overlapped)) {
+            LogMessage("ConnectNamedPipe returned TRUE unexpectedly.");
+            // This case is rare but possible, handle like a normal connection
+        }
+        else {
+            DWORD err = GetLastError();
+            if (err == ERROR_IO_PENDING) {
+                // This is the normal, expected case for an async operation.
+                // Wait for either the connection to complete or the service to stop.
+                DWORD waitResult = WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE);
 
-            std::string stateData;
-            {
-                std::lock_guard<std::mutex> lock(g_stateMutex);
-                std::stringstream ss;
-                ss << "hostname=" << g_CurrentState.hostname << "\n";
-                ss << "ipv4_1=" << g_CurrentState.network1.ipv4 << "\n";
-                ss << "ipv4_2=" << g_CurrentState.network2.ipv4 << "\n";
-                stateData = ss.str();
+                if (waitResult == WAIT_OBJECT_0) {
+                    // g_StopEvent was signaled. Time to exit.
+                    CancelIo(hPipe); // Cancel the pending connection attempt
+                    CloseHandle(hPipe);
+                    break;
+                }
+                // If waitResult is WAIT_OBJECT_0 + 1, a client connected.
+                // If it's anything else, there's an error.
+                if (waitResult != WAIT_OBJECT_0 + 1) {
+                    LogMessage("WaitForMultipleObjects failed in pipe thread.");
+                    CloseHandle(hPipe);
+                    break;
+                }
+            } else if (err == ERROR_PIPE_CONNECTED) {
+                 // Client connected before we could even wait.
+                 SetEvent(overlapped.hEvent);
             }
-
-            DWORD bytesWritten;
-            if (!WriteFile(hPipe, stateData.c_str(), (DWORD)stateData.length(), &bytesWritten, NULL)) {
-                LogMessage("Failed to write to named pipe.");
-            } else {
-                LogMessage("Send data to client: " + stateData);
+            else {
+                LogMessage("ConnectNamedPipe failed with a different error.");
+                CloseHandle(hPipe);
+                continue; // Try to create the pipe again
             }
-        } else {
-            LogMessage("Client failed to connect to named pipe.");
+        }
+        
+        // --- Client is now connected ---
+        LogMessage("Client Connected to named pipe.");
+        std::string stateData;
+        {
+            std::lock_guard<std::mutex> lock(g_stateMutex);
+            std::stringstream ss;
+            ss << "hostname=" << g_CurrentState.hostname << "\n";
+            ss << "ipv4_1=" << g_CurrentState.network1.ipv4 << "\n";
+            ss << "ipv4_2=" << g_CurrentState.network2.ipv4 << "\n";
+            stateData = ss.str();
         }
 
+        DWORD bytesWritten;
+        WriteFile(hPipe, stateData.c_str(), (DWORD)stateData.length(), &bytesWritten, NULL);
+        
         DisconnectNamedPipe(hPipe);
         CloseHandle(hPipe);
     }
+    
+    CloseHandle(overlapped.hEvent);
     LogMessage("Named pipe server thread shutting down.");
 }
 
@@ -855,23 +924,20 @@ void RunMainWindow() {
     g_hWnd = hWnd;
     WTSRegisterSessionNotification(hWnd, NOTIFY_FOR_ALL_SESSIONS);                             
 
-    std::thread(serialThread).detach();
-    std::thread(namedPipeServerThread).detach();
+    g_serialThread = std::thread(serialThread);
+    g_namedPipeServerThread = std::thread(namedPipeServerThread);
 
     MSG msg;
     LogMessage("Main loop starting");
+
     // Look for incoming windows messages until service told to stop...
-    while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-        Sleep(50);  // ms 
+    while (GetMessage(&msg, NULL, 0, 0) > 0) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
     LogMessage("Main loop shuting down");    
     WTSUnRegisterSessionNotification(hWnd);
-    DestroyWindow(hWnd);
 }
 
 
@@ -911,40 +977,32 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     LogMessage(ss.str());
 
     switch (msg) {
-
-
         case WM_WTSSESSION_CHANGE:
-            /* wParam defines the new state, defined in WinUser.h
-            C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um
-            
-                    APP_STARTING                       0
-            #define WTS_CONSOLE_CONNECT                1
-            #define WTS_CONSOLE_DISCONNECT             2
-            #define WTS_REMOTE_CONNECT                 3
-            #define WTS_REMOTE_DISCONNECT              4
-            #define WTS_SESSION_LOGON                  5
-            #define WTS_SESSION_LOGOFF                 6
-            #define WTS_SESSION_LOCK                   7
-            #define WTS_SESSION_UNLOCK                 8
-            #define WTS_SESSION_REMOTE_CONTROL         9
-            #define WTS_SESSION_CREATE                 10
-            #define WTS_SESSION_TERMINATE              11   */
-            
-            // convert session state to its integer value
+            // ... (this case remains the same) ...
             val = std::to_string(static_cast<int>(wParam));
             passSessionStateToSerial(val);
-            
         break;
 
         case WM_QUERYENDSESSION:
+            LogMessage("WM_QUERYENDSESSION received");
             passPowerStateToSerial("queryEndSession");
+            SetEvent(g_StopEvent);
             return TRUE;
+
+        // ADD WM_CLOSE handler
+        case WM_CLOSE:
+            DestroyWindow(hWnd); // Start the destruction process
+            break;
 
         case WM_DESTROY:
             passPowerStateToSerial("appExit");
-            Sleep(500);
-            PostQuitMessage(0);
+            PostQuitMessage(0); // This will cause GetMessage() to return 0.
             break;
+            
+        // ADD a default handler for WM_QUIT to call DestroyWindow
+        case WM_QUIT:
+             DestroyWindow(hWnd);
+             break;
     }
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
