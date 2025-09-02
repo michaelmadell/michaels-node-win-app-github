@@ -543,8 +543,9 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
     static std::vector<BYTE> data;
     DWORD size = 0;
 
-    NetworkInterface* currentNetworks[] = { &currentState->network1, &currentState->network2 };
-    int interfaceIndex = 0;
+    bool network1Found = false;
+    bool network2Found = false;
+
     if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, nullptr, nullptr, &size) == ERROR_BUFFER_OVERFLOW) {
         data.resize(size);
     } else {
@@ -564,15 +565,20 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
             }
             std::string macAddress = macStream.str();
 
-            if (macAddress.rfind("00:17:fd", 0) != 0 && macAddress.rfind("00:13:95", 0) != 0) {
-                continue;
+            NetworkInterface* targetInterface = nullptr;
+            if (macAddress.rfind("00:17:fd", 0) == 0) {
+                targetInterface = &currentState->network1;
+                network1Found = true;
+            } else if (macAddress.rfind("00:13:95", 0) == 0) {
+                targetInterface = &currentState->network2;
+                network2Found = true;
             }
 
-            // We only handle a fixed number of network interfaces.
-            if (interfaceIndex >= std::size(currentNetworks)) break;
+            if (!targetInterface) {
+                continue;
+            }
  
-            // Convert FriendlyName from wide to UTF-8
-            // Explicitly construct a wstring from the PWCHAR.
+            // --- CHANGE: Logic now applies to the 'targetInterface' directly ---
             std::string name = adapter->FriendlyName ? WideToUtf8(std::wstring(adapter->FriendlyName)) : "Unknown";
             std::string linkStatus = (adapter->OperStatus == IfOperStatusUp) ? "up" : "down";
             std::string ipv4 = "none", ipv6 = "none";
@@ -580,7 +586,6 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
 
             for (IP_ADAPTER_UNICAST_ADDRESS *addr = adapter->FirstUnicastAddress; addr; addr = addr->Next) {
                 char buffer[INET6_ADDRSTRLEN] = {0};
-
                 if (addr->Address.lpSockaddr->sa_family == AF_INET) {
                     sockaddr_in *sa = reinterpret_cast<sockaddr_in *>(addr->Address.lpSockaddr);
                     inet_ntop(AF_INET, &(sa->sin_addr), buffer, sizeof(buffer));
@@ -592,57 +597,35 @@ void checkNetworkAdapters(HANDLE hSerial, SystemState* currentState) {
                 }
             }
 
-            // If only one port up, it will be returned first
+            NetworkInterface newState;
+            newState.name = name;
+            newState.ipv4 = ipv4;
+            newState.ipv6 = ipv6;
+            newState.dhcp = dhcp;
+            newState.linkStatus = linkStatus;
+            newState.macAddress = macAddress;
 
-            // Check for changes    
-            bool valueChanged = false;
-            if (currentNetworks[interfaceIndex]->name != name ) {
-                currentNetworks[interfaceIndex]->name = name;
-                valueChanged = true;
+            // If the link just went down, try to reset the adapter
+            if (linkStatus == "down" && targetInterface->linkStatus == "up") {
+                resetNetworkAdapter(adapter);
             }
 
-            if (currentNetworks[interfaceIndex]->ipv6 != ipv6 ) {
-                currentNetworks[interfaceIndex]->ipv6 = ipv6;
-                valueChanged = true;
+            // If any value has changed, update the global state and send the update
+            if (*targetInterface != newState) {
+                *targetInterface = newState;
+                sendLineToBmc(hSerial, "network, " + macAddress + ", " + linkStatus + ", "+ ipv4 + ", " + ipv6 + ", " + dhcp + ", "  + name);
             }
-
-            if (currentNetworks[interfaceIndex]->ipv4 != ipv4 ) {
-                currentNetworks[interfaceIndex]->ipv4 = ipv4;
-                valueChanged = true;
-            }
-
-            if (currentNetworks[interfaceIndex]->dhcp != dhcp ) {
-                currentNetworks[interfaceIndex]->dhcp = dhcp;
-                valueChanged = true;
-            }
-
-            // if (currentNetworks[interfaceIndex]->adapterStatus != adapterStatus ) {
-            //     currentNetworks[interfaceIndex]->adapterStatus = adapterStatus;
-            //     valueChanged = true;
-            // }
-
-
-            if (currentNetworks[interfaceIndex]->linkStatus != linkStatus ) {
-                if (linkStatus == "down") {
-                    // link just transistioned to "down"
-                    resetNetworkAdapter(adapter);
-                }
-                currentNetworks[interfaceIndex]->linkStatus = linkStatus;
-                valueChanged = true;
-            }
-
-            // macAddress obviously wont change, but this gets the first value into the struct
-            if (currentNetworks[interfaceIndex]->macAddress != macAddress ) {
-                currentNetworks[interfaceIndex]->macAddress = macAddress;
-                valueChanged = true;
-            }
-            
-            if (valueChanged) {
-                // sendLineToBmc(hSerial,  std::string(name) + ", " + adapterStatus + ", " + linkStatus + ", " + ipv6 + ", " + ipv4 + ", " + dhcp + ", " + macAddress  );
-                sendLineToBmc(hSerial, "network, " + macAddress + ", " + linkStatus + ", "+ ipv4 + ", " + ipv6 + ", " + dhcp + ", "  + std::string(name)  );
-            }
-            interfaceIndex += 1;
         }
+    }
+    // --- CHANGE: After checking all adapters, handle any that were not found ---
+    // This means an adapter that was previously connected has been removed or disabled.
+    if (!network1Found && !currentState->network1.macAddress.empty()) {
+        sendLineToBmc(hSerial, "network, " + currentState->network1.macAddress + ", disconnected, none, none, none, " + currentState->network1.name);
+        currentState->network1.Clear(); // Clear the stale data
+    }
+    if (!network2Found && !currentState->network2.macAddress.empty()) {
+        sendLineToBmc(hSerial, "network, " + currentState->network2.macAddress + ", disconnected, none, none, none, " + currentState->network2.name);
+        currentState->network2.Clear(); // Clear the stale data
     }
 }
 
