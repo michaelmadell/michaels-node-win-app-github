@@ -1,0 +1,9 @@
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/CoreStationHXAgent.dir
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/package.dir
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/package_source.dir
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/edit_cache.dir
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/rebuild_cache.dir
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/list_install_components.dir
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/install.dir
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/install/local.dir
+/home/labtest/Documents/michaels-node-win-app/CMakeFiles/install/strip.dir
