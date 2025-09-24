@@ -1,0 +1,4 @@
+09bdf08c1cde96ad56833ae4fd932637  lib/systemd/system/CoreStationHXAgent.service
+df9a4e9981aeba60bca3bce21ac0dd37  usr/sbin/CoreStationHXAgent
+e6b292d98d01ed5af745402c531003bf  usr/share/doc/corestationhxagent/changelog.gz
+ae599a9c89947ff8d9ef70e2330db5d5  usr/share/doc/corestationhxagent/copyright

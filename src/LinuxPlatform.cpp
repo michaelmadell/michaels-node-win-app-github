@@ -157,26 +157,26 @@ int LinuxPlatform::run(
     SessionStateCallback session_cb
 ) {
     g_session_callback = session_cb;
-    pid_t pid = fork();
-    if (pid < 0) exit(EXIT_FAILURE);
-    if (pid > 0) exit(EXIT_SUCCESS); // Parent exits, leaving child in background
-    umask(0);
-    if (setsid() < 0) exit(EXIT_FAILURE);
+    //pid_t pid = fork();
+    //if (pid < 0) exit(EXIT_FAILURE);
+    //if (pid > 0) exit(EXIT_SUCCESS); // Parent exits, leaving child in background
+    //umask(0);
+    //if (setsid() < 0) exit(EXIT_FAILURE);
 
     // --- ADD THIS BLOCK TO CREATE THE PID FILE ---
-    pid_t child_pid = getpid();
-    std::ofstream pid_file("/run/CoreStationHXAgent/CoreStationHXAgent.pid");
-    if (pid_file.is_open()) {
-        pid_file << child_pid;
-        pid_file.close();
-    } else {
-        syslog(LOG_ERR, "Failed to create PID file");
-        exit(EXIT_FAILURE);
-    }
+    //pid_t child_pid = getpid();
+    //std::ofstream pid_file("/run/CoreStationHXAgent/CoreStationHXAgent.pid");
+    //if (pid_file.is_open()) {
+    //    pid_file << child_pid;
+    //    pid_file.close();
+    //} else {
+    //    syslog(LOG_ERR, "Failed to create PID file");
+    //    exit(EXIT_FAILURE);
+    //}
     
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
+    //close(STDIN_FILENO);
+    //close(STDOUT_FILENO);
+    //close(STDERR_FILENO);
     std::cout << "[DEBUG] Running in foreground mode as root." << std::endl;
 
     openlog("CoreStationHXAgent", LOG_PID, LOG_DAEMON);

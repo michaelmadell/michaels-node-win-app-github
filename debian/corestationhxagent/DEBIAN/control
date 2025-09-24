@@ -1,0 +1,11 @@
+Package: corestationhxagent
+Version: 2025.9.1
+Architecture: amd64
+Maintainer: Michael Madell <michael.madell@amulethotkey.com>
+Installed-Size: 93
+Depends: libc6 (>= 2.34), libdbus-1-3 (>= 1.9.14), libgcc-s1 (>= 3.3.1), libstdc++6 (>= 13.1), network-manager
+Section: utils
+Priority: optional
+Description: CoreStation HX Agent
+ This agent monitors system status and reports it over a serial connection.
+ It is designed to run as a background service.
