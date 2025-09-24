@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/CoreStationHXAgent.dir/src/main.cpp.o CMakeFiles/CoreStationHXAgent.dir/src/LinuxPlatform.cpp.o -o CoreStationHXAgent  -ldbus-1 
