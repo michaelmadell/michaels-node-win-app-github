@@ -30,6 +30,19 @@ void sendLineToBmc(const std::string& output_string) {
     platform->writeSerial(output_string + "\r\n");
 }
 
+void heartbeatThread() {
+    platform->logMessage("Heartbeat thread started.");
+    while (!g_terminate.load()) {
+        std::this_thread::sleep_for(std::chrono::seconds(30));
+        if (g_terminate.load()) {
+            break;
+        }
+
+        sendLineToBmc("HB");
+    }
+    platform->logMessage("Heartbeat thread finished")
+}
+
 void checkSystemState() {
     SystemState previousState;
     {
@@ -125,6 +138,7 @@ int main(int argc, char* argv[]) {
     
     platform = createPlatform();
     std::thread workerThread;
+    std::thread hbThread;
 
     std::cout << "[DEBUG] Calling platform->run(). Waiting for on_start callback..." << std::endl;
 
@@ -134,6 +148,7 @@ int main(int argc, char* argv[]) {
             // If we see this message, we know the service/daemon started correctly
             std::cout << "[DEBUG] on_start callback EXECUTED. Launching serialThread." << std::endl;
             workerThread = std::thread(serialThread);
+            hbThread = std::thread(heartbeatThread);
         },
         // on_stop callback
         [&]() {
@@ -141,6 +156,9 @@ int main(int argc, char* argv[]) {
             g_terminate = true;
             if (workerThread.joinable()) {
                 workerThread.join();
+            }
+            if (hbThread.joinable()) {
+                hbThread.join();
             }
         },
         // powerState callback

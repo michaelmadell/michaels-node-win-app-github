@@ -1,5 +1,48 @@
 # README #
 
+## Files ##
+```
+michaels-node-win-app
+│   README.md
+│   Makefile
+│   build.bat
+│   start.ps1
+│   install_manifest.txt
+│   CMakeLists.txt
+│   ps.bat
+│   stop.ps1
+│   release-notes.txt
+│   CoreStationHXAgent.service
+│
+├───installer
+│       install.ps1
+│       remove.ps1
+│       release-notes.txt
+│
+├───src
+│       version.h
+│       main.cpp
+│       Platform.h
+│       WindowsPlatform.cpp
+│       LinuxPlatform.cpp
+│       SystemState.h
+│
+└───debian
+    │   dh-cmake.compat
+    │   postrm
+    │   compat
+    │   copyright
+    │   rules
+    │   changelog
+    │   clean
+    │   prerm
+    │   control
+    │   postinst
+    └───source
+            format
+
+```
+
 ## Linux Build ##
 Developed on Ubuntu 24.04.5 LTS due to better compatibility with the Meteor Lake Processor
 
@@ -22,6 +65,38 @@ Developed on Ubuntu 24.04.5 LTS due to better compatibility with the Meteor Lake
      - `debian/control` - Not 100% necessary to be updated
      - `debian/copyright`
      - `debian/changelog` - *100% Necessary to change this*
+ - ***NOTE***: If debuild complains about no new lines at end of files, run `echo "" >> <file>` to add a new line to the end
+ - in the project root, run:
+    ```bash
+    debuild -us -uc -S -I
+    ```
+    to build the source files
+ - then run:
+   ```bash
+   debuild -us -uc -b
+   ```
+    to build the .deb file, but this will be unsigned
+- I think at this point, it could be signed with the existing method for windows executables but I am not sure
+
+### To Install ###
+```bash
+sudo apt install ./corestationhxagent_2025.9.1-1_amd64.deb
+```
+following that, the status of the service can be viewed with
+```bash
+sudo systemctl status CoreStationHXAgent
+```
+this will show something like:
+```
+● CoreStationHXAgent.service - CoreStation HX Agent
+     Loaded: loaded (/usr/lib/systemd/system/CoreStationHXAgent.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2025-09-24 15:14:08 BST; 18h ago
+   Main PID: 57599 (CoreStationHXAg)
+      Tasks: 3 (limit: 13993)
+     Memory: 15.5M ()
+     CGroup: /system.slice/CoreStationHXAgent.service
+             └─57599 /usr/sbin/CoreStationHXAgent
+```
 
 ## Windows Build ##
 This project was developed on a Win 11 Pro CoreStation Node
