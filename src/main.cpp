@@ -66,7 +66,7 @@ void serialThread() {
     #ifdef _WIN32
         const std::string portName = SERIAL_PORT;
     #else
-        const std::string portName = "/dev/pts/4"; // Make sure this is your correct port
+        const std::string portName = "/dev/ttyS2"; // Make sure this is your correct port
     #endif
 
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
