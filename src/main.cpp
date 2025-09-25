@@ -40,7 +40,7 @@ void heartbeatThread() {
 
         sendLineToBmc("HB");
     }
-    platform->logMessage("Heartbeat thread finished")
+    platform->logMessage("Heartbeat thread finished");
 }
 
 void checkSystemState() {
