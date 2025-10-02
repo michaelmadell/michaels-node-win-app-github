@@ -4,7 +4,7 @@ REM check the target .exe is writeable (local machine might be running it)
 
 
 REM Attempt to open the file for appending without modifying it
-set "OUTPUT_EXE_FILE=C:\Users\labtest\repos\node-win-app\installer\nodeWinApp.exe"
+set "OUTPUT_EXE_FILE=C:\Users\michael.madell\source\repos\michaels-node-win-app\build\CoreStationHXAgent.exe"
 
 REM Attempt to append (without modifying) to test writability
 >> "%OUTPUT_EXE_FILE%" (
@@ -57,12 +57,15 @@ echo Hash: !GIT_HASH!
 echo Modified: !MODIFICATIONS!
 echo Time: !BUILD_TIME!
 
+echo Compiling Resources...
+rc.exe app.rc
+
 
 REM Copy release notes to output dir
 copy release-notes.txt installer 
 
 REM Build exe file to output dir
-cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"!OUTPUT_EXE_FILE!" C:\Users\labtest\repos\node-win-app\main.cpp /link user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib winmm.lib Wtsapi32.lib
+cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"!OUTPUT_EXE_FILE!" src\main.cpp src\WindowsPlatform.cpp app.res /link user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib winmm.lib Wtsapi32.lib
 
 
 REM If a release branch 

@@ -1,2 +1,0 @@
-/usr/sbin/CoreStationHXAgent
-/lib/systemd/system/CoreStationHXAgent.service

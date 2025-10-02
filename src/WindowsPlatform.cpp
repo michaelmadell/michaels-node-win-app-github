@@ -252,25 +252,57 @@ std::string WindowsPlatform::getLoggedInUser()
     }
     return username;
 }
+
 std::string WindowsPlatform::getOsVersion()
 {
+    // First, get the raw version info to check the build number
     HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
-    if (!hMod)
-        return "Unknown Windows Version";
+    if (!hMod) return "Unknown Windows Version";
 
     RtlGetVersionPtr fn = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
-    if (!fn)
-        return "Unknown Windows Version";
+    if (!fn) return "Unknown Windows Version";
 
     RTL_OSVERSIONINFOW rovi = {0};
     rovi.dwOSVersionInfoSize = sizeof(rovi);
-    if (fn(&rovi) != 0)
-        return "Unknown Windows Version";
+    if (fn(&rovi) != 0) return "Unknown Windows Version";
 
-    std::ostringstream version;
-    version << rovi.dwMajorVersion << "." << rovi.dwMinorVersion << "." << rovi.dwBuildNumber;
-    return version.str();
+    // Now, query the registry for the friendly name
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+        // Fallback to build number if registry fails
+        std::ostringstream version;
+        version << rovi.dwMajorVersion << "." << rovi.dwMinorVersion << "." << rovi.dwBuildNumber;
+        return version.str();
+    }
+
+    char productName[255];
+    DWORD productNameSize = sizeof(productName);
+    if (RegQueryValueExA(hKey, "ProductName", NULL, NULL, (LPBYTE)productName, &productNameSize) != ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        return "Unknown Windows Version";
+    }
+
+    std::string finalProductName = productName;
+
+    // Correct the product name if the build number indicates Windows 11
+    if (rovi.dwBuildNumber >= 22000) {
+        size_t pos = finalProductName.find("10");
+        if (pos != std::string::npos) {
+            finalProductName.replace(pos, 2, "11");
+        }
+    }
+
+    char displayVersion[255];
+    DWORD displayVersionSize = sizeof(displayVersion);
+    if (RegQueryValueExA(hKey, "DisplayVersion", NULL, NULL, (LPBYTE)displayVersion, &displayVersionSize) == ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        return finalProductName + " " + std::string(displayVersion);
+    }
+    
+    RegCloseKey(hKey);
+    return finalProductName;
 }
+
 bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
 {
     // The port name is passed in, but we will use the one from version.h for this implementation
