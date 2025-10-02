@@ -1,0 +1,22 @@
+#!/bin/sh
+# A "noisy" version for debugging
+set -e
+
+case "$1" in
+    configure)
+        echo "    /---\/---\/---\    "
+        echo "    |   ||   ||   |    "
+        echo "    \---/\---/\---/    "
+        echo "   Amulet Hotkey Ltd   "    
+        echo "Enabling CoreStationHXAgent Service..."
+        systemctl enable CoreStationHXAgent.service
+
+        echo "Starting CoreStationHXAgent Service..."
+        systemctl restart CoreStationHXAgent.service
+        echo "--- postinst script finished ---"
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

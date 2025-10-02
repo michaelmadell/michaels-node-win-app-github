@@ -64,7 +64,16 @@
       "mutex": "cpp",
       "fstream": "cpp",
       "iostream": "cpp",
-      "ostream": "cpp"
+      "ostream": "cpp",
+      "csignal": "cpp",
+      "functional": "cpp",
+      "list": "cpp",
+      "unordered_map": "cpp",
+      "xhash": "cpp",
+      "array": "cpp",
+      "cwctype": "cpp",
+      "numbers": "cpp",
+      "string_view": "cpp"
     }
   }
   
