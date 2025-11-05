@@ -45,7 +45,7 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES src/LinuxPlatform.cpp)
 endif()
-add_executable(CoreStationHXAgent ${CORE_SOURCES})
+add_executable(CoreStationHXAgent ${CORE_SOURCES} "resource.h" "version.h")
 
 if(WIN32)
     target_link_libraries(CoreStationHXAgent PRIVATE iphlpapi ws2_32 wtsapi32 setupapi user32 shell32)
@@ -58,7 +58,7 @@ endif()
 
 include(InstallRequiredSystemLibraries)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION "2025.9.1")
+set(CPACK_PROJECT_VERSION "2025.11.1")
 
 
 set(CPACK_PACKAGE_NAME "corestationhxagent") # Debian prefers lowercase package names

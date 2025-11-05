@@ -33,11 +33,69 @@ void sendLineToBmc(const std::string& output_string) {
 void heartbeatThread() {
     platform->logMessage("Heartbeat thread started.");
     while (!g_terminate.load()) {
-        std::this_thread::sleep_for(std::chrono::seconds(30));
+        std::this_thread::sleep_for(std::chrono::seconds(10));
         if (g_terminate.load()) {
             break;
         }
 
+        platform->updatePdhMetrics();
+
+        // --- NEW METRIC COLLECTION & REPORTING ---
+        try {
+            int cpuUsage = platform->getCpuUsagePercent();
+            int ramUsage = platform->getRamUsagePercent();
+            std::string freeDisk = platform->getFreeDiskSpaceGB("C:"); // Collects C: drive space
+            std::string updateState = platform->getWindowsUpdateState();
+            float diskQueue = platform->getDiskQueueLength();
+            float netRetrans = platform->getNetworkRetransRate();
+            std::string uptime = platform->getSystemUptime();
+            std::string gpuInfo = platform->getGpuDriverInfo();
+            float gpuUsage = platform->getGpuUsagePercent();
+            std::string highRamProcs = platform->getHighRamProcesses();
+
+            {
+                std::lock_guard<std::mutex> lock(stateMutex);
+
+                // Update SystemState (not strictly necessary for reporting, but good practice)
+                currentState.cpuUsagePercent = cpuUsage;
+                currentState.ramUsagePercent = ramUsage;
+                currentState.freeDiskSpaceGB = freeDisk;
+                currentState.windowsUpdateState = updateState;
+                currentState.diskQueueLength = diskQueue;
+                currentState.networkRetransRate = netRetrans;
+                currentState.systemUptime = uptime;
+                currentState.gpuDriverInfo = gpuInfo;
+                currentState.gpuUsagePercent = gpuUsage;
+                currentState.highRamProcesses = highRamProcs;
+
+                // Send the metrics
+                sendLineToBmc("cpuUsage, " + std::to_string(cpuUsage) + "%");
+                sendLineToBmc("ramUsage, " + std::to_string(ramUsage) + "%");
+                sendLineToBmc("freeDisk, " + freeDisk + "GB");
+                sendLineToBmc("wuState, " + updateState);
+                sendLineToBmc("diskQueue, " + std::to_string(diskQueue));
+                sendLineToBmc("netRetrans, " + std::to_string(netRetrans) + "/s");
+                sendLineToBmc("uptime, " + uptime);
+                sendLineToBmc("gpuInfo, " + gpuInfo);
+                sendLineToBmc("gpuUsage, " + std::to_string(gpuUsage) + "%");
+                sendLineToBmc("highRamProcs, " + highRamProcs);
+
+                // Log the metrics for confirmation (ensuring logging is used)
+                std::stringstream logMsg;
+                logMsg << "Metrics: CPU=" << cpuUsage << "%, RAM=" << ramUsage << "%, Disk=" << freeDisk << "GB, WU=" << updateState;
+                logMsg << ", DiskQ=" << diskQueue << ", NetR=" << netRetrans << "/s, Uptime=" << uptime;
+                logMsg << " | GPU=" << gpuUsage << "% | " << gpuInfo;
+                logMsg << " | HighRam={" << highRamProcs << "}";
+                platform->logMessage(logMsg.str());
+            }
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[ERROR] Exception in heartbeatThread: " << e.what() << std::endl;
+            platform->logMessage("[ERROR] Exception in heartbeatThread: " + std::string(e.what()));
+        }
+        // --- END NEW METRIC COLLECTION & REPORTING ---
+
+        // Existing Heartbeat (HB) message (kept last)
         sendLineToBmc("HB");
     }
     platform->logMessage("Heartbeat thread finished");
@@ -82,7 +140,7 @@ void serialThread() {
     platform->logMessage("Serial Port opened successfully");
 
     std::stringstream versionStream;
-    versionStream << VERSION_YEAR << "." << VERSION_MONTH << "." << VERSION_RELEASE;
+    versionStream << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_RELEASE << "." << VERSION_BUILD;
     if (std::string(VERSION_EXTRAVERSION) == "rc") {
         versionStream << "_" << VERSION_EXTRAVERSION << VERSION_RC_NO;
     } else {

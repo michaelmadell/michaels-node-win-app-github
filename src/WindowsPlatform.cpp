@@ -11,11 +11,37 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <Psapi.h>
+#include <tlhelp32.h>
+#include <Pdh.h>
+#include <WbemIdl.h>
+#include <comutil.h>
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "wtsapi32.lib")
 #pragma comment(lib, "setupapi.lib")
+#pragma comment(lib, "Pdh.lib")
+#pragma comment(lib, "Wbemuuid.lib")
+#pragma comment(lib, "ole32.lib")     // <<< FIX: Required for CoInitializeEx, CoUninitialize, CoCreateInstance, etc.
+#pragma comment(lib, "comsuppw.lib")
+#pragma comment(lib, "Psapi.lib")
+
+HQUERY m_hQuery = NULL;
+HCOUNTER m_hDiskCounter = NULL;
+HCOUNTER m_hNetRetransCounter = NULL;
+
+#ifndef PDH_FMT_FLOAT
+#define PDH_FMT_FLOAT 0x00000200
+#endif
+
+#ifndef PDH_MORE_DATA
+#define PDH_MORE_DATA ((PDH_STATUS)0x800007D2)
+#endif
+
+static ULONGLONG FileTimeToInt64(const FILETIME& ft) {
+    return ((ULONGLONG)ft.dwHighDateTime) << 32 | ((ULONGLONG)ft.dwLowDateTime);
+}
 
 std::string WideToUtf8(const std::wstring &wstr)
 {
@@ -45,6 +71,17 @@ public:
     void closeSerialPort() override;
     bool writeSerial(const std::string &data) override;
     void logMessage(const std::string &message) override;
+    int getCpuUsagePercent() override;
+    int getRamUsagePercent() override;
+    std::string getFreeDiskSpaceGB(const std::string& drivePath) override;
+    std::string getWindowsUpdateState() override;
+    float getDiskQueueLength() override;
+    float getNetworkRetransRate() override;
+    std::string getSystemUptime() override;
+    void updatePdhMetrics() override;
+    std::string getGpuDriverInfo() override;
+    float getGpuUsagePercent() override;
+    std::string getHighRamProcesses() override;
 
     int run(
         int argc, char *argv[],
@@ -69,7 +106,26 @@ private:
     SERVICE_STATUS g_service_status = {};
     SERVICE_STATUS_HANDLE g_status_handle = nullptr;
     HANDLE g_stop_event = nullptr;
+    ULONGLONG m_previousIdleTime = 0;
+    ULONGLONG m_previousKernelTime = 0;
+    ULONGLONG m_previousUserTime = 0;
+    PDH_HQUERY m_hQuery = NULL;
+    PDH_HCOUNTER m_hDiskCounter = NULL;
+    PDH_HCOUNTER m_hNetRetransCounter = NULL;
+    PDH_HCOUNTER m_hGpuTotalCounter = NULL;
+
+    void updateCpuTimes();
+    std::string getProcessName(HANDLE hProcess);
 };
+
+void WindowsPlatform::updateCpuTimes() {
+    FILETIME idleTime, kernelTime, userTime;
+    if (GetSystemTimes(&idleTime, &kernelTime, &userTime)) {
+        m_previousIdleTime = FileTimeToInt64(idleTime);
+        m_previousKernelTime = FileTimeToInt64(kernelTime) - m_previousIdleTime;
+        m_previousUserTime = FileTimeToInt64(userTime);
+    }
+}
 
 // --- 2. DEFINE GLOBALS AND HANDLERS THAT USE THE CLASS ---
 static WindowsPlatform *g_platform_instance = nullptr;
@@ -111,10 +167,38 @@ WindowsPlatform::WindowsPlatform()
 {
     g_platform_instance = this;
     g_stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    updateCpuTimes();
+
+    // Initialize PDH Query for Disk and Network Counters
+    if (PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS) {
+        // Counter for Avg. Disk Queue Length for the entire physical disk subsystem
+        PdhAddCounterA(m_hQuery, "\\PhysicalDisk(_Total)\\Avg. Disk Queue Length", 0, &m_hDiskCounter);
+        // Counter for Segments Retransmitted/sec for IPv4 traffic
+        PdhAddCounterA(m_hQuery, "\\TCPv4\\Segments Retransmitted/sec", 0, &m_hNetRetransCounter);
+
+        PdhAddCounterW(m_hQuery, L"\\GPU Engine(*)\\Utilization Percentage", 0, &m_hGpuTotalCounter);
+
+        // Collect initial data sample for counters that require two samples (like averages/rates)
+        PdhCollectQueryData(m_hQuery);
+    }
+    else {
+        logMessage("[WARNING] Failed to open PDH Query for system metrics.");
+        m_hQuery = NULL;
+    }
+
+    HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hr)) {
+        logMessage("[WARNING] Failed to initialize COM for WMI access.");
+    }
 }
 
 WindowsPlatform::~WindowsPlatform()
 {
+    if (m_hQuery) {
+        PdhCloseQuery(m_hQuery);
+    }
+    CoUninitialize();
     CloseHandle(g_stop_event);
 }
 
@@ -169,7 +253,7 @@ std::vector<NetworkInterface> WindowsPlatform::getNetworkInterfaces()
 
     if (result == NO_ERROR)
     {
-        for (IP_ADAPTER_ADDRESSES *pAdapter = pAdapterAddresses; pAdapter; pAdapter = pAdapter->Next)
+        for (IP_ADAPTER_ADDRESSES* pAdapter = pAdapterAddresses; pAdapter; pAdapter = pAdapter->Next)
         {
             // We only care about Ethernet interfaces
             if (pAdapter->IfType != IF_TYPE_ETHERNET_CSMACD)
@@ -178,11 +262,6 @@ std::vector<NetworkInterface> WindowsPlatform::getNetworkInterfaces()
             }
 
             NetworkInterface iface;
-            iface.name = pAdapter->FriendlyName ? WideToUtf8(pAdapter->FriendlyName) : "Unknown";
-            iface.linkStatus = (pAdapter->OperStatus == IfOperStatusUp) ? "up" : "down";
-            iface.dhcp = (pAdapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
-            iface.ipv4 = "none";
-            iface.ipv6 = "none";
 
             // Format MAC address
             std::ostringstream macStream;
@@ -194,24 +273,33 @@ std::vector<NetworkInterface> WindowsPlatform::getNetworkInterfaces()
             }
             iface.macAddress = macStream.str();
 
-            // Get IP addresses
-            for (IP_ADAPTER_UNICAST_ADDRESS *pUnicast = pAdapter->FirstUnicastAddress; pUnicast; pUnicast = pUnicast->Next)
+            if (iface.macAddress.rfind("00:17", 0) == 0 || iface.macAddress.rfind("00:13", 0) == 0)
             {
-                char ipBuffer[INET6_ADDRSTRLEN] = {0};
-                if (pUnicast->Address.lpSockaddr->sa_family == AF_INET)
+                iface.name = pAdapter->FriendlyName ? WideToUtf8(pAdapter->FriendlyName) : "Unknown";
+                iface.linkStatus = (pAdapter->OperStatus == IfOperStatusUp) ? "up" : "down";
+                iface.dhcp = (pAdapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
+                iface.ipv4 = "none";
+                iface.ipv6 = "none";
+
+                // Get IP addresses
+                for (IP_ADAPTER_UNICAST_ADDRESS* pUnicast = pAdapter->FirstUnicastAddress; pUnicast; pUnicast = pUnicast->Next)
                 {
-                    sockaddr_in *pSockAddr = reinterpret_cast<sockaddr_in *>(pUnicast->Address.lpSockaddr);
-                    inet_ntop(AF_INET, &(pSockAddr->sin_addr), ipBuffer, sizeof(ipBuffer));
-                    iface.ipv4 = ipBuffer;
+                    char ipBuffer[INET6_ADDRSTRLEN] = { 0 };
+                    if (pUnicast->Address.lpSockaddr->sa_family == AF_INET)
+                    {
+                        sockaddr_in* pSockAddr = reinterpret_cast<sockaddr_in*>(pUnicast->Address.lpSockaddr);
+                        inet_ntop(AF_INET, &(pSockAddr->sin_addr), ipBuffer, sizeof(ipBuffer));
+                        iface.ipv4 = ipBuffer;
+                    }
+                    else if (pUnicast->Address.lpSockaddr->sa_family == AF_INET6)
+                    {
+                        sockaddr_in6* pSockAddr6 = reinterpret_cast<sockaddr_in6*>(pUnicast->Address.lpSockaddr);
+                        inet_ntop(AF_INET6, &(pSockAddr6->sin6_addr), ipBuffer, sizeof(ipBuffer));
+                        iface.ipv6 = ipBuffer;
+                    }
                 }
-                else if (pUnicast->Address.lpSockaddr->sa_family == AF_INET6)
-                {
-                    sockaddr_in6 *pSockAddr6 = reinterpret_cast<sockaddr_in6 *>(pUnicast->Address.lpSockaddr);
-                    inet_ntop(AF_INET6, &(pSockAddr6->sin6_addr), ipBuffer, sizeof(ipBuffer));
-                    iface.ipv6 = ipBuffer;
-                }
+                interfaces.push_back(iface);
             }
-            interfaces.push_back(iface);
         }
     }
     return interfaces;
@@ -405,6 +493,150 @@ void WindowsPlatform::logMessage(const std::string &message)
     }
 }
 
+int WindowsPlatform::getCpuUsagePercent()
+{
+    // NOTE: This now relies on updatePdhMetrics being called right before it
+    // The previous times were updated in updatePdhMetrics.
+
+    FILETIME idleTime, kernelTime, userTime;
+    if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) {
+        return 0;
+    }
+
+    ULONGLONG currentIdleTime = FileTimeToInt64(idleTime);
+    ULONGLONG currentKernelTime = FileTimeToInt64(kernelTime) - currentIdleTime;
+    ULONGLONG currentUserTime = FileTimeToInt64(userTime);
+
+    // Calculate delta times based on the previous sample taken in updatePdhMetrics
+    ULONGLONG idleTimeDelta = currentIdleTime - m_previousIdleTime;
+    ULONGLONG kernelTimeDelta = currentKernelTime - m_previousKernelTime;
+    ULONGLONG userTimeDelta = currentUserTime - m_previousUserTime;
+
+    // No need to update previous times here, that is done in updatePdhMetrics
+
+    ULONGLONG totalTimeDelta = kernelTimeDelta + userTimeDelta;
+
+    if (totalTimeDelta == 0) {
+        return 0;
+    }
+
+    // CPU Usage = (Total Time - Idle Time) / Total Time * 100
+    int cpuUsage = (int)((totalTimeDelta - idleTimeDelta) * 100 / totalTimeDelta);
+
+    if (cpuUsage < 0) return 0;
+    if (cpuUsage > 100) return 100;
+
+    return cpuUsage;
+}
+
+int WindowsPlatform::getRamUsagePercent() {
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof(statex);
+
+    if (GlobalMemoryStatusEx(&statex)) {
+        return (int)statex.dwMemoryLoad;
+    }
+    
+    return 0;
+}
+
+std::string WindowsPlatform::getFreeDiskSpaceGB(const std::string& drivePath) {
+    ULARGE_INTEGER freeBytesAvailableToCaller;
+    ULARGE_INTEGER totalNumberOfBytes;
+    ULARGE_INTEGER totalNumberOfFreeBytes;
+
+    // Pseudocode plan:
+    // 1. Identify the problematic line: if (path.size() == 2 && path[1] == ":") path += "\\";
+    // 2. The error is caused by comparing path[1] (a char) to ":" (a const char*).
+    // 3. Fix by comparing path[1] to ':' (a char), not ":" (a string).
+    // 4. The rest of the code remains unchanged.
+
+    std::wstring wDrivePath = L"C:\\";
+    if (!drivePath.empty()) {
+        std::string path = drivePath;
+        if (path.size() == 2 && path[1] == ':') path += "\\";
+        wDrivePath = std::wstring(path.begin(), path.end());
+    }
+
+    if (GetDiskFreeSpaceExW(
+        wDrivePath.c_str(),
+        &freeBytesAvailableToCaller,
+        &totalNumberOfBytes,
+        &totalNumberOfFreeBytes
+    ))
+    {
+        double freeGB = (double)freeBytesAvailableToCaller.QuadPart / (1024.0 * 1024.0 * 1024.0);
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(1) << freeGB;
+        return ss.str();
+    }
+    return "Unknown";
+}
+
+std::string WindowsPlatform::getWindowsUpdateState() {
+    HKEY hKey;
+
+    LONG lResult = RegOpenKeyExA(
+        HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Auto Update\\RebootRequired",
+        0,
+        KEY_READ,
+        &hKey
+    );
+
+    if (lResult == ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        return "Pending Reboot";
+    }
+
+    lResult = RegOpenKeyExA(
+        HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\RebootPending",
+        0,
+        KEY_READ,
+        &hKey
+    );
+
+    if (lResult == ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        return "Pending Reboot";
+    }
+
+    return "Up to Date or Unknown";
+}
+
+void WindowsPlatform::updatePdhMetrics() {
+    if (m_hQuery) {
+        PdhCollectQueryData(m_hQuery);
+    }
+
+    updateCpuTimes();
+}
+
+float WindowsPlatform::getDiskQueueLength()
+{
+    if (m_hQuery == NULL || m_hDiskCounter == NULL) return 0.0f;
+
+    PDH_FMT_COUNTERVALUE value;
+    // PdhCollectQueryData is now called externally in updatePdhMetrics()
+    if (PdhGetFormattedCounterValue(m_hDiskCounter, PDH_FMT_FLOAT, NULL, &value) == ERROR_SUCCESS) {
+        return (float)value.doubleValue;
+    }
+    return 0.0f;
+}
+
+float WindowsPlatform::getNetworkRetransRate()
+{
+    if (m_hQuery == NULL || m_hNetRetransCounter == NULL) return 0.0f;
+
+    PDH_FMT_COUNTERVALUE value;
+    // PdhCollectQueryData is now called externally in updatePdhMetrics()
+    if (PdhGetFormattedCounterValue(m_hNetRetransCounter, PDH_FMT_FLOAT, NULL, &value) == ERROR_SUCCESS) {
+        return (float)value.doubleValue;
+    }
+    return 0.0f;
+}
+
 // Helper methods for the service
 void WindowsPlatform::reportStatus(DWORD currentState, DWORD win32ExitCode, DWORD waitHint)
 {
@@ -414,6 +646,225 @@ void WindowsPlatform::reportStatus(DWORD currentState, DWORD win32ExitCode, DWOR
     g_service_status.dwWin32ExitCode = win32ExitCode;
     g_service_status.dwWaitHint = waitHint;
     SetServiceStatus(g_status_handle, &g_service_status);
+}
+
+std::string WindowsPlatform::getSystemUptime()
+{
+    // Get the system tick count in milliseconds
+    ULONGLONG ms = GetTickCount64();
+
+    // Convert milliseconds to days, hours, minutes, seconds
+    ULONGLONG seconds = ms / 1000;
+    ULONGLONG minutes = seconds / 60;
+    ULONGLONG hours = minutes / 60;
+    ULONGLONG days = hours / 24;
+
+    seconds %= 60;
+    minutes %= 60;
+    hours %= 24;
+
+    std::stringstream ss;
+    ss << days << "d ";
+    ss << std::setw(2) << std::setfill('0') << hours << "h ";
+    ss << std::setw(2) << std::setfill('0') << minutes << "m ";
+    ss << std::setw(2) << std::setfill('0') << seconds << "s";
+
+    return ss.str();
+}
+
+std::string WindowsPlatform::getGpuDriverInfo() {
+    std::string result = "GPU: Not Found.";
+    IWbemLocator* pLoc = NULL;
+    IWbemServices* pSvc = NULL;
+    IEnumWbemClassObject* pEnumerator = NULL;
+
+    HRESULT hr = CoCreateInstance(
+        CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator, (LPVOID*)&pLoc
+    );
+
+    if (FAILED(hr)) goto cleanup;
+
+    hr = pLoc->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"),
+        NULL,
+        NULL,
+        0,
+        NULL,
+        0,
+        0,
+        &pSvc
+    );
+
+    if (FAILED(hr)) goto cleanup;
+
+    hr = CoSetProxyBlanket(
+        pSvc,
+        RPC_C_AUTHN_WINNT,
+        RPC_C_AUTHZ_NONE,
+        NULL,
+        RPC_C_AUTHN_LEVEL_CALL,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL,
+        EOAC_NONE
+    );
+
+    if (FAILED(hr)) goto cleanup;
+
+    hr = pSvc->ExecQuery(
+        _bstr_t(L"WQL"),
+        _bstr_t(L"SELECT Name, DriverVersion FROM Win32_VideoController"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL,
+        &pEnumerator
+    );
+
+    if (FAILED(hr)) goto cleanup;
+
+    IWbemClassObject* pclsObj = NULL;
+    ULONG uReturn = 0;
+    while (pEnumerator) {
+        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
+
+        if (0 == uReturn) break;
+
+        VARIANT vtPropName, vtPropVersion;
+        hr = pclsObj->Get(L"Name", 0, &vtPropName, 0, 0);
+        hr = pclsObj->Get(L"DriverVersion", 0, &vtPropVersion, 0, 0);
+
+        if (hr == S_OK) {
+            std::string name = WideToUtf8(vtPropName.bstrVal ? vtPropName.bstrVal : L"Unknown GPU");
+            std::string version = WideToUtf8(vtPropVersion.bstrVal ? vtPropVersion.bstrVal : L"Unknown Version");
+
+            if (name.find("Intel") != std::string::npos ||
+                name.find("HD Graphics") != std::string::npos ||
+                name.find("UHD Graphics") != std::string::npos ||
+                name.find("Xe Graphics") != std::string::npos) {
+                result = "GPU: " + name + " | Driver: " + version;
+                VariantClear(&vtPropName);
+                VariantClear(&vtPropVersion);
+                pclsObj->Release();
+                goto cleanup;
+            }
+
+            VariantClear(&vtPropName);
+            VariantClear(&vtPropVersion);
+        }
+
+        pclsObj->Release();
+    }
+
+cleanup:
+    if (pEnumerator) pEnumerator->Release();
+    if (pSvc) pSvc->Release();
+    if (pLoc) pLoc->Release();
+
+    return result;
+}
+
+float WindowsPlatform::getGpuUsagePercent() {
+    if (m_hQuery == NULL | m_hGpuTotalCounter == NULL) return 0.0f;
+
+    PDH_FMT_COUNTERVALUE_ITEM_W* items = nullptr;
+    DWORD bufferSize = 0;
+    DWORD item_count = 0;
+    float totalUsage = 0.0f;
+    PDH_STATUS status;
+
+    status = PdhGetFormattedCounterArrayW(m_hGpuTotalCounter, PDH_FMT_FLOAT, &bufferSize, &item_count, nullptr);
+
+    if (status != PDH_MORE_DATA && status != ERROR_SUCCESS) {
+        return 0.0f;
+    }
+
+    items = (PDH_FMT_COUNTERVALUE_ITEM_W*)malloc(bufferSize);
+    if (items == nullptr) return 0.0f;
+
+    status = PdhGetFormattedCounterArrayW(m_hGpuTotalCounter, PDH_FMT_FLOAT, &bufferSize, &item_count, items);
+
+    if (status == ERROR_SUCCESS) {
+        for (DWORD i = 0; i < item_count; i++) {
+            totalUsage += (float)items[i].FmtValue.doubleValue;
+        }
+    }
+
+    free(items);
+    return (totalUsage > 100.0f ? 100.0f : totalUsage);
+}
+
+std::string WindowsPlatform::getProcessName(HANDLE hProcess) {
+    wchar_t szProcessPath[MAX_PATH];
+    DWORD pathSize = MAX_PATH;
+
+    if (QueryFullProcessImageNameW(hProcess, 0, szProcessPath, &pathSize)) {
+        std::wstring wsPath = szProcessPath;
+        size_t lastSlash = wsPath.find_last_of(L"\\");
+        if (lastSlash != std::wstring::npos) {
+            return WideToUtf8(wsPath.substr(lastSlash + 1));
+        }
+
+        return WideToUtf8(wsPath);
+    }
+
+    TCHAR szProcessName[MAX_PATH] = TEXT("unknown");
+    DWORD bufferSize = sizeof(szProcessName) / sizeof(TCHAR);
+
+    if (GetModuleBaseName(hProcess, NULL, szProcessName, bufferSize)) {
+        return WideToUtf8(std::wstring(reinterpret_cast<const wchar_t*>(szProcessName)));
+    }
+
+    return "unknown";
+}
+
+std::string WindowsPlatform::getHighRamProcesses() {
+    const ULONGLONG HIGH_RAM_THRESHOLD_MB = 500;
+    const ULONGLONG HIGH_RAM_THRESHOLD_BYTES = HIGH_RAM_THRESHOLD_MB * 1024 * 1024;
+
+    DWORD aProcesses[2048];
+    DWORD cbNeeded;
+    DWORD cProcesses;
+    std::stringstream ss;
+    bool first = true;
+
+    if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded)) {
+        return "error: EnumProcesses failed";
+    }
+
+    cProcesses = cbNeeded / sizeof(DWORD);
+
+    for (DWORD i = 0; i < cProcesses; i++) {
+        if (aProcesses[i] == 0) continue;
+
+        HANDLE hProcess = OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, 
+            FALSE, 
+            aProcesses[i]
+        );
+
+        if (hProcess == NULL) continue;
+
+        PROCESS_MEMORY_COUNTERS pmc;
+
+        if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
+            if (pmc.PagefileUsage >= HIGH_RAM_THRESHOLD_BYTES) {
+                std::string name = getProcessName(hProcess);
+
+                ULONGLONG ram_mb = pmc.PagefileUsage / (1024 * 1024);
+
+                if (!first) {
+                    ss << "|";
+                }
+
+                ss << name << "(" << aProcesses[i] << ")=" << ram_mb  << "MB";
+                first = false;
+            }
+        }
+
+        CloseHandle(hProcess);
+    }
+
+    std::string result = ss.str();
+    return result.empty() ? "None" : result;
 }
 
 void WindowsPlatform::registerServiceHandler()
