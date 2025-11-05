@@ -23,6 +23,7 @@ class Platform{
     virtual bool openSerialPort(const std::string& portName, int baudrate) = 0;
     virtual void closeSerialPort() = 0;
     virtual bool writeSerial(const std::string& data) = 0;
+    virtual bool readSerial(std::string &readData) = 0;
     virtual void logMessage(const std::string& message) = 0;
 
     virtual int getCpuUsagePercent() = 0;
@@ -37,6 +38,8 @@ class Platform{
     virtual std::string getGpuDriverInfo() = 0;
     virtual float getGpuUsagePercent() = 0;
     virtual std::string getHighRamProcesses() = 0;
+
+    virtual void showMessageDialog(const std::string& title, const std::string& message) = 0;
 
     virtual int run(
         int argc, char* argv[], 

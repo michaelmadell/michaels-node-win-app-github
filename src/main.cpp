@@ -118,6 +118,34 @@ void checkSystemState() {
     }
 }
 
+void processIncomingCommand(const std::string& command) {
+    const std::string prefix = "c2a, ";
+    if (command.size() > prefix.size() && command.substr(0, prefix.size()) == prefix) {
+        std::string message = command.substr(prefix.size());
+        platform->logMessage("Received C2A Command: " + message);
+        std::cout << "[DEBUG] Received C2A Command: " << message << std::endl;
+        platform->showMessageDialog("Command from BMC", message);
+    }
+}
+
+void processIncomingSerialData() {
+    static std::string rxBuffer;
+    std::string newData;
+    platform->readSerial(newData);
+    rxBuffer+=newData;
+    size_t pos=0;
+    while((pos=rxBuffer.find_first_of("\r\n"))!=std::string::npos) {
+        std::string line=rxBuffer.substr(0, pos);
+        if (!line.empty()) {
+            processIncomingCommand(line);
+        }
+        rxBuffer.erase(0,pos+1);
+        if (!rxBuffer.empty()&&(rxBuffer[0]=='\r'||rxBuffer[0]=='\n')) {
+            rxBuffer.erase(0, 1);
+        }
+    }
+}
+
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
@@ -156,29 +184,36 @@ void serialThread() {
     currentState.username = platform->getLoggedInUser();
     sendLineToBmc("username, " + currentState.username);
 
+    auto lastCheckTime = std::chrono::steady_clock::now();
+    const auto checkInterval = std::chrono::seconds(5);
+
     while (!g_terminate.load()) {
-        std::cout << "[DEBUG] Polling for system state..." << std::endl;
-        std::string newHostname = platform->getHostname();
-        std::string newUsername = platform->getLoggedInUser();
-        std::vector<NetworkInterface> newInterfaces = platform->getNetworkInterfaces();
+        processIncomingSerialData();
+        auto now = std::chrono::steady_clock::now();
+        if (now - lastCheckTime >= checkInterval) {
+            std::cout << "[DEBUG] Polling for system state..." << std::endl;
+            std::string newHostname = platform->getHostname();
+            std::string newUsername = platform->getLoggedInUser();
+            std::vector<NetworkInterface> newInterfaces = platform->getNetworkInterfaces();
 
-        {
-            std::lock_guard<std::mutex> lock(stateMutex);
+            {
+                std::lock_guard<std::mutex> lock(stateMutex);
 
-            if (currentState.hostname != newHostname) {
-                currentState.hostname = newHostname;
-                sendLineToBmc("hostname, " + currentState.hostname);
-            }
-            if (currentState.username != newUsername) {
-                currentState.username = newUsername;
-                sendLineToBmc("username, " + currentState.username);
-            }
-            if (currentState.networkInterfaces != newInterfaces) {
-                currentState.networkInterfaces = newInterfaces;
-                for (const auto& iface : newInterfaces) { // Iterate over the new interfaces
-                    std::stringstream ss;
-                    ss << "network, " << iface.macAddress << ", " << iface.linkStatus << ", " << iface.ipv4 << ", " << iface.ipv6 << ", " << iface.dhcp << ", " << iface.name;
-                    sendLineToBmc(ss.str());
+                if (currentState.hostname != newHostname) {
+                    currentState.hostname = newHostname;
+                    sendLineToBmc("hostname, " + currentState.hostname);
+                }
+                if (currentState.username != newUsername) {
+                    currentState.username = newUsername;
+                    sendLineToBmc("username, " + currentState.username);
+                }
+                if (currentState.networkInterfaces != newInterfaces) {
+                    currentState.networkInterfaces = newInterfaces;
+                    for (const auto& iface : newInterfaces) { // Iterate over the new interfaces
+                        std::stringstream ss;
+                        ss << "network, " << iface.macAddress << ", " << iface.linkStatus << ", " << iface.ipv4 << ", " << iface.ipv6 << ", " << iface.dhcp << ", " << iface.name;
+                        sendLineToBmc(ss.str());
+                    }
                 }
             }
         }
@@ -247,3 +282,5 @@ int main(int argc, char* argv[]) {
     std::cout << "[DEBUG] platform->run() has exited. Application terminating." << std::endl;
     return 0;
 }
+
+

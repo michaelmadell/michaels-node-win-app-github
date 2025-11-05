@@ -70,6 +70,7 @@ public:
     bool openSerialPort(const std::string &portName, int baudrate) override;
     void closeSerialPort() override;
     bool writeSerial(const std::string &data) override;
+    bool readSerial(std::string &readData) override;
     void logMessage(const std::string &message) override;
     int getCpuUsagePercent() override;
     int getRamUsagePercent() override;
@@ -82,6 +83,7 @@ public:
     std::string getGpuDriverInfo() override;
     float getGpuUsagePercent() override;
     std::string getHighRamProcesses() override;
+    void showMessageDialog(const std::string& title, const std::string& message) override;
 
     int run(
         int argc, char *argv[],
@@ -432,9 +434,9 @@ bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
 
     // Set timeouts
     COMMTIMEOUTS timeouts = {0};
-    timeouts.ReadIntervalTimeout = 50;
-    timeouts.ReadTotalTimeoutConstant = 50;
-    timeouts.ReadTotalTimeoutMultiplier = 10;
+    timeouts.ReadIntervalTimeout = 5;
+    timeouts.ReadTotalTimeoutConstant = 5;
+    timeouts.ReadTotalTimeoutMultiplier = 1;
     timeouts.WriteTotalTimeoutConstant = 50;
     timeouts.WriteTotalTimeoutMultiplier = 10;
 
@@ -446,6 +448,7 @@ bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
 
     return true;
 }
+
 void WindowsPlatform::closeSerialPort()
 {
     if (hSerial != INVALID_HANDLE_VALUE)
@@ -454,6 +457,7 @@ void WindowsPlatform::closeSerialPort()
         hSerial = INVALID_HANDLE_VALUE;
     }
 }
+
 bool WindowsPlatform::writeSerial(const std::string &data)
 {
     if (hSerial == INVALID_HANDLE_VALUE)
@@ -461,6 +465,36 @@ bool WindowsPlatform::writeSerial(const std::string &data)
     DWORD bytesWritten = 0;
     return WriteFile(hSerial, data.c_str(), (DWORD)data.length(), &bytesWritten, NULL);
 }
+
+bool WindowsPlatform::readSerial(std::string &readData) {
+    if (hSerial == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    char buffer[256];
+    DWORD bytesRead = 0;
+
+    if (ReadFile(hSerial, buffer, sizeof(buffer) -1, &bytesRead, NULL)) {
+        if (bytesRead > 0) {
+            readData.append(buffer, bytesRead);
+            return true;
+        }
+    }
+    return false;
+}
+
+void WindowsPlatform::showMessageDialog(const std::string& title, const std::string& message) {
+    std::wstring wTitle(title.begin(), title.end());
+    std::wstring wMessage(message.begin(), message.end());
+
+    MessageBoxW(
+        NULL,
+        wMessage.c_str(),
+        wTitle.c_str(),
+        MB_OK | MB_ICONINFORMATION
+    );
+}
+
 void WindowsPlatform::logMessage(const std::string &message)
 {
     const wchar_t *dirPath = L"C:\\ProgramData\\ahk";
@@ -576,11 +610,13 @@ std::string WindowsPlatform::getFreeDiskSpaceGB(const std::string& drivePath) {
 std::string WindowsPlatform::getWindowsUpdateState() {
     HKEY hKey;
 
+    const REGSAM samDesired = KEY_READ | KEY_WOW64_64KEY;
+
     LONG lResult = RegOpenKeyExA(
         HKEY_LOCAL_MACHINE,
         "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Auto Update\\RebootRequired",
         0,
-        KEY_READ,
+        samDesired,
         &hKey
     );
 
@@ -593,7 +629,7 @@ std::string WindowsPlatform::getWindowsUpdateState() {
         HKEY_LOCAL_MACHINE,
         "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\RebootPending",
         0,
-        KEY_READ,
+        samDesired,
         &hKey
     );
 
