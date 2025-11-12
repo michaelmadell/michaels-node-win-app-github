@@ -146,13 +146,41 @@ void processIncomingSerialData() {
     }
 }
 
+void readSerialPortWorker() {
+    platform->logMessage("Serial worker thread started.");
+    std::string readData;
+    // ... other variables
+
+    while (!g_terminate.load()) {
+        
+        // This call is now NON-BLOCKING (returns immediately if no data is ready)
+        if (platform->readSerial(readData)) {
+            // --- SUCCESSFUL READ / Data Processing ---
+            // ... your processing logic
+        } 
+        
+        else {
+            // --- FAILED READ / No Data Available ---
+            
+            // CRITICAL: Check exit flag immediately
+            if (g_terminate.load()) {
+                break; 
+            }
+            
+            // CRITICAL: Sleep briefly to prevent 100% CPU spin when no data is available
+            std::this_thread::sleep_for(std::chrono::milliseconds(5)); 
+        }
+    }
+    platform->logMessage("Serial worker thread finished cleanly.");
+}
+
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
     #ifdef _WIN32
         const std::string portName = SERIAL_PORT;
     #else
-        const std::string portName = "/dev/ttyS2"; // Make sure this is your correct port
+        const std::string portName = "/dev/ttyUSB0"; // Make sure this is your correct port
     #endif
 
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
@@ -178,6 +206,7 @@ void serialThread() {
     std::cout << "[DEBUG] Sending initial messages..." << std::endl;
     sendLineToBmc("appVersion, " + versionStream.str());
     sendLineToBmc("osVersion, " + platform->getOsVersion());
+    sendLineToBmc("osBuild, " + platform->getOsBuild());
     sendLineToBmc("sessionState, 0");
     std::cout << "[DEBUG] Initial messages sent." << std::endl;
 
@@ -246,6 +275,7 @@ int main(int argc, char* argv[]) {
         // on_stop callback
         [&]() {
             std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread." << std::endl;
+            platform->closeSerialPort();
             g_terminate = true;
             if (workerThread.joinable()) {
                 workerThread.join();

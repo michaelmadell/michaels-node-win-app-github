@@ -19,6 +19,7 @@ class Platform{
     virtual std::string getHostname() = 0;
     virtual std::string getLoggedInUser() = 0;
     virtual std::string getOsVersion() = 0;
+    virtual std::string getOsBuild() = 0;
 
     virtual bool openSerialPort(const std::string& portName, int baudrate) = 0;
     virtual void closeSerialPort() = 0;

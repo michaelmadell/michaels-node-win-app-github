@@ -16,6 +16,7 @@
 #include <Pdh.h>
 #include <WbemIdl.h>
 #include <comutil.h>
+#include "Windows_Addon.h"
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -23,7 +24,7 @@
 #pragma comment(lib, "setupapi.lib")
 #pragma comment(lib, "Pdh.lib")
 #pragma comment(lib, "Wbemuuid.lib")
-#pragma comment(lib, "ole32.lib")     // <<< FIX: Required for CoInitializeEx, CoUninitialize, CoCreateInstance, etc.
+#pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "comsuppw.lib")
 #pragma comment(lib, "Psapi.lib")
 
@@ -38,6 +39,9 @@ HCOUNTER m_hNetRetransCounter = NULL;
 #ifndef PDH_MORE_DATA
 #define PDH_MORE_DATA ((PDH_STATUS)0x800007D2)
 #endif
+
+static const wchar_t* const LOG_DIR_PATH = L"C:\\ProgramData\\ahk";
+static const wchar_t* const LOG_FILE_PATH = L"C:\\ProgramData\\ahk\\node-win-app.log";
 
 static ULONGLONG FileTimeToInt64(const FILETIME& ft) {
     return ((ULONGLONG)ft.dwHighDateTime) << 32 | ((ULONGLONG)ft.dwLowDateTime);
@@ -67,6 +71,7 @@ public:
     std::string getHostname() override;
     std::string getLoggedInUser() override;
     std::string getOsVersion() override;
+    std::string getOsBuild() override;
     bool openSerialPort(const std::string &portName, int baudrate) override;
     void closeSerialPort() override;
     bool writeSerial(const std::string &data) override;
@@ -100,21 +105,23 @@ public:
     void stopService();
 
 private:
-    HANDLE hSerial = INVALID_HANDLE_VALUE;
+    UniqueHandle hSerial = UniqueHandle(INVALID_HANDLE_VALUE);
     VoidCallback on_start_callback;
     VoidCallback on_stop_callback;
     PowerStateCallback power_callback;
     SessionStateCallback session_callback;
     SERVICE_STATUS g_service_status = {};
     SERVICE_STATUS_HANDLE g_status_handle = nullptr;
-    HANDLE g_stop_event = nullptr;
+    UniqueHandle g_stop_event = nullptr;
     ULONGLONG m_previousIdleTime = 0;
     ULONGLONG m_previousKernelTime = 0;
     ULONGLONG m_previousUserTime = 0;
-    PDH_HQUERY m_hQuery = NULL;
+    UniquePdhQuery m_hQuery = nullptr;
     PDH_HCOUNTER m_hDiskCounter = NULL;
     PDH_HCOUNTER m_hNetRetransCounter = NULL;
     PDH_HCOUNTER m_hGpuTotalCounter = NULL;
+
+    ComInitializer com_initializer;
 
     void updateCpuTimes();
     std::string getProcessName(HANDLE hProcess);
@@ -168,40 +175,36 @@ std::unique_ptr<Platform> createPlatform()
 WindowsPlatform::WindowsPlatform()
 {
     g_platform_instance = this;
-    g_stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    g_stop_event = UniqueHandle(CreateEvent(NULL, TRUE, FALSE, NULL));
 
     updateCpuTimes();
 
-    // Initialize PDH Query for Disk and Network Counters
-    if (PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS) {
-        // Counter for Avg. Disk Queue Length for the entire physical disk subsystem
-        PdhAddCounterA(m_hQuery, "\\PhysicalDisk(_Total)\\Avg. Disk Queue Length", 0, &m_hDiskCounter);
-        // Counter for Segments Retransmitted/sec for IPv4 traffic
-        PdhAddCounterA(m_hQuery, "\\TCPv4\\Segments Retransmitted/sec", 0, &m_hNetRetransCounter);
+    PDH_HQUERY rawQuery = NULL;
+    if (PdhOpenQuery(NULL, 0, &rawQuery) == ERROR_SUCCESS) {
+        // Store the raw handle in the unique_ptr wrapper
+        m_hQuery = UniquePdhQuery(rawQuery);
 
-        PdhAddCounterW(m_hQuery, L"\\GPU Engine(*)\\Utilization Percentage", 0, &m_hGpuTotalCounter);
+        // Counter for Avg. Disk Queue Length for the entire physical disk subsystem
+        PdhAddCounterA(m_hQuery.get(), "\\PhysicalDisk(_Total)\\Avg. Disk Queue Length", 0, &m_hDiskCounter);
+        // Counter for Segments Retransmitted/sec for IPv4 traffic
+        PdhAddCounterA(m_hQuery.get(), "\\TCPv4\\Segments Retransmitted/sec", 0, &m_hNetRetransCounter);
+
+        PdhAddCounterW(m_hQuery.get(), L"\\GPU Engine(*)\\Utilization Percentage", 0, &m_hGpuTotalCounter);
 
         // Collect initial data sample for counters that require two samples (like averages/rates)
-        PdhCollectQueryData(m_hQuery);
+        PdhCollectQueryData(m_hQuery.get());
     }
     else {
         logMessage("[WARNING] Failed to open PDH Query for system metrics.");
-        m_hQuery = NULL;
     }
 
-    HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-    if (FAILED(hr)) {
+    if (!com_initializer.Succeeded()) {
         logMessage("[WARNING] Failed to initialize COM for WMI access.");
     }
 }
 
 WindowsPlatform::~WindowsPlatform()
 {
-    if (m_hQuery) {
-        PdhCloseQuery(m_hQuery);
-    }
-    CoUninitialize();
-    CloseHandle(g_stop_event);
 }
 
 int WindowsPlatform::run(
@@ -393,31 +396,51 @@ std::string WindowsPlatform::getOsVersion()
     return finalProductName;
 }
 
+std::string WindowsPlatform::getOsBuild()
+{
+    HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
+    if (!hMod) return "Unknown Build (ntdll.dll)";
+
+    RtlGetVersionPtr fn = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
+    if (!fn) return "Unknown Build (RtlGetVersion)";
+
+    RTL_OSVERSIONINFOW rovi = {0};
+    rovi.dwOSVersionInfoSize = sizeof(rovi);
+    
+    if (fn(&rovi) != 0) return "Unknown Build (RtlGetVersion failed)";
+
+    // Format the version as a string: Major.Minor.Build
+    std::ostringstream version;
+    version << rovi.dwMajorVersion << "." << rovi.dwMinorVersion << "." << rovi.dwBuildNumber;
+    
+    return version.str();
+}
+
 bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
 {
-    // The port name is passed in, but we will use the one from version.h for this implementation
-    hSerial = CreateFileA(
+    HANDLE rawHandle = CreateFileA(
         portName.c_str(),
         GENERIC_READ | GENERIC_WRITE,
         0,
         NULL,
         OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL,
-        NULL);
+        NULL
+    );
 
-    if (hSerial == INVALID_HANDLE_VALUE)
+    hSerial.reset(rawHandle);
+
+    if (hSerial.get() == INVALID_HANDLE_VALUE)
     {
-        // You can get more detailed error info here if needed
-        // DWORD error = GetLastError();
         return false;
     }
 
     DCB dcbSerialParams = {0};
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 
-    if (!GetCommState(hSerial, &dcbSerialParams))
+    if (!GetCommState(hSerial.get(), &dcbSerialParams))
     {
-        CloseHandle(hSerial);
+        hSerial.reset(INVALID_HANDLE_VALUE);
         return false;
     }
 
@@ -426,9 +449,9 @@ bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
     dcbSerialParams.StopBits = ONESTOPBIT;
     dcbSerialParams.Parity = NOPARITY;
 
-    if (!SetCommState(hSerial, &dcbSerialParams))
+    if (!SetCommState(hSerial.get(), &dcbSerialParams))
     {
-        CloseHandle(hSerial);
+        hSerial.reset();
         return false;
     }
 
@@ -440,9 +463,9 @@ bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
     timeouts.WriteTotalTimeoutConstant = 50;
     timeouts.WriteTotalTimeoutMultiplier = 10;
 
-    if (!SetCommTimeouts(hSerial, &timeouts))
+    if (!SetCommTimeouts(hSerial.get(), &timeouts))
     {
-        CloseHandle(hSerial);
+        hSerial.reset();
         return false;
     }
 
@@ -451,30 +474,26 @@ bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
 
 void WindowsPlatform::closeSerialPort()
 {
-    if (hSerial != INVALID_HANDLE_VALUE)
-    {
-        CloseHandle(hSerial);
-        hSerial = INVALID_HANDLE_VALUE;
-    }
+    hSerial.reset(INVALID_HANDLE_VALUE);
 }
 
 bool WindowsPlatform::writeSerial(const std::string &data)
 {
-    if (hSerial == INVALID_HANDLE_VALUE)
+    if (hSerial.get() == INVALID_HANDLE_VALUE)
         return false;
     DWORD bytesWritten = 0;
-    return WriteFile(hSerial, data.c_str(), (DWORD)data.length(), &bytesWritten, NULL);
+    return WriteFile(hSerial.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL);
 }
 
 bool WindowsPlatform::readSerial(std::string &readData) {
-    if (hSerial == INVALID_HANDLE_VALUE) {
+    if (!hSerial) {
         return false;
     }
 
     char buffer[256];
     DWORD bytesRead = 0;
 
-    if (ReadFile(hSerial, buffer, sizeof(buffer) -1, &bytesRead, NULL)) {
+    if (ReadFile(hSerial.get(), buffer, sizeof(buffer) -1, &bytesRead, NULL)) {
         if (bytesRead > 0) {
             readData.append(buffer, bytesRead);
             return true;
@@ -497,13 +516,10 @@ void WindowsPlatform::showMessageDialog(const std::string& title, const std::str
 
 void WindowsPlatform::logMessage(const std::string &message)
 {
-    const wchar_t *dirPath = L"C:\\ProgramData\\ahk";
-    const wchar_t *logPath = L"C:\\ProgramData\\ahk\\node-win-app.log";
-
-    DWORD fileAttr = GetFileAttributesW(dirPath);
+    DWORD fileAttr = GetFileAttributesW(LOG_DIR_PATH);
     if (fileAttr == INVALID_FILE_ATTRIBUTES)
     {
-        if (!CreateDirectoryW(dirPath, NULL))
+        if (!CreateDirectoryW(LOG_DIR_PATH, NULL))
         {
             // Could add error handling here, but for now, we'll just fail silently
             // if the directory can't be created.
@@ -511,7 +527,7 @@ void WindowsPlatform::logMessage(const std::string &message)
         }
     }
 
-    std::ofstream logFile(logPath, std::ios::app);
+    std::ofstream logFile(LOG_FILE_PATH, std::ios::app);
     if (logFile.is_open())
     {
         SYSTEMTIME time;
@@ -578,13 +594,7 @@ std::string WindowsPlatform::getFreeDiskSpaceGB(const std::string& drivePath) {
     ULARGE_INTEGER freeBytesAvailableToCaller;
     ULARGE_INTEGER totalNumberOfBytes;
     ULARGE_INTEGER totalNumberOfFreeBytes;
-
-    // Pseudocode plan:
-    // 1. Identify the problematic line: if (path.size() == 2 && path[1] == ":") path += "\\";
-    // 2. The error is caused by comparing path[1] (a char) to ":" (a const char*).
-    // 3. Fix by comparing path[1] to ':' (a char), not ":" (a string).
-    // 4. The rest of the code remains unchanged.
-
+    
     std::wstring wDrivePath = L"C:\\";
     if (!drivePath.empty()) {
         std::string path = drivePath;
@@ -642,8 +652,8 @@ std::string WindowsPlatform::getWindowsUpdateState() {
 }
 
 void WindowsPlatform::updatePdhMetrics() {
-    if (m_hQuery) {
-        PdhCollectQueryData(m_hQuery);
+    if (m_hQuery.get()) {
+        PdhCollectQueryData((PDH_HQUERY)m_hQuery.get());
     }
 
     updateCpuTimes();
@@ -651,7 +661,7 @@ void WindowsPlatform::updatePdhMetrics() {
 
 float WindowsPlatform::getDiskQueueLength()
 {
-    if (m_hQuery == NULL || m_hDiskCounter == NULL) return 0.0f;
+    if (m_hQuery.get() == NULL || m_hDiskCounter == NULL) return 0.0f;
 
     PDH_FMT_COUNTERVALUE value;
     // PdhCollectQueryData is now called externally in updatePdhMetrics()
@@ -663,7 +673,7 @@ float WindowsPlatform::getDiskQueueLength()
 
 float WindowsPlatform::getNetworkRetransRate()
 {
-    if (m_hQuery == NULL || m_hNetRetransCounter == NULL) return 0.0f;
+    if (m_hQuery.get() == NULL || m_hNetRetransCounter == NULL) return 0.0f;
 
     PDH_FMT_COUNTERVALUE value;
     // PdhCollectQueryData is now called externally in updatePdhMetrics()
@@ -799,7 +809,7 @@ cleanup:
 }
 
 float WindowsPlatform::getGpuUsagePercent() {
-    if (m_hQuery == NULL | m_hGpuTotalCounter == NULL) return 0.0f;
+    if (m_hQuery.get() == NULL | m_hGpuTotalCounter == NULL) return 0.0f;
 
     PDH_FMT_COUNTERVALUE_ITEM_W* items = nullptr;
     DWORD bufferSize = 0;
@@ -813,8 +823,8 @@ float WindowsPlatform::getGpuUsagePercent() {
         return 0.0f;
     }
 
-    items = (PDH_FMT_COUNTERVALUE_ITEM_W*)malloc(bufferSize);
-    if (items == nullptr) return 0.0f;
+    std::vector<BYTE> buffer(bufferSize);
+    items = (PDH_FMT_COUNTERVALUE_ITEM_W*)buffer.data();
 
     status = PdhGetFormattedCounterArrayW(m_hGpuTotalCounter, PDH_FMT_FLOAT, &bufferSize, &item_count, items);
 
@@ -824,7 +834,6 @@ float WindowsPlatform::getGpuUsagePercent() {
         }
     }
 
-    free(items);
     return (totalUsage > 100.0f ? 100.0f : totalUsage);
 }
 
@@ -913,7 +922,7 @@ void WindowsPlatform::registerServiceHandler()
 
 HANDLE WindowsPlatform::getStopEvent()
 {
-    return g_stop_event;
+    return g_stop_event.get();
 }
 
 void WindowsPlatform::startService()
@@ -926,7 +935,7 @@ void WindowsPlatform::stopService()
 {
     if (on_stop_callback)
         on_stop_callback();
-    SetEvent(g_stop_event);
+    SetEvent(g_stop_event.get());
 }
 
 #endif // _WIN32

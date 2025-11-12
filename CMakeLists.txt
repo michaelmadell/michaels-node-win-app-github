@@ -45,7 +45,18 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES src/LinuxPlatform.cpp)
 endif()
-add_executable(CoreStationHXAgent ${CORE_SOURCES} "resource.h" "version.h")
+
+# The Windows-specific resource files (like resource.h) should only be compiled 
+# when WIN32 is true. We remove them here and rely only on the C++ source list.
+add_executable(CoreStationHXAgent ${CORE_SOURCES}) 
+
+# OPTIONAL: If you need to include the Windows resource files again 
+# for the Windows build, you'd add them conditionally like this:
+if(WIN32)
+    target_sources(CoreStationHXAgent PRIVATE "resource.h" "version.h")
+    # You would also typically need the .rc file for the resource compiler
+    # target_sources(CoreStationHXAgent PRIVATE "app.rc")
+endif()
 
 if(WIN32)
     target_link_libraries(CoreStationHXAgent PRIVATE iphlpapi ws2_32 wtsapi32 setupapi user32 shell32)
