@@ -97,7 +97,9 @@ private:
 			// Send entire line to tray application (previously only "c2a" commands were forwarded).
 			// This ensures TrayApp receives all serial data lines.
 			if (!line.empty()) {
+#ifdef _WIN32
 				notify_agent(line);
+#endif
 			}
 
 			// Existing command parsing retained for local handling/logging
@@ -119,6 +121,7 @@ private:
 		}
 	}
 
+#ifdef _WIN32
 	void notify_agent(const std::string& msg) {
 		try {
 			ip::tcp::socket sock(io_);
@@ -143,6 +146,7 @@ private:
 			std::cerr << "IPC Error: " << e.what() << std::endl;
 		}
 	}
+#endif
 
 	void send_startup_info() {
 		std::ostringstream ss;
@@ -161,14 +165,18 @@ private:
 	}
 
 	void start_telemetry_loop() {
+		std::cout << "[DEBUG] Starting telemetry timer (" << UPDATE_INTERVAL_SEC << " seconds)" << std::endl;
 		telemetry_timer_.expires_after(std::chrono::seconds(UPDATE_INTERVAL_SEC));
 		telemetry_timer_.async_wait(boost::bind(&ServiceApp::handle_telemetry_timer, this, placeholders::error));
 	}
 
 	void handle_telemetry_timer(const boost::system::error_code& e) {
+		std::cout << "[DEBUG] Timer fired, error_code: " << e.message() << std::endl;
 		if (e != error::operation_aborted) {
 			send_periodic_changes();
 			start_telemetry_loop();
+		} else {
+			std::cout << "[DEBUG] Timer aborted, not restarting" << std::endl;
 		}
 	}
 
@@ -198,14 +206,23 @@ private:
 			any = true;
 		}
 
-		if (cpu) {
+		if (std::abs(cpu - last_cpu_) >= EPS) {
+			ss << "cpu, " << cpu << "\r\n";
+			last_cpu_ = cpu;
+			any = true;
+		} else {
 			ss << "cpu, " << cpu << "\r\n";
 			any = true;
 		}
 
-		if (ram) {
+		if (std::abs(ram - last_ram_) >= EPS) {
 			ss << "ram, " << ram << "\r\n";
+			last_ram_ = ram;
 			any = true;
+		} else {
+			ss << "ram, " << ram << "\r\n"; 
+			any = true;
+			
 		}
 
 		if (!nets_equal(nets, last_nets_)) {
@@ -230,6 +247,8 @@ private:
 
 			// When sending telemetry to serial, also forward same payload to Tray app.
 			async_send_payload(serial_, std::move(payload));
+		} else {
+			std::cout << "[DEBUG] No telemetry changes detected" << std::endl;
 		}
 	}
 
@@ -251,6 +270,7 @@ private:
 
 	// Overload for serial_port: forward payload to Tray app, then send to serial.
 	void async_send_payload(serial_port& stream, std::string payload) {
+#ifdef _WIN32
 		// Forward the same payload to the Tray application via IPC.
 		// Use notify_agent which connects synchronously for reliability here.
 		try {
@@ -259,6 +279,7 @@ private:
 		catch (...) {
 			// ignore notify failure; continue with serial send
 		}
+#endif
 
 		// Proceed to write to serial as before.
 		auto data = std::make_shared<std::string>(std::move(payload));
@@ -336,7 +357,7 @@ int main(int argc, char* argv[]) {
 
 		std::string port = "COM3";
 #ifndef _WIN32
-		port = "/dev/ttyS2";
+		port = "/dev/pts/3";
 #endif
 		if (argc > 1) port = argv[1];
 
