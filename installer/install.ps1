@@ -23,7 +23,7 @@ param (
     [string]$ServiceName = "CoreStationService",
 
     [Parameter()]
-    [string]$ExePath = "$PSScriptRoot\CoreStation_HX_Agent.exe"
+    [string]$ExePath = "$PSScriptRoot\nodeWinApp.exe"
 )
 
 # 1. Verify the script is running with Administrator privileges
@@ -67,10 +67,14 @@ try {
         Write-Host "Existing service removed successfully."
     }
 
+    Copy-Item -Path $ExePath -Destination "C:\ProgramData\ahk"
+
+    $NewExePath = "C:\ProgramData\ahk\nodeWinApp.exe"
+
     # 4. Create the new service
-    Write-Host "Creating new service from executable: '$ExePath'..."
+    Write-Host "Creating new service from executable: '$NewExePath'..."
     New-Service -Name $ServiceName `
-                -BinaryPathName $ExePath `
+                -BinaryPathName $NewExePath `
                 -DisplayName "CoreStation HX Agent" `
                 -StartupType Automatic `
                 -Description "Passes network, session, and power status to the CoreStation management controller."
@@ -86,10 +90,10 @@ try {
         Start-Service -Name $ServiceName
     }
 
-    Write-Host "[✓] Service '$ServiceName' installed and started successfully." -ForegroundColor Green
+    Write-Host "Service '$ServiceName' installed and started successfully." -ForegroundColor Green
 }
 catch {
-    Write-Error "[✕] An error occurred during installation: $_"
+    Write-Error "An error occurred during installation: $_"
     # If the script fails, try to clean up the partially installed service
     if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
         Write-Warning "Attempting to clean up partially installed service..."
