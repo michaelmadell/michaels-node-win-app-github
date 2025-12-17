@@ -98,5 +98,5 @@ build.sh-example
 *.dwo
 
 
-.vs
-.vscode
+.vs/
+.vscode/
