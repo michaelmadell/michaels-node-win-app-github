@@ -274,11 +274,11 @@ std::vector<NetworkInterface> WindowsPlatform::getNetworkInterfaces()
             {
                 if (i != 0)
                     macStream << ":";
-                macStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(pAdapter->PhysicalAddress[i]);
+                macStream << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(pAdapter->PhysicalAddress[i]);
             }
             iface.macAddress = macStream.str();
 
-            if (iface.macAddress.rfind("00:17", 0) == 0 || iface.macAddress.rfind("00:13", 0) == 0)
+            if (iface.macAddress.compare(0, 5, "00:17") == 0 || iface.macAddress.compare(0, 5, "00:13") == 0)
             {
                 iface.name = pAdapter->FriendlyName ? WideToUtf8(pAdapter->FriendlyName) : "Unknown";
                 iface.linkStatus = (pAdapter->OperStatus == IfOperStatusUp) ? "up" : "down";

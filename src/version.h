@@ -5,8 +5,8 @@
 #define VERSION_RELEASE 11
 #define VERSION_BUILD 1
 #define VERSION_EXTRAVERSION "rc"
-#define VERSION_RC_NO 2
-#define VERSION_ADHOC_NO 2
+#define VERSION_RC_NO 3
+#define VERSION_ADHOC_NO 3
 
 #define SERIAL_PORT "\\\\.\\COM3"
 

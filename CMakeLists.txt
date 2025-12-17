@@ -53,7 +53,7 @@ add_executable(CoreStationHXAgent ${CORE_SOURCES})
 # OPTIONAL: If you need to include the Windows resource files again 
 # for the Windows build, you'd add them conditionally like this:
 if(WIN32)
-    target_sources(CoreStationHXAgent PRIVATE "resource.h" "version.h")
+    target_sources(CoreStationHXAgent PRIVATE "src\\version.h")
     # You would also typically need the .rc file for the resource compiler
     # target_sources(CoreStationHXAgent PRIVATE "app.rc")
 endif()

@@ -8,6 +8,9 @@
 #include <mutex>
 #include <atomic>
 #include <sstream>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 std::unique_ptr<Platform> platform;
 std::unique_ptr<Platform> createPlatform();
@@ -33,7 +36,7 @@ void sendLineToBmc(const std::string& output_string) {
 void heartbeatThread() {
     platform->logMessage("Heartbeat thread started.");
     while (!g_terminate.load()) {
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+		std::this_thread::sleep_for(std::chrono::seconds(30)); // Heartbeat interval - 30s for Release Candidate
         if (g_terminate.load()) {
             break;
         }
@@ -114,7 +117,19 @@ void checkSystemState() {
 
     if (currentState != previousState){
         // check change logic
-        sendLineToBmc("hostname, " + currentState.hostname);
+        if (currentState.hostname != previousState.hostname) {
+            sendLineToBmc("hostname, " + currentState.hostname);
+		}
+        if (currentState.username != previousState.username) {
+            sendLineToBmc("username, " + currentState.username);
+        }
+        if (currentState.networkInterfaces != previousState.networkInterfaces) {
+            for (const auto& iface : currentState.networkInterfaces) {
+                std::stringstream ss;
+                ss << "network, " << iface.macAddress << ", " << iface.linkStatus << ", " << iface.ipv4 << ", " << iface.ipv6 << ", " << iface.dhcp << ", " << iface.name;
+                sendLineToBmc(ss.str());
+            }
+        }
     }
 }
 
@@ -189,6 +204,9 @@ void serialThread() {
     if (!platform->openSerialPort(portName, 115200)) { 
         std::cerr << "[DEBUG] FATAL: platform->openSerialPort() returned false. Thread is exiting." << std::endl;
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);
+#ifdef _WIN32
+        OutputDebugStringW(L"[FATAL] Failed to Open Serial Port.\n");
+#endif
         return;
     }
 
@@ -275,6 +293,9 @@ int main(int argc, char* argv[]) {
         // on_stop callback
         [&]() {
             std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread." << std::endl;
+#ifdef _WIN32
+			OutputDebugStringW(L"on_stop callback EXECUTED. Stopping serial Thread.\n");
+#endif
             platform->closeSerialPort();
             g_terminate = true;
             if (workerThread.joinable()) {
