@@ -6,7 +6,8 @@ Build-Depends: debhelper (>= 11), cmake, dh-cmake
 Standards-Version: 4.1.3
 
 Package: corestationhxagent
-Architecture: any
+Section: base
+Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, network-manager, libdbus-1-3
 Description: CoreStation HX Agent
  This agent monitors system status and reports it over a serial connection.

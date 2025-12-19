@@ -1,0 +1,19 @@
+services:
+  builder:
+    build: .
+    container_name: CoreStationHXAgent-builder
+    volumes:
+      - ./:/build-env
+    environment:
+      - BUILD_TYPE=release
+    command: >
+      bash -c "
+        echo 'Starting build in release mode...' &&
+        chmod +x build.sh &&
+        cd /build-env &&
+        ./build.sh &&
+        cp build/CoreStationHXAgent.exe ./CoreStationHXAgent.exe &&
+        dpkg-buildpackage -us -uc -b &&
+        dpkg-deb --build debian/corestationhxagent CoreStationHXAgent.deb &&
+        echo 'Build completed. Check build directory for output.'
+      "

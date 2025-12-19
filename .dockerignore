@@ -1,0 +1,12 @@
+build/
+bin/
+obj/
+.vs/
+.vscode/
+*.exe
+*.obj
+*.res
+*.aps
+docker-compose.yml
+Dockerfile
+.git/

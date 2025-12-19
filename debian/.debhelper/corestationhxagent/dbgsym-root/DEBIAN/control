@@ -1,0 +1,13 @@
+Package: corestationhxagent-dbgsym
+Package-Type: ddeb
+Source: corestationhxagent
+Version: 2025.9.1
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Michael Madell <michael.madell@amulethotkey.com>
+Installed-Size: 460
+Depends: corestationhxagent (= 2025.9.1)
+Section: debug
+Priority: optional
+Description: debug symbols for corestationhxagent
+Build-Ids: 41dec315586e12f03e84ed33b4c0758da1ec4e33
