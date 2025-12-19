@@ -309,7 +309,7 @@ int WindowsPlatform::run(
     if (!forceInteractive && (forceService || isServiceLaunch))
     {
         SERVICE_TABLE_ENTRYW ServiceTable[] = {
-            { (LPWSTR)L"CoreStationHXAgent", (LPSERVICE_MAIN_FUNCTIONW)ServiceMain },
+            { (LPWSTR)L"CoreStationService", (LPSERVICE_MAIN_FUNCTIONW)ServiceMain },
             { NULL, NULL }
         };
 
@@ -1015,7 +1015,7 @@ std::string WindowsPlatform::getHighRamProcesses() {
 
 void WindowsPlatform::registerServiceHandler()
 {
-    g_status_handle = RegisterServiceCtrlHandlerW(L"CoreStationHXAgent", ServiceCtrlHandler);
+    g_status_handle = RegisterServiceCtrlHandlerW(L"CoreStationService", ServiceCtrlHandler);
     g_service_status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
     g_service_status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
     reportStatus(SERVICE_START_PENDING, NO_ERROR, 3000);

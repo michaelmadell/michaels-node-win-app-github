@@ -223,7 +223,7 @@ void serialThread() {
 
     std::cout << "[DEBUG] Sending initial messages..." << std::endl;
     sendLineToBmc("appVersion, " + versionStream.str());
-    sendLineToBmc("osVersion, " + platform->getOsVersion());
+    sendLineToBmc("winVersion, " + platform->getOsVersion());
     sendLineToBmc("osBuild, " + platform->getOsBuild());
     sendLineToBmc("sessionState, 0");
     std::cout << "[DEBUG] Initial messages sent." << std::endl;
