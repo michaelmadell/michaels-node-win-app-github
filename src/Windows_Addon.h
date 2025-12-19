@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
 #include <memory>
-#include <Pdh.h>
+#include <pdh.h>
 #include <objbase.h>
 
 struct HandleCloser {

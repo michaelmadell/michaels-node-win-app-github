@@ -1,20 +1,21 @@
 #ifdef _WIN32
 #include "Platform.h"
 #include <iostream>
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include <Windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 #include <iphlpapi.h>
-#include <WtsApi32.h>
-#include <SetupAPI.h>
+#include <wtsapi32.h>
+#include <setupapi.h>
+#include <shellapi.h>
 #include <vector>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#include <Psapi.h>
+#include <psapi.h>
 #include <tlhelp32.h>
-#include <Pdh.h>
-#include <WbemIdl.h>
+#include <pdh.h>
+#include <wbemidl.h>
 #include <comutil.h>
 #include "Windows_Addon.h"
 
@@ -27,10 +28,6 @@
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "comsuppw.lib")
 #pragma comment(lib, "Psapi.lib")
-
-HQUERY m_hQuery = NULL;
-HCOUNTER m_hDiskCounter = NULL;
-HCOUNTER m_hNetRetransCounter = NULL;
 
 #ifndef PDH_FMT_FLOAT
 #define PDH_FMT_FLOAT 0x00000200
@@ -125,7 +122,70 @@ private:
 
     void updateCpuTimes();
     std::string getProcessName(HANDLE hProcess);
+
+    bool runningUnderServiceControlManager();
+    static bool hasSwitch(int argc, char* argv[], const char* sw);
+    static bool hasSwitchCmd(const wchar_t* sw);
 };
+
+bool WindowsPlatform::hasSwitch(int argc, char* argv[], const char* sw)
+{
+    for (int i = 1; i < argc; ++i)
+    {
+        if (_stricmp(argv[i], sw) == 0) return true;
+    }
+    return false;
+}
+
+bool WindowsPlatform::hasSwitchCmd(const wchar_t* sw) {
+    int argcW = 0;
+    LPWSTR* argvW = CommandLineToArgvW(GetCommandLineW(), &argcW);
+    if (!argvW) return false;
+    for (int i = 1; i < argcW; ++i) {
+        if (_wcsicmp(argvW[i], sw) == 0) { LocalFree(argvW); return true;}
+    }
+    LocalFree(argvW);
+    return false;
+}
+
+bool WindowsPlatform::runningUnderServiceControlManager()
+{
+    DWORD pid = GetCurrentProcessId();
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnap == INVALID_HANDLE_VALUE) return false;
+
+    PROCESSENTRY32 pe = { 0 };
+    pe.dwSize = sizeof(pe);
+    DWORD parentPid = 0;
+
+    if (Process32First(hSnap, &pe))
+    {
+        do
+        {
+            if (pe.th32ProcessID == pid)
+            {
+                parentPid = pe.th32ParentProcessID;
+                break;
+            }
+        } while (Process32Next(hSnap, &pe));
+    }
+    CloseHandle(hSnap);
+    if (parentPid == 0) return false;
+
+    HANDLE hParent = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, parentPid);
+    if (!hParent) return false;
+
+    char name[MAX_PATH] = {0};
+    if (GetModuleBaseNameA(hParent, NULL, name, MAX_PATH) == 0)
+    {
+        CloseHandle(hParent);
+        return false;
+    }
+    CloseHandle(hParent);
+
+    for (char* p = name; *p; ++p) *p = (char)tolower(*p);
+    return strcmp(name, "services.exe") == 0;
+}
 
 void WindowsPlatform::updateCpuTimes() {
     FILETIME idleTime, kernelTime, userTime;
@@ -180,9 +240,10 @@ WindowsPlatform::WindowsPlatform()
     updateCpuTimes();
 
     PDH_HQUERY rawQuery = NULL;
-    if (PdhOpenQuery(NULL, 0, &rawQuery) == ERROR_SUCCESS) {
+    if (PdhOpenQuery(NULL, 0, &rawQuery) == ERROR_SUCCESS && rawQuery != NULL) {
         // Store the raw handle in the unique_ptr wrapper
         m_hQuery = UniquePdhQuery(rawQuery);
+	if (m_hQuery) {
 
         // Counter for Avg. Disk Queue Length for the entire physical disk subsystem
         PdhAddCounterA(m_hQuery.get(), "\\PhysicalDisk(_Total)\\Avg. Disk Queue Length", 0, &m_hDiskCounter);
@@ -193,6 +254,7 @@ WindowsPlatform::WindowsPlatform()
 
         // Collect initial data sample for counters that require two samples (like averages/rates)
         PdhCollectQueryData(m_hQuery.get());
+	}
     }
     else {
         logMessage("[WARNING] Failed to open PDH Query for system metrics.");
@@ -219,20 +281,58 @@ int WindowsPlatform::run(
     this->power_callback = power_cb;
     this->session_callback = session_cb;
 
-    SERVICE_TABLE_ENTRYW ServiceTable[] = {
-        {(LPWSTR)L"CoreStationAgent", (LPSERVICE_MAIN_FUNCTIONW)ServiceMain},
-        {NULL, NULL}};
+    // Ensure stop event exists and is unsignaled
+    if (!g_stop_event)
+        g_stop_event = UniqueHandle(CreateEvent(NULL, TRUE, FALSE, NULL));
+    else
+        ResetEvent(g_stop_event.get());
 
-    if (!StartServiceCtrlDispatcherW(ServiceTable))
+    const bool forceInteractive =
+        hasSwitch(argc, argv, "--interactive") ||
+        hasSwitchCmd(L"--interactive") ||
+        hasSwitchCmd(L"/interactive");
+    const bool forceService =
+        hasSwitch(argc, argv, "--service") ||
+        hasSwitchCmd(L"--service") ||
+        hasSwitchCmd(L"/service");
+    const bool isServiceLaunch = runningUnderServiceControlManager();
+
     {
-        logMessage("Running in interactive mode.");
-        if (on_start_callback)
-            on_start_callback();
-        std::cout << "Service running interactively. Press Enter to stop." << std::endl;
-        std::cin.get();
-        if (on_stop_callback)
-            on_stop_callback();
+        std::ostringstream oss;
+        oss << "Mode Detection: forceInteractive=" << (forceInteractive ? "true" : "false")
+            << ", forceService=" << (forceService ? "true" : "false")
+            << ", isServiceLaunch=" << (isServiceLaunch ? "true" : "false");
+        logMessage(oss.str());
     }
+
+    // Only go to SCM when truly launched by it or explicitly forced
+    if (!forceInteractive && (forceService || isServiceLaunch))
+    {
+        SERVICE_TABLE_ENTRYW ServiceTable[] = {
+            { (LPWSTR)L"CoreStationHXAgent", (LPSERVICE_MAIN_FUNCTIONW)ServiceMain },
+            { NULL, NULL }
+        };
+
+        if (StartServiceCtrlDispatcherW(ServiceTable))
+            return 0;
+
+        DWORD err = GetLastError();
+        std::ostringstream oss;
+        oss << "StartServiceCtrlDispatcher failed (" << err << "), falling back to interactive mode.";
+        logMessage(oss.str());
+    }
+
+    // Interactive mode
+    logMessage("Running in interactive mode.");
+    if (on_start_callback) on_start_callback();
+
+    logMessage("Interactive: waiting for stop event...");
+    DWORD wait = WaitForSingleObject(g_stop_event.get(), INFINITE);
+    std::ostringstream ossWait;
+    ossWait << "Interactive wait returned " << wait << " (gle=" << GetLastError() << ")";
+    logMessage(ossWait.str());
+
+    if (on_stop_callback) on_stop_callback();
     return 0;
 }
 
@@ -723,6 +823,8 @@ std::string WindowsPlatform::getGpuDriverInfo() {
     IWbemLocator* pLoc = NULL;
     IWbemServices* pSvc = NULL;
     IEnumWbemClassObject* pEnumerator = NULL;
+    IWbemClassObject* pclsObj = NULL;
+    ULONG uReturn = 0;
 
     HRESULT hr = CoCreateInstance(
         CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
@@ -736,7 +838,7 @@ std::string WindowsPlatform::getGpuDriverInfo() {
         NULL,
         NULL,
         0,
-        NULL,
+        0,
         0,
         0,
         &pSvc
@@ -767,18 +869,16 @@ std::string WindowsPlatform::getGpuDriverInfo() {
 
     if (FAILED(hr)) goto cleanup;
 
-    IWbemClassObject* pclsObj = NULL;
-    ULONG uReturn = 0;
     while (pEnumerator) {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
 
         if (0 == uReturn) break;
 
         VARIANT vtPropName, vtPropVersion;
-        hr = pclsObj->Get(L"Name", 0, &vtPropName, 0, 0);
-        hr = pclsObj->Get(L"DriverVersion", 0, &vtPropVersion, 0, 0);
+        HRESULT hrGet1 = pclsObj->Get(L"Name", 0, &vtPropName, 0, 0);
+        HRESULT hrGet2 = pclsObj->Get(L"DriverVersion", 0, &vtPropVersion, 0, 0);
 
-        if (hr == S_OK) {
+        if (hrGet1 == S_OK && hrGet2 == S_OK) {
             std::string name = WideToUtf8(vtPropName.bstrVal ? vtPropName.bstrVal : L"Unknown GPU");
             std::string version = WideToUtf8(vtPropVersion.bstrVal ? vtPropVersion.bstrVal : L"Unknown Version");
 
@@ -790,17 +890,18 @@ std::string WindowsPlatform::getGpuDriverInfo() {
                 VariantClear(&vtPropName);
                 VariantClear(&vtPropVersion);
                 pclsObj->Release();
+		pclsObj = NULL;
                 goto cleanup;
             }
-
-            VariantClear(&vtPropName);
-            VariantClear(&vtPropVersion);
         }
-
+	VariantClear(&vtPropName);
+	VariantClear(&vtPropVersion);
         pclsObj->Release();
+	pclsObj = NULL;
     }
 
 cleanup:
+    if (pclsObj) pclsObj->Release();
     if (pEnumerator) pEnumerator->Release();
     if (pSvc) pSvc->Release();
     if (pLoc) pLoc->Release();
