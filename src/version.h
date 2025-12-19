@@ -10,4 +10,4 @@
 
 #define SERIAL_PORT "\\\\.\\COM3"
 
-#define DESCRIPTION		"Sends System information to the CoreStation HX CMC"
+#define DESCRIPTION		"CoreStationHXAgent"
