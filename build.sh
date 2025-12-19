@@ -55,6 +55,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+cp "$OUTPUT_EXE_FILE" installer/CoreStationHXAgent.exe
+
 echo "Finished!"
 exit 0
 
