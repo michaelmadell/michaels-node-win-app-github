@@ -122,6 +122,28 @@ This project was developed on a Win 11 Pro CoreStation Node
 ### Debug output
 Unless the build version is a GA, all output to the serial port will also be stored in `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`
 
+### Tray helper (interactive mode)
+- When the app runs interactively (StartServiceCtrlDispatcher fails), a tray icon is created using the Windows notification area.
+- The tray tooltip is fed by a named pipe at `\\.\pipe\corestation_tray`.
+- Send plain text lines containing `hostname=`, `ip=` (or `ipaddress=`), and `uptime=`. Example payload:
+  ```text
+  hostname=NODE-01
+  ip=192.168.1.10
+  uptime=2d 04h 13m 09s
+  ```
+- A quick PowerShell sender for testing:
+  ```powershell
+  $pipe = New-Object System.IO.Pipes.NamedPipeClientStream('.', 'corestation_tray', [System.IO.Pipes.PipeDirection]::Out)
+  $pipe.Connect(1000)
+  $writer = New-Object System.IO.StreamWriter($pipe)
+  $writer.AutoFlush = $true
+  $writer.WriteLine('hostname=NODE-01')
+  $writer.WriteLine('ip=192.168.1.10')
+  $writer.WriteLine('uptime=2d 04h 13m 09s')
+  $writer.Dispose(); $pipe.Dispose()
+  ```
+- Tooltip format: `Host: <hostname> | IP: <ip> | Up: <uptime>`.
+
 
 ### To build
 - Update `version.h` with the desired release details **and COM port** and commit to git

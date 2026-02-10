@@ -1,5 +1,17 @@
 @echo off
 setlocal enabledelayedexpansion
+REM Initialize the MSVC environment so cl.exe and rc.exe are on PATH
+if not defined DevEnvDir (
+    for /f "usebackq tokens=*" %%i in (`"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+        set "VS_PATH=%%i"
+    )
+    if exist "!VS_PATH!\VC\Auxiliary\Build\vcvarsall.bat" (
+        call "!VS_PATH!\VC\Auxiliary\Build\vcvarsall.bat" x64
+    ) else (
+        echo Could not find vcvarsall.bat; install Visual Studio Build Tools with C++ workload.
+        exit /b 1
+    )
+)
 REM check the target .exe is writeable (local machine might be running it)
 
 
