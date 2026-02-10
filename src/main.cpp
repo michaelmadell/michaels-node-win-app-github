@@ -18,7 +18,7 @@ std::unique_ptr<Platform> createPlatform();
 SystemState currentState;
 std::mutex stateMutex;
 
-std::atomic<bool> g_terminate = false;
+std::atomic<bool> g_terminate{false};
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
