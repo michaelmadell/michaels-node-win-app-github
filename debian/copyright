@@ -1,0 +1,27 @@
+ 1 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+ 2 Upstream-Name: corestationhxagent
+ 3 Upstream-Contact: Michael Madell <michael.madell@amulethotkey.com>
+ 4 Source: http://amulethotkey.com
+ 5
+ 6 Files: *
+ 7 Copyright: 2025-2025 Michael Madell <michael.madell@amulethotkey.com>
+ 8 License: GPL-2+
+17
+18 License: GPL-2+
+19  This program is free software; you can redistribute it and/or modify
+20  it under the terms of the GNU General Public License as published by
+21  the Free Software Foundation; either version 2 of the License, or
+22  (at your option) any later version. 
+23  .
+24  This program is distributed in the hope that it will be useful,
+25  but WITHOUT ANY WARRANTY; without even the implied warranty of
+26  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+27  GNU General Public License for more details.
+28  .
+29  You should have received a copy of the GNU General Public License along
+30  with this program; if not, write to the Free Software Foundation, Inc.,
+31  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+32  .
+33  On Debian systems, the full text of the GNU General Public
+34  License version 2 can be found in the file
+35  '/usr/share/common-licenses/GPL-2'.

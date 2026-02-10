@@ -1,0 +1,13 @@
+Source: corestationhxagent
+Section: utils
+Priority: optional
+Maintainer: Michael Madell <michael.madell@amulethotkey.com>
+Build-Depends: debhelper (>= 11), cmake, dh-cmake
+Standards-Version: 4.1.3
+
+Package: corestationhxagent
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, network-manager, libdbus-1-3
+Description: CoreStation HX Agent
+ This agent monitors system status and reports it over a serial connection.
+ It is designed to run as a background service.

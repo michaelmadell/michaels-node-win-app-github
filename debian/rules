@@ -1,0 +1,5 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with cmake
+override_dh_auto_clean:

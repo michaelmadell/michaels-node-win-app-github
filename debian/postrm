@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge|remove|upgrade)
+        # Use the official systemd helper if it exists
+        if [ -x "/usr/bin/deb-systemd-helper" ]; then
+            deb-systemd-helper disable CoreStationHXAgent.service >/dev/null || true
+            deb-systemd-helper purge CoreStationHXAgent.service >/dev/null || true
+        else
+            echo "Disbling CoreStationHXAgent Service..."
+            systemctl disable CoreStationHXAgent.service
+        fi
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,61 @@
+#include <windows.h> // Includes necessary definitions for VS_VERSION_INFO block
+#include "src/version.h" // Assuming this contains your version macros
+
+// --- Custom Resource IDs (Manually defined here since resource.h is missing) ---
+#define IDI_ICON1 101 // Using a standard ID for the main icon resource
+
+// Helper macros to convert the version components to strings
+#define VERSION_TO_STRING2(x) #x
+#define VERSION_TO_STRING(x) VERSION_TO_STRING2(x)
+
+// Define the file version numbers
+#define FILE_VERSION_NUMBERS VERSION_MAJOR, VERSION_MINOR, VERSION_RELEASE, VERSION_BUILD
+#define FILE_VERSION_STRING VERSION_TO_STRING(VERSION_MAJOR) "." VERSION_TO_STRING(VERSION_MINOR) "." VERSION_TO_STRING(VERSION_RELEASE) "." VERSION_TO_STRING(VERSION_BUILD)
+
+// Define the product version numbers
+#define PRODUCT_VERSION_NUMBERS VERSION_MAJOR, VERSION_MINOR, VERSION_RELEASE, VERSION_BUILD
+#define PRODUCT_VERSION_STRING VERSION_TO_STRING(VERSION_MAJOR) "." VERSION_TO_STRING(VERSION_MINOR) "." VERSION_TO_STRING(VERSION_RELEASE) "." VERSION_TO_STRING(VERSION_BUILD)
+
+
+// Standard resource block for icons
+IDI_ICON1 ICON "logo.ico"
+
+// --------------------------------------------------------------------------
+// VERSION INFO BLOCK (for the Properties > Details tab)
+// --------------------------------------------------------------------------
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION FILE_VERSION_NUMBERS
+PRODUCTVERSION PRODUCT_VERSION_NUMBERS
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+FILEFLAGS 0x1L // VS_FF_DEBUG
+#else
+FILEFLAGS 0x0L
+#endif
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+BLOCK "StringFileInfo"
+BEGIN
+BLOCK "040904b0" // Language: U.S. English (0409), Code Page: Unicode (04b0)
+BEGIN
+VALUE "CompanyName", "Amulet Hotkey Ltd\0"
+VALUE "FileDescription", DESCRIPTION
+VALUE "FileVersion", FILE_VERSION_STRING "\0"
+VALUE "InternalName", "CoreStationHXAgent\0"
+VALUE "LegalCopyright", "Copyright (C) 2025 Amulet Hotkey Ltd\0"
+VALUE "OriginalFilename", "CoreStationHXAgent.exe\0"
+VALUE "ProductName", "CoreStation HX Agent\0"
+VALUE "ProductVersion", PRODUCT_VERSION_STRING "\0"
+// Custom fields pulled from version.h macros
+VALUE "GitBranch", VERSION_TO_STRING(VERSION_BRANCH) "\0"
+VALUE "BuildTime", VERSION_TO_STRING(VERSION_TIME) "\0"
+END
+END
+BLOCK "VarFileInfo"
+BEGIN
+// Required for the Properties window to show details
+VALUE "Translation", 0x809, 1200 // U.S. English, Unicode
+END
+END
