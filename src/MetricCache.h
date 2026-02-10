@@ -37,7 +37,7 @@ public:
 		if (!isValid_ || elapsed >= ttl_) {
 			cachedValue_ = computeFunc();
 			lastUpdate_ = now;
-			isvalid_ = true;
+			isValid_ = true;
 		}
 
 		return cachedValue_;

@@ -1,9 +1,11 @@
 #ifdef _WIN32
-#include "Platform.h"
-#include <iostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#include "Platform.h"
+#include <iostream>
+#undef min
+#undef max
 #include <iphlpapi.h>
 #include <wtsapi32.h>
 #include <setupapi.h>
@@ -220,6 +222,16 @@ private:
 	std::string getGpuDriverInfoImpl();
 	float getGpuUsagePercentImpl();
 	std::string getHighRamProcessesImpl();
+
+    HWND sessionMonitorWindow_ = nullptr;
+    std::thread sessionMonitorThread_;
+    std::atomic<bool> sessionMonitorActive_{ false };
+
+    void startSessionMonitor();
+    void stopSessionMonitor();
+    void sessionMonitorThreadProc();
+    static LRESULT CALLBACK SessionMonitorWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    void handleSessionChange(DWORD sessionChangeType, DWORD sessionId);
 };
 
 bool WindowsPlatform::hasSwitch(int argc, char* argv[], const char* sw)
@@ -279,6 +291,177 @@ bool WindowsPlatform::runningUnderServiceControlManager()
 
     for (char* p = name; *p; ++p) *p = (char)tolower(*p);
     return strcmp(name, "services.exe") == 0;
+}
+
+void WindowsPlatform::startSessionMonitor() {
+    sessionMonitorActive_ = true;
+    sessionMonitorThread_ = std::thread([this]() {sessionMonitorThreadProc(); });
+    logMessage("Session state monitor started");
+}
+
+void WindowsPlatform::stopSessionMonitor() {
+    sessionMonitorActive_ = false;
+    if (sessionMonitorWindow_) {
+        PostMessage(sessionMonitorWindow_, WM_CLOSE, 0, 0);
+    }
+
+    if (sessionMonitorThread_.joinable()) {
+        sessionMonitorThread_.join();
+    }
+
+    logMessage("Session state monitor stopped");
+}
+
+void WindowsPlatform::sessionMonitorThreadProc() {
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+
+    WNDCLASSEXW wcex = { 0 };
+    wcex.cbSize = sizeof(WNDCLASSEXW);
+    wcex.lpfnWndProc = WindowsPlatform::SessionMonitorWndProc;
+    wcex.hInstance = hInstance;
+    wcex.lpszClassName = L"SessionMonitorWindow";
+
+    RegisterClassExW(&wcex);
+
+    sessionMonitorWindow_ = CreateWindowExW(
+        0,
+        L"SessionMonitorWindow",
+        L"Session Monitor",
+        0,
+        0, 0, 0, 0,
+        HWND_MESSAGE,
+        NULL,
+        hInstance,
+        this
+    );
+
+    if (!sessionMonitorWindow_) {
+        logMessage("ERROR: Failed to create session monitor window");
+        return;
+    }
+
+    if (!WTSRegisterSessionNotification(sessionMonitorWindow_, NOTIFY_FOR_THIS_SESSION)) {
+        DWORD err = GetLastError();
+        logMessage("ERROR: WTSRegisterSessionNotification failed, error: " + std::to_string(err));
+        DestroyWindow(sessionMonitorWindow_);
+        return;
+    }
+
+    logMessage("Session monitor registered successfully");
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0) > 0 && sessionMonitorActive_) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    WTSUnRegisterSessionNotification(sessionMonitorWindow_);
+    DestroyWindow(sessionMonitorWindow_);
+    sessionMonitorWindow_ = nullptr;
+}
+
+LRESULT CALLBACK WindowsPlatform::SessionMonitorWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    WindowsPlatform* self = nullptr;
+
+    if (msg == WM_CREATE) {
+        auto createStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
+        self = reinterpret_cast<WindowsPlatform*>(createStruct->lpCreateParams);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
+    }
+    else {
+        self = reinterpret_cast<WindowsPlatform*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    }
+
+    switch (msg) {
+    case WM_WTSSESSION_CHANGE:
+        if (self) {
+            DWORD sessionChangeType = wParam;
+            DWORD sessionId = lParam;
+            self->handleSessionChange(sessionChangeType, sessionId);
+        }
+        return 0;
+
+    case WM_CLOSE:
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+
+    default:
+        return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+}
+
+void WindowsPlatform::handleSessionChange(DWORD sessionChangeType, DWORD sessionId) {
+    std::string eventName;
+    std::string stateValue;
+
+    switch (sessionChangeType) {
+    case WTS_CONSOLE_CONNECT:
+        eventName = "Console Connect";
+        stateValue = "1";
+        break;
+
+    case WTS_CONSOLE_DISCONNECT:
+        eventName = "Console Disconnect";
+        stateValue = "2";
+        break;
+
+    case WTS_REMOTE_CONNECT:
+        eventName = "Remote Connect (RDP)";
+        stateValue = "3";
+        break;
+
+    case WTS_REMOTE_DISCONNECT:
+        eventName = "Remote Disconnect (RDP)";
+        stateValue = "4";
+        break;
+
+    case WTS_SESSION_LOGON:
+        eventName = "Session Logon";
+        stateValue = "5";
+        break;
+
+    case WTS_SESSION_LOGOFF:
+        eventName = "Session Logoff";
+        stateValue = "6";
+        break;
+
+    case WTS_SESSION_LOCK:
+        eventName = "Session Lock";
+        stateValue = "7";
+        break;
+
+    case WTS_SESSION_UNLOCK:
+        eventName = "Session Unlock";
+        stateValue = "8";
+        break;
+
+    case WTS_SESSION_REMOTE_CONTROL:
+        eventName = "Remote Control";
+        stateValue = "9";
+        break;
+
+    case WTS_SESSION_CREATE:
+        eventName = "Session Create";
+        stateValue = "10";
+        break;
+
+    case WTS_SESSION_TERMINATE:
+        eventName = "Session Terminate";
+        stateValue = "11";
+        break;
+
+    default:
+        eventName = "Unknown";
+        stateValue = std::to_string(sessionChangeType);
+        break;
+    }
+
+    logMessage("Session State Change: " + eventName + " (Type: " + stateValue + ", Session ID: " + std::to_string(sessionId) + ")");
+
+    if (session_callback) {
+        session_callback(stateValue);
+    }
 }
 
 void WindowsPlatform::updateCpuTimes() {
@@ -642,7 +825,8 @@ WindowsPlatform::WindowsPlatform()
 {
     g_platform_instance = this;
     g_stop_event = UniqueHandle(CreateEvent(NULL, TRUE, FALSE, NULL));
-
+    
+    startSessionMonitor();
     updateCpuTimes();
 
     PDH_HQUERY rawQuery = NULL;
@@ -673,6 +857,7 @@ WindowsPlatform::WindowsPlatform()
 
 WindowsPlatform::~WindowsPlatform()
 {
+    stopSessionMonitor();
 }
 
 int WindowsPlatform::run(
@@ -1155,7 +1340,7 @@ int WindowsPlatform::getCpuUsagePercentImpl()
     return cpuUsage;
 }
 
-int WindowsPlatform::getMemoryUsagePercent() {
+int WindowsPlatform::getRamUsagePercent() {
     return ramCache_.get([this]() { return getRamUsagePercentImpl(); });
 }
 
@@ -1331,28 +1516,12 @@ std::string WindowsPlatform::getGpuDriverInfoImpl() {
     IWbemClassObject* pclsObj = NULL;
 	ULONG uReturn = 0;
 
-	auto now = std::chrono::steady_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - gpuCache_.lastUpdate).count();
-
-    if (elapsed < gpuCache_.CACHE_DURATION_SECONDS && !gpuCache_.info.empty()) {
-        return gpuCache_.info;
-	}
-
-    auto cleanup = [&]() {
-        if (pclsObj) { pclsObj->Release(); pclsObj = NULL; }
-        if (pEnumerator) { pEnumerator->Release(); pEnumerator = NULL; }
-        if (pSvc) { pSvc->Release(); pSvc = NULL; }
-        if (pLoc) { pLoc->Release(); pLoc = NULL; }
-        };
-
     HRESULT hr = CoCreateInstance(
         CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
         IID_IWbemLocator, (LPVOID*)&pLoc
     );
 
-    if (FAILED(hr)) {
-        cleanup(); return result;
-    }
+    if (FAILED(hr)) goto cleanup;
 
     hr = pLoc->ConnectServer(
         _bstr_t(L"ROOT\\CIMV2"),
@@ -1365,7 +1534,7 @@ std::string WindowsPlatform::getGpuDriverInfoImpl() {
         &pSvc
     );
 
-    if (FAILED(hr)) { cleanup(); return result; }
+    if (FAILED(hr)) goto cleanup;
 
     hr = CoSetProxyBlanket(
         pSvc,
@@ -1378,7 +1547,7 @@ std::string WindowsPlatform::getGpuDriverInfoImpl() {
         EOAC_NONE
     );
 
-    if (FAILED(hr)) { cleanup(); return result; }
+    if (FAILED(hr)) goto cleanup;
 
     hr = pSvc->ExecQuery(
         _bstr_t(L"WQL"),
@@ -1388,9 +1557,7 @@ std::string WindowsPlatform::getGpuDriverInfoImpl() {
         &pEnumerator
     );
 
-    if (FAILED(hr)) {
-        cleanup(); return result;
-    }
+    if (FAILED(hr)) goto cleanup;
 
     while (pEnumerator) {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
@@ -1414,8 +1581,7 @@ std::string WindowsPlatform::getGpuDriverInfoImpl() {
                 VariantClear(&vtPropVersion);
                 pclsObj->Release();
                 pclsObj = NULL;
-                cleanup();
-				return result;
+                goto cleanup;
             }
         }
         VariantClear(&vtPropName);
@@ -1424,11 +1590,13 @@ std::string WindowsPlatform::getGpuDriverInfoImpl() {
         pclsObj = NULL;
     }
 
-	gpuCache_.info = result;
-	gpuCache_.lastUpdate = now;
+cleanup:
+    if (pclsObj) pclsObj->Release();
+    if (pEnumerator) pEnumerator->Release();
+    if (pSvc) pSvc->Release();
+    if (pLoc) pLoc->Release();
 
-	cleanup();
-	return result;
+    return result;
 }
 
 float WindowsPlatform::getGpuUsagePercent() {
@@ -1558,12 +1726,14 @@ HANDLE WindowsPlatform::getStopEvent()
 
 void WindowsPlatform::startService()
 {
+    startSessionMonitor();
     if (on_start_callback)
         on_start_callback();
 }
 
 void WindowsPlatform::stopService()
 {
+    stopSessionMonitor();
     if (on_stop_callback)
         on_stop_callback();
     SetEvent(g_stop_event.get());
