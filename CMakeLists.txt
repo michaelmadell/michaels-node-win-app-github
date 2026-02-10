@@ -48,7 +48,7 @@ endif()
 
 # The Windows-specific resource files (like resource.h) should only be compiled 
 # when WIN32 is true. We remove them here and rely only on the C++ source list.
-add_executable(CoreStationHXAgent ${CORE_SOURCES}) 
+add_executable(CoreStationHXAgent ${CORE_SOURCES} "src/MetricCache.h") 
 
 # OPTIONAL: If you need to include the Windows resource files again 
 # for the Windows build, you'd add them conditionally like this:

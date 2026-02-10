@@ -26,6 +26,7 @@
 #include <chrono>
 #include <cctype>
 #include "Windows_Addon.h"
+#include "MetricCache.h"
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -192,6 +193,33 @@ private:
     bool hasSwitch(int argc, char* argv[], const char* sw);
     bool hasSwitchCmd(const wchar_t* sw);
     bool runningUnderServiceControlManager();
+
+    std::chrono::steady_clock::time_point lastSerialAttempt_;
+    const int SERIAL_RETRY_DELAY_MS = 5000;
+
+	std::mutex platformMutex_;
+
+    MetricCache<int> cpuCache_{ CacheDurations::CPU_USAGE };
+	MetricCache<int> ramCache_{ CacheDurations::RAM_USAGE };
+	MetricCache<std::string> diskSpaceCache_{ CacheDurations::FREE_DISK_SPACE };
+	MetricCache<std::string> windowsUpdateCache_{ CacheDurations::WINDOWS_UPDATE };
+	MetricCache<float> diskQueueCache_{ CacheDurations::DISK_QUEUE };
+	MetricCache<float> netRetransCache_{ CacheDurations::NET_RETRANS };
+	MetricCache<std::string> uptimeCache_{ CacheDurations::SYSTEM_UPTIME };
+	MetricCache<std::string> gpuDriverCache_{ CacheDurations::GPU_DRIVER_INFO };
+	MetricCache<float> gpuUsageCache_{ CacheDurations::GPU_USAGE };
+	MetricCache<std::string> highRamProcsCache_{ CacheDurations::HIGH_RAM_PROCS };
+
+	int getCpuUsagePercentImpl();
+	int getRamUsagePercentImpl();
+	std::string getFreeDiskSpaceGBImpl(const std::string& drivePath);
+	std::string getWindowsUpdateStateImpl();
+	float getDiskQueueLengthImpl();
+	float getNetworkRetransRateImpl();
+	std::string getSystemUptimeImpl();
+	std::string getGpuDriverInfoImpl();
+	float getGpuUsagePercentImpl();
+	std::string getHighRamProcessesImpl();
 };
 
 bool WindowsPlatform::hasSwitch(int argc, char* argv[], const char* sw)
@@ -982,10 +1010,34 @@ void WindowsPlatform::closeSerialPort()
 
 bool WindowsPlatform::writeSerial(const std::string &data)
 {
-    if (hSerial.get() == INVALID_HANDLE_VALUE)
+    if (hSerial.get() == INVALID_HANDLE_VALUE) {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - lastSerialAttempt_).count();
+
+        if (elapsed >= SERIAL_RETRY_DELAY_MS) {
+            lastSerialAttempt_ = now;
+            logMessage("Attempting to reconnect serial port...");
+            if (openSerialPort("COM3", 115200)) {
+                logMessage("Serial port reconnected successfully");
+            }
+        }
         return false;
+    }
+
     DWORD bytesWritten = 0;
-    return WriteFile(hSerial.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL);
+    if (WriteFile(hSerial.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
+        DWORD err = GetLastError();
+        logMessage("WriteFile failed (Error " + std::to_string(err) + "), closing serial port");
+        closeSerialPort();
+        return false;
+    }
+
+    if (bytesWritten != data.length()) {
+        logMessage("Partial write detected (" + std::to_string(bytesWritten) + " of " + std::to_string(data.length()) + " bytes)");
+        return false;
+    }
+    return true;
 }
 
 bool WindowsPlatform::readSerial(std::string &readData) {
@@ -1025,15 +1077,24 @@ void WindowsPlatform::showMessageDialog(const std::string& title, const std::str
 
 void WindowsPlatform::logMessage(const std::string &message)
 {
+    const size_t MAX_LOG_SIZE = 10 * 1024 * 1024;
+
+    std::ifstream checkSize(LOG_FILE_PATH, std::ios::ate | std::ios::binary);
+    if (checkSize.is_open()) {
+        size_t fileSize = checkSize.tellg();
+        checkSize.close();
+
+        if (fileSize >= MAX_LOG_SIZE) {
+            std::wstring backupPath = std::wstring(LOG_FILE_PATH) + L".old";
+            DeleteFileW(backupPath.c_str());
+            MoveFileW(LOG_FILE_PATH, backupPath.c_str());
+        }
+    }
+
     DWORD fileAttr = GetFileAttributesW(LOG_DIR_PATH);
     if (fileAttr == INVALID_FILE_ATTRIBUTES)
     {
-        if (!CreateDirectoryW(LOG_DIR_PATH, NULL))
-        {
-            // Could add error handling here, but for now, we'll just fail silently
-            // if the directory can't be created.
-            return;
-        }
+        CreateDirectoryW(LOG_DIR_PATH, NULL);
     }
 
     std::ofstream logFile(LOG_FILE_PATH, std::ios::app);
@@ -1042,17 +1103,23 @@ void WindowsPlatform::logMessage(const std::string &message)
         SYSTEMTIME time;
         GetLocalTime(&time);
 
-        logFile << "[" << time.wYear << "-" << time.wMonth << "-" << time.wDay << " "
-                << std::setfill('0') << std::setw(2) << time.wHour << ":"
-                << std::setfill('0') << std::setw(2) << time.wMinute << ":"
-                << std::setfill('0') << std::setw(2) << time.wSecond << "."
-                << std::setfill('0') << std::setw(3) << time.wMilliseconds << "] "
-                << message << std::endl;
+        logFile << "[" << time.wYear << "-"
+            << std::setfill('0') << std::setw(2) << time.wMonth << "-"
+            << std::setfill('0') << std::setw(2) << time.wDay << " "
+            << std::setfill('0') << std::setw(2) << time.wHour << ":"
+            << std::setfill('0') << std::setw(2) << time.wMinute << ":"
+            << std::setfill('0') << std::setw(2) << time.wSecond << "."
+            << std::setfill('0') << std::setw(3) << time.wMilliseconds << "] "
+            << message << std::endl;
         logFile.close();
     }
 }
 
-int WindowsPlatform::getCpuUsagePercent()
+int WindowsPlatform::getCpuUsagePercent() {
+    return cpuCache_.get([this]() {return getCpuUsagePercentImpl();  });
+}
+
+int WindowsPlatform::getCpuUsagePercentImpl()
 {
     // NOTE: This now relies on updatePdhMetrics being called right before it
     // The previous times were updated in updatePdhMetrics.
@@ -1088,7 +1155,11 @@ int WindowsPlatform::getCpuUsagePercent()
     return cpuUsage;
 }
 
-int WindowsPlatform::getRamUsagePercent() {
+int WindowsPlatform::getMemoryUsagePercent() {
+    return ramCache_.get([this]() { return getRamUsagePercentImpl(); });
+}
+
+int WindowsPlatform::getRamUsagePercentImpl() {
     MEMORYSTATUSEX statex;
     statex.dwLength = sizeof(statex);
 
@@ -1100,6 +1171,10 @@ int WindowsPlatform::getRamUsagePercent() {
 }
 
 std::string WindowsPlatform::getFreeDiskSpaceGB(const std::string& drivePath) {
+	return diskSpaceCache_.get([this, drivePath]() { return getFreeDiskSpaceGBImpl(drivePath); });
+}
+
+std::string WindowsPlatform::getFreeDiskSpaceGBImpl(const std::string& drivePath) {
     ULARGE_INTEGER freeBytesAvailableToCaller;
     ULARGE_INTEGER totalNumberOfBytes;
     ULARGE_INTEGER totalNumberOfFreeBytes;
@@ -1127,6 +1202,10 @@ std::string WindowsPlatform::getFreeDiskSpaceGB(const std::string& drivePath) {
 }
 
 std::string WindowsPlatform::getWindowsUpdateState() {
+    return windowsUpdateCache_.get([this]() { return getWindowsUpdateStateImpl(); });
+}
+
+std::string WindowsPlatform::getWindowsUpdateStateImpl() {
     HKEY hKey;
 
     const REGSAM samDesired = KEY_READ | KEY_WOW64_64KEY;
@@ -1161,14 +1240,19 @@ std::string WindowsPlatform::getWindowsUpdateState() {
 }
 
 void WindowsPlatform::updatePdhMetrics() {
+	std::lock_guard<std::mutex> lock(platformMutex_);
+    
     if (m_hQuery.get()) {
         PdhCollectQueryData((PDH_HQUERY)m_hQuery.get());
     }
-
     updateCpuTimes();
 }
 
-float WindowsPlatform::getDiskQueueLength()
+float WindowsPlatform::getDiskQueueLength() {
+	return diskQueueCache_.get([this]() { return getDiskQueueLengthImpl(); });
+}
+
+float WindowsPlatform::getDiskQueueLengthImpl()
 {
     if (m_hQuery.get() == NULL || m_hDiskCounter == NULL) return 0.0f;
 
@@ -1180,7 +1264,11 @@ float WindowsPlatform::getDiskQueueLength()
     return 0.0f;
 }
 
-float WindowsPlatform::getNetworkRetransRate()
+float WindowsPlatform::getNetworkRetransRate() {
+    return netRetransCache_.get([this]() { return getNetworkRetransRateImpl(); });
+}
+
+float WindowsPlatform::getNetworkRetransRateImpl()
 {
     if (m_hQuery.get() == NULL || m_hNetRetransCounter == NULL) return 0.0f;
 
@@ -1203,7 +1291,11 @@ void WindowsPlatform::reportStatus(DWORD currentState, DWORD win32ExitCode, DWOR
     SetServiceStatus(g_status_handle, &g_service_status);
 }
 
-std::string WindowsPlatform::getSystemUptime()
+std::string WindowsPlatform::getSystemUptime() {
+	return uptimeCache_.get([this]() { return getSystemUptimeImpl(); });
+}
+
+std::string WindowsPlatform::getSystemUptimeImpl()
 {
     // Get the system tick count in milliseconds
     ULONGLONG ms = GetTickCount64();
@@ -1228,19 +1320,39 @@ std::string WindowsPlatform::getSystemUptime()
 }
 
 std::string WindowsPlatform::getGpuDriverInfo() {
+	return gpuDriverCache_.get([this]() { return getGpuDriverInfoImpl(); });
+}
+
+std::string WindowsPlatform::getGpuDriverInfoImpl() {
     std::string result = "GPU: Not Found.";
     IWbemLocator* pLoc = NULL;
     IWbemServices* pSvc = NULL;
     IEnumWbemClassObject* pEnumerator = NULL;
     IWbemClassObject* pclsObj = NULL;
-    ULONG uReturn = 0;
+	ULONG uReturn = 0;
+
+	auto now = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - gpuCache_.lastUpdate).count();
+
+    if (elapsed < gpuCache_.CACHE_DURATION_SECONDS && !gpuCache_.info.empty()) {
+        return gpuCache_.info;
+	}
+
+    auto cleanup = [&]() {
+        if (pclsObj) { pclsObj->Release(); pclsObj = NULL; }
+        if (pEnumerator) { pEnumerator->Release(); pEnumerator = NULL; }
+        if (pSvc) { pSvc->Release(); pSvc = NULL; }
+        if (pLoc) { pLoc->Release(); pLoc = NULL; }
+        };
 
     HRESULT hr = CoCreateInstance(
         CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
         IID_IWbemLocator, (LPVOID*)&pLoc
     );
 
-    if (FAILED(hr)) goto cleanup;
+    if (FAILED(hr)) {
+        cleanup(); return result;
+    }
 
     hr = pLoc->ConnectServer(
         _bstr_t(L"ROOT\\CIMV2"),
@@ -1253,7 +1365,7 @@ std::string WindowsPlatform::getGpuDriverInfo() {
         &pSvc
     );
 
-    if (FAILED(hr)) goto cleanup;
+    if (FAILED(hr)) { cleanup(); return result; }
 
     hr = CoSetProxyBlanket(
         pSvc,
@@ -1266,7 +1378,7 @@ std::string WindowsPlatform::getGpuDriverInfo() {
         EOAC_NONE
     );
 
-    if (FAILED(hr)) goto cleanup;
+    if (FAILED(hr)) { cleanup(); return result; }
 
     hr = pSvc->ExecQuery(
         _bstr_t(L"WQL"),
@@ -1276,7 +1388,9 @@ std::string WindowsPlatform::getGpuDriverInfo() {
         &pEnumerator
     );
 
-    if (FAILED(hr)) goto cleanup;
+    if (FAILED(hr)) {
+        cleanup(); return result;
+    }
 
     while (pEnumerator) {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
@@ -1299,26 +1413,29 @@ std::string WindowsPlatform::getGpuDriverInfo() {
                 VariantClear(&vtPropName);
                 VariantClear(&vtPropVersion);
                 pclsObj->Release();
-		pclsObj = NULL;
-                goto cleanup;
+                pclsObj = NULL;
+                cleanup();
+				return result;
             }
         }
-	VariantClear(&vtPropName);
-	VariantClear(&vtPropVersion);
+        VariantClear(&vtPropName);
+        VariantClear(&vtPropVersion);
         pclsObj->Release();
-	pclsObj = NULL;
+        pclsObj = NULL;
     }
 
-cleanup:
-    if (pclsObj) pclsObj->Release();
-    if (pEnumerator) pEnumerator->Release();
-    if (pSvc) pSvc->Release();
-    if (pLoc) pLoc->Release();
+	gpuCache_.info = result;
+	gpuCache_.lastUpdate = now;
 
-    return result;
+	cleanup();
+	return result;
 }
 
 float WindowsPlatform::getGpuUsagePercent() {
+    return gpuUsageCache_.get([this]() { return getGpuUsagePercentImpl(); });
+}
+
+float WindowsPlatform::getGpuUsagePercentImpl() {
     if (m_hQuery.get() == NULL | m_hGpuTotalCounter == NULL) return 0.0f;
 
     PDH_FMT_COUNTERVALUE_ITEM_W* items = nullptr;
@@ -1372,6 +1489,10 @@ std::string WindowsPlatform::getProcessName(HANDLE hProcess) {
 }
 
 std::string WindowsPlatform::getHighRamProcesses() {
+    return highRamProcsCache_.get([this]() { return getHighRamProcessesImpl(); });
+}
+
+std::string WindowsPlatform::getHighRamProcessesImpl() {
     const ULONGLONG HIGH_RAM_THRESHOLD_MB = 500;
     const ULONGLONG HIGH_RAM_THRESHOLD_BYTES = HIGH_RAM_THRESHOLD_MB * 1024 * 1024;
 
