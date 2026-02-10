@@ -188,6 +188,10 @@ private:
     std::string getProcessName(HANDLE hProcess);
     void startTrayApp();
     void stopTrayApp();
+
+    bool hasSwitch(int argc, char* argv[], const char* sw);
+    bool hasSwitchCmd(const wchar_t* sw);
+    bool runningUnderServiceControlManager();
 };
 
 bool WindowsPlatform::hasSwitch(int argc, char* argv[], const char* sw)
@@ -696,18 +700,15 @@ int WindowsPlatform::run(
         logMessage(oss.str());
     }
 
-    if (!StartServiceCtrlDispatcherW(ServiceTable))
-    {
-        logMessage("Running in interactive mode.");
-        startTrayApp();
-        if (on_start_callback)
-            on_start_callback();
-        std::cout << "Service running interactively. Press Enter to stop." << std::endl;
-        std::cin.get();
-        if (on_stop_callback)
-            on_stop_callback();
-        stopTrayApp();
-    }
+    logMessage("Running in interactive mode.");
+    startTrayApp();
+    if (on_start_callback)
+        on_start_callback();
+    std::cout << "Service running interactively. Press Enter to stop." << std::endl;
+    std::cin.get();
+    if (on_stop_callback)
+        on_stop_callback();
+    stopTrayApp();
     return 0;
 }
 
@@ -921,6 +922,15 @@ bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
         NULL
     );
 
+    if (rawHandle == INVALID_HANDLE_VALUE) 
+    {
+        DWORD err = GetLastError();
+		std::ostringstream oss;
+		oss << "CreateFileA failed for " << portName << " with error " << err;
+        logMessage(oss.str());
+		return false;
+    }
+
     hSerial.reset(rawHandle);
 
     if (hSerial.get() == INVALID_HANDLE_VALUE)
@@ -990,6 +1000,12 @@ bool WindowsPlatform::readSerial(std::string &readData) {
         if (bytesRead > 0) {
             readData.append(buffer, bytesRead);
             return true;
+        }
+    }
+    else {
+		DWORD err = GetLastError();
+        if (err != ERROR_IO_PENDING) {
+			logMessage("Error reading from serial port: " + std::to_string(err));
         }
     }
     return false;
