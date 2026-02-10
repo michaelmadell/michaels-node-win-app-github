@@ -7,6 +7,7 @@
 node_modules/
 dist/
 build/
+.vs/
 
 # Compiled Java class files
 *.class
@@ -40,6 +41,7 @@ Thumbs.db
 *.app
 *.exe
 *.war
+*.obj
 
 # Large media files
 *.mp4
