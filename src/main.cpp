@@ -229,7 +229,8 @@ void serialThread() {
     sendLineToBmc("appVersion, " + versionStream.str());
     sendLineToBmc("winVersion, " + platform->getOsVersion());
     sendLineToBmc("osBuild, " + platform->getOsBuild());
-    sendLineToBmc("sessionState, 0");  // Initial state
+    std::string initialSessionState = platform->getCurrentSessionState();
+    sendLineToBmc("sessionState, " + initialSessionState);  // Initial state
     std::cout << "[DEBUG] Initial messages sent." << std::endl;
 
     // Send initial username

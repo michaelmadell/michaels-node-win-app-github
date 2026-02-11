@@ -1,58 +1,89 @@
 @echo off
 setlocal enabledelayedexpansion
-REM Initialize the MSVC environment so cl.exe and rc.exe are on PATH
+REM ============================================================================
+REM ADVANCED MODULAR BUILD SCRIPT - SIMPLIFIED & FIXED
+REM ============================================================================
+
+REM Capture start time using PowerShell (more reliable than batch arithmetic)
+for /f %%i in ('powershell -command "[int](Get-Date -UFormat %%s)"') do set START_EPOCH=%%i
+
+
+echo ============================================================================
+echo CoreStationHXAgent - Advanced Build System
+echo ============================================================================
+
+REM ============================================================================
+REM Configuration
+REM ============================================================================
+set "BUILD_DIR=build"
+set "OUTPUT_EXE_FILE=build\CoreStationHXAgent.exe"
+
+REM ============================================================================
+REM Initialize MSVC
+REM ============================================================================
+echo [1/6] Initializing MSVC environment...
 if not defined DevEnvDir (
     for /f "usebackq tokens=*" %%i in (`"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
         set "VS_PATH=%%i"
     )
     if exist "!VS_PATH!\VC\Auxiliary\Build\vcvarsall.bat" (
-        call "!VS_PATH!\VC\Auxiliary\Build\vcvarsall.bat" x64
+        call "!VS_PATH!\VC\Auxiliary\Build\vcvarsall.bat" x64 >nul 2>&1
+        if errorlevel 1 (
+            echo ERROR: Failed to initialize Visual Studio environment
+            exit /b 1
+        )
     ) else (
-        echo Could not find vcvarsall.bat; install Visual Studio Build Tools with C++ workload.
+        echo ERROR: Could not find vcvarsall.bat
         exit /b 1
     )
 )
-REM check the target .exe is writeable (local machine might be running it)
+echo    Visual Studio environment ready
 
-
-REM Attempt to open the file for appending without modifying it
-set "OUTPUT_EXE_FILE=C:\Users\michael.madell\source\repos\michaels-node-win-app\build\CoreStationHXAgent.exe"
-
-REM Attempt to append (without modifying) to test writability
->> "%OUTPUT_EXE_FILE%" (
-    REM If appending succeeds, do nothing
-) || (
-    echo File "%OUTPUT_EXE_FILE%" is not writable,
-    echo have you STOPPED the service?
-    exit /b 1
-)
-
-
-
-REM Gather git info and create git.h
-
-
-REM Get the current Git branch name
-for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD') do set "GIT_BRANCH=%%i"
-
-REM Get the short commit hash
-for /f "delims=" %%i in ('git rev-parse --short HEAD') do set "GIT_HASH=%%i"
-
-REM Check for uncommitted modifications
-git diff --quiet || set MODIFICATIONS=1
-git diff --cached --quiet || set MODIFICATIONS=1
-
-if not defined MODIFICATIONS (
-    set "MODIFICATIONS=0"
+REM ============================================================================
+REM Create Directories
+REM ============================================================================
+echo [2/6] Setting up build directory...
+if not exist "%BUILD_DIR%" (
+    mkdir "%BUILD_DIR%"
 ) else (
-    set "GIT_HASH=!GIT_HASH!-mods"
+    echo    Build directory already exists, cleaning up...
+     del /Q "%BUILD_DIR%\*.*" >nul 2>&1
+)
+echo    Build directory: %BUILD_DIR%
+
+REM ============================================================================
+REM Check Output
+REM ============================================================================
+echo [3/6] Checking output file...
+if exist "%OUTPUT_EXE_FILE%" (
+    >> "%OUTPUT_EXE_FILE%" ( rem ) 2>nul || (
+        echo ERROR: File "%OUTPUT_EXE_FILE%" is locked
+        echo Have you stopped the service?
+        exit /b 1
+    )
+    echo    Output file is writable
+) else (
+    echo    First build (output doesn't exist yet)
 )
 
-REM Get the current date and time as build time
+REM ============================================================================
+REM Generate Git Info
+REM ============================================================================
+echo [4/6] Generating version info...
+
+for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "GIT_BRANCH=%%i"
+if not defined GIT_BRANCH set "GIT_BRANCH=unknown"
+
+for /f "delims=" %%i in ('git rev-parse --short HEAD 2^>nul') do set "GIT_HASH=%%i"
+if not defined GIT_HASH set "GIT_HASH=unknown"
+
+set "MODIFICATIONS=0"
+git diff --quiet 2>nul || set "MODIFICATIONS=1"
+git diff --cached --quiet 2>nul || set "MODIFICATIONS=1"
+if "!MODIFICATIONS!"=="1" set "GIT_HASH=!GIT_HASH!-mods"
+
 for /f %%i in ('powershell -Command "Get-Date -Format yyyy-MM-dd_HH:mm:ss"') do set "BUILD_TIME=%%i"
 
-REM Generate the C++ header file
-set "HEADER_FILE=git_info.h"
 (
     echo #pragma once
     echo #include ^<string^>
@@ -61,111 +92,61 @@ set "HEADER_FILE=git_info.h"
     echo     const std::string HASH = "!GIT_HASH!";
     echo     const std::string BUILD_TIME = "!BUILD_TIME!";
     echo }
-) > %HEADER_FILE%
+) > git_info.h
 
-echo Header file %HEADER_FILE% generated successfully.
-echo Branch: !GIT_BRANCH!
-echo Hash: !GIT_HASH!
-echo Modified: !MODIFICATIONS!
-echo Time: !BUILD_TIME!
+echo    Version: !GIT_BRANCH! @ !GIT_HASH!
 
-echo Compiling Resources...
-rc.exe app.rc
-
-
-REM Copy release notes to output dir
-copy release-notes.txt installer 
-
-REM Build exe file to output dir
-cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"!OUTPUT_EXE_FILE!" src\main.cpp src\WindowsPlatform.cpp app.res /link user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib winmm.lib Wtsapi32.lib
-
-
-REM If a release branch 
-echo Branch = !GIT_BRANCH!
-REM Check if branch matches format *.*.*
-echo !GIT_BRANCH! | findstr /R "^[0-9]*\.[0-9]*\.[0-9]*" >nul
+REM ============================================================================
+REM Compile Resources
+REM ============================================================================
+echo [5/6] Compiling resources...
+rc.exe /nologo /fo "%BUILD_DIR%\app.res" app.rc
 if errorlevel 1 (
-    echo Not a release branch, finished
-    exit /b 0
+    echo ERROR: Resource compilation failed
+    exit /b 1
+)
+echo    Resources compiled
+
+REM ============================================================================
+REM Link Executable
+REM ============================================================================
+echo [6/6] Building executable...
+
+cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"%OUTPUT_EXE_FILE%" ^
+       src\main.cpp src\WindowsPlatform.cpp "%BUILD_DIR%\app.res" /link ^
+       user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib ^
+       winmm.lib Wtsapi32.lib ws2_32.lib pdh.lib iphlpapi.lib
+    
+if errorlevel 1 (
+    echo.
+    echo ============================================================================
+    echo BUILD FAILED
+    echo ============================================================================
+    exit /b 1
 )
 
-set /p userChoice=Do you want to sign the .exe file? (y/n): 
-
-if /i "%userChoice%"=="y" (
-    echo.
-    smctl sign --keypair-alias key_1269013793 --input "!OUTPUT_EXE_FILE!"
-    echo.
-    echo If signing failed, try running 'smctl healthcheck' or check [C:\Users\labtest\.signingmanager\logs\smctl.log]
-) else (    
-    echo skipping siging and transfer steps
-
+REM Copy release notes
+if exist "release-notes.txt" (
+    if not exist "installer" mkdir "installer"
+    copy /Y "release-notes.txt" "installer\" >nul 2>&1
 )
+
+REM Get file size
+for %%F in ("%OUTPUT_EXE_FILE%") do set FILE_SIZE=%%~zF
+set /a FILE_SIZE_KB=FILE_SIZE/1024
+
+REM Calculate build time using PowerShell (reliable!)
+for /f %%i in ('powershell -command "[int](Get-Date -UFormat %%s)"') do set END_EPOCH=%%i
+set /a ELAPSED_S=END_EPOCH-START_EPOCH
+
+echo    Output: %OUTPUT_EXE_FILE% (!FILE_SIZE_KB! KB)
+
 echo.
-set /p userChoice=Do you want to push to ahkengbuild? (y/n): 
-
-if /i not "%userChoice%"=="y" (
-    echo skipping transfer steps
-    echo.
-    exit /b 0
-)
-
-REM Build version number string 
-set "VERSION_H=version.h"
-
-REM Initialize variables
-set "VERSION_YEAR="
-set "VERSION_MONTH="
-set "VERSION_RELEASE="
-set "VERSION_EXTRAVERSION="
-set "VERSION_RC_NO="
-set "VERSION_ADHOC_NO="
-
-REM Read each line of version.h
-for /f "usebackq tokens=1,2,3 delims= " %%A in ("%VERSION_H%") do (
-    if "%%A"=="#define" (
-        if "%%B"=="VERSION_YEAR" set "VERSION_YEAR=%%C"
-        if "%%B"=="VERSION_MONTH" set "VERSION_MONTH=%%C"
-        if "%%B"=="VERSION_RELEASE" set "VERSION_RELEASE=%%C"
-        if "%%B"=="VERSION_EXTRAVERSION" set "VERSION_EXTRAVERSION=%%~C"
-        if "%%B"=="VERSION_RC_NO" set "VERSION_RC_NO=%%C"
-        if "%%B"=="VERSION_ADHOC_NO" set "VERSION_ADHOC_NO=%%C"
-    )
-)
-
-REM Strip quotes from VERSION_EXTRAVERSION
-set "VERSION_EXTRAVERSION=!VERSION_EXTRAVERSION:"=!"
-
-REM Build the VERSION string
-if /i "!VERSION_EXTRAVERSION!"=="rc" (
-    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_rc!VERSION_RC_NO!"
-) else if /i "!VERSION_EXTRAVERSION!"=="adhoc" (
-    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_adhoc!VERSION_ADHOC_NO!"
-) else if /i "!VERSION_EXTRAVERSION!"=="ga" (
-    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_ga"
-) else (
-    echo Unknown VERSION_EXTRAVERSION: !VERSION_EXTRAVERSION!
-    exit /b 1
-)
-
-echo Version = %VERSION%
-
-set "REMOTE_MACHINE=ci.user@ahkengbuild"
-set "REMOTE_DIR=/srv/build_server/builds/releases/node-win-app/%GIT_BRANCH%/%VERSION%"
-
-REM Use percent vars since they don't need delayed expansion and don't interfere with remote shell
-ssh %REMOTE_MACHINE% "DIR=%REMOTE_DIR%; if [ -d \"$DIR\" ]; then exit 1; else mkdir -p \"$DIR\"; fi"
-
-if errorlevel 1 (
-    echo Release %VERSION% already exists on build server
-    exit /b 1
-)
-
-echo Sorry, you need to enter the password again for scp...
-
-REM Now copy
-scp -r installer/* %REMOTE_MACHINE%:%REMOTE_DIR%/
+echo ============================================================================
+echo BUILD SUCCESSFUL (completed in !ELAPSED_S! seconds)
+echo ============================================================================
+echo.
 
 endlocal
-
-echo Deployment to build server complete.
-echo.
+exit /b 0
+exit /b 0

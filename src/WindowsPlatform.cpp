@@ -165,6 +165,7 @@ public:
     HANDLE getStopEvent();
     void startService();
     void stopService();
+    std::string getCurrentSessionState();
 
 private:
     UniqueHandle hSerial = UniqueHandle(INVALID_HANDLE_VALUE);
@@ -462,6 +463,79 @@ void WindowsPlatform::handleSessionChange(DWORD sessionChangeType, DWORD session
     if (session_callback) {
         session_callback(stateValue);
     }
+}
+
+std::string WindowsPlatform::getCurrentSessionState() {
+    DWORD sessionId = WTSGetActiveConsoleSessionId();
+    if (sessionId == 0xFFFFFFFF) {
+        logMessage("No active console session detected");
+        return "0";
+    }
+
+    HDESK hDesk = OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS);
+    if (hDesk == NULL) {
+        logMessage("Workstation appears to be locked");
+        CloseDesktop(hDesk);
+        return "7";
+    }
+
+    char desktopName[256] = { 0 };
+    DWORD needed = 0;
+    if (GetUserObjectInformation(hDesk, UOI_NAME, desktopName, sizeof(desktopName), &needed)) {
+        std::string deskName(desktopName);
+        logMessage("Current Desktop: " + deskName);
+
+        if (deskName.find("Winlogon") != std::string::npos) {
+            CloseDesktop(hDesk);
+            logMessage("Desktop is Winlogon - workstation is locked");
+            return "7";
+        }
+    }
+    CloseDesktop(hDesk);
+
+    if (GetSystemMetrics(SM_REMOTESESSION)) {
+        logMessage("Running in RDP Session");
+        return "3";
+    }
+
+    LPWSTR pBuffer = NULL;
+    DWORD bytesReturned = 0;
+
+    if (WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, sessionId, WTSConnectState, &pBuffer, &bytesReturned)) {
+        WTS_CONNECTSTATE_CLASS state = *((WTS_CONNECTSTATE_CLASS*)pBuffer);
+        WTSFreeMemory(pBuffer);
+
+        switch (state) {
+        case WTSActive:
+            logMessage("Session is active and connected");
+            return "5";
+
+        case WTSConnected:
+            logMessage("Session is connected");
+            return "1";
+
+        case WTSDisconnected:
+            logMessage("Session is Disconnected");
+            return "2";
+
+        case WTSIdle:
+            logMessage("Session is Idle");
+            return "5";
+
+        default:
+            logMessage("Session state: " + std::to_string(state));
+            return "6";
+        }
+    }
+
+    std::string username = getLoggedInUser();
+    if (username.empty() || username == "none" || username == "SYSTEM") {
+        logMessage("No user logged in");
+        return "6";
+    }
+
+    logMessage("User logged in: " + username);
+    return "5";
 }
 
 void WindowsPlatform::updateCpuTimes() {
