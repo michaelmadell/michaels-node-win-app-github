@@ -17,6 +17,7 @@ class Platform{
 
     virtual std::vector<NetworkInterface> getNetworkInterfaces() = 0;
     virtual std::string getHostname() = 0;
+	virtual std::string getCurrentSessionState() = 0;
     virtual std::string getLoggedInUser() = 0;
     virtual std::string getOsVersion() = 0;
     virtual std::string getOsBuild() = 0;

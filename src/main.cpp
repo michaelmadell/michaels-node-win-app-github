@@ -1,3 +1,7 @@
+#ifdef _WIN32
+#define _WINSOCKAPI_
+#include <windows.h>
+#endif
 #include "Platform.h"
 #include "SystemState.h"
 #include "version.h"
@@ -8,9 +12,7 @@
 #include <mutex>
 #include <atomic>
 #include <sstream>
-#ifdef _WIN32
-#include <windows.h>
-#endif
+
 
 std::unique_ptr<Platform> platform;
 std::unique_ptr<Platform> createPlatform();
@@ -192,16 +194,16 @@ void readSerialPortWorker() {
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
-    #ifdef _WIN32
-        const std::string portName = SERIAL_PORT;
-    #else
-        const std::string portName = "/dev/ttyUSB0"; // Make sure this is your correct port
-    #endif
+#ifdef _WIN32
+    const std::string portName = SERIAL_PORT;
+#else
+    const std::string portName = "/dev/ttyUSB0";
+#endif
 
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
     platform->logMessage("Serial Thread Started. Attempting to open port " + portName);
 
-    if (!platform->openSerialPort(portName, 115200)) { 
+    if (!platform->openSerialPort(portName, 115200)) {
         std::cerr << "[DEBUG] FATAL: platform->openSerialPort() returned false. Thread is exiting." << std::endl;
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);
 #ifdef _WIN32
@@ -213,58 +215,80 @@ void serialThread() {
     std::cout << "[DEBUG] Serial Port opened successfully." << std::endl;
     platform->logMessage("Serial Port opened successfully");
 
+    // Send initial system info
     std::stringstream versionStream;
     versionStream << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_RELEASE << "." << VERSION_BUILD;
     if (std::string(VERSION_EXTRAVERSION) == "rc") {
         versionStream << "_" << VERSION_EXTRAVERSION << VERSION_RC_NO;
-    } else {
+    }
+    else {
         versionStream << "_" << VERSION_EXTRAVERSION;
     }
 
     std::cout << "[DEBUG] Sending initial messages..." << std::endl;
     sendLineToBmc("appVersion, " + versionStream.str());
-    sendLineToBmc("osVersion, " + platform->getOsVersion());
+    sendLineToBmc("winVersion, " + platform->getOsVersion());
     sendLineToBmc("osBuild, " + platform->getOsBuild());
-    sendLineToBmc("sessionState, 0");
+    std::string initialSessionState = platform->getCurrentSessionState();
+    sendLineToBmc("sessionState, " + initialSessionState);  // Initial state
     std::cout << "[DEBUG] Initial messages sent." << std::endl;
 
+    // Send initial username
     currentState.username = platform->getLoggedInUser();
     sendLineToBmc("username, " + currentState.username);
 
-    auto lastCheckTime = std::chrono::steady_clock::now();
-    const auto checkInterval = std::chrono::seconds(5);
+    // Send initial network state
+    currentState.networkInterfaces = platform->getNetworkInterfaces();
+    for (const auto& iface : currentState.networkInterfaces) {
+        std::stringstream ss;
+        ss << "network, " << iface.macAddress << ", " << iface.linkStatus
+            << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
+            << iface.dhcp << ", " << iface.name;
+        sendLineToBmc(ss.str());
+    }
+
+    // Periodic check timer (network and hostname only - session is event-driven now)
+    auto lastNetworkCheck = std::chrono::steady_clock::now();
+    const auto networkCheckInterval = std::chrono::seconds(30);  // Check every 30s
 
     while (!g_terminate.load()) {
+        // Process incoming serial data
         processIncomingSerialData();
+
+        // Periodic network and hostname check
         auto now = std::chrono::steady_clock::now();
-        if (now - lastCheckTime >= checkInterval) {
-            std::cout << "[DEBUG] Polling for system state..." << std::endl;
+        if (now - lastNetworkCheck >= networkCheckInterval) {
+
+            // Check hostname changes (rare, but possible)
             std::string newHostname = platform->getHostname();
-            std::string newUsername = platform->getLoggedInUser();
-            std::vector<NetworkInterface> newInterfaces = platform->getNetworkInterfaces();
-
-            {
+            if (currentState.hostname != newHostname) {
                 std::lock_guard<std::mutex> lock(stateMutex);
+                currentState.hostname = newHostname;
+                sendLineToBmc("hostname, " + currentState.hostname);
+                platform->logMessage("Hostname changed to: " + newHostname);
+            }
 
-                if (currentState.hostname != newHostname) {
-                    currentState.hostname = newHostname;
-                    sendLineToBmc("hostname, " + currentState.hostname);
-                }
-                if (currentState.username != newUsername) {
-                    currentState.username = newUsername;
-                    sendLineToBmc("username, " + currentState.username);
-                }
-                if (currentState.networkInterfaces != newInterfaces) {
-                    currentState.networkInterfaces = newInterfaces;
-                    for (const auto& iface : newInterfaces) { // Iterate over the new interfaces
-                        std::stringstream ss;
-                        ss << "network, " << iface.macAddress << ", " << iface.linkStatus << ", " << iface.ipv4 << ", " << iface.ipv6 << ", " << iface.dhcp << ", " << iface.name;
-                        sendLineToBmc(ss.str());
-                    }
+            // Check network interface changes
+            std::vector<NetworkInterface> newInterfaces = platform->getNetworkInterfaces();
+            if (currentState.networkInterfaces != newInterfaces) {
+                std::lock_guard<std::mutex> lock(stateMutex);
+                currentState.networkInterfaces = newInterfaces;
+
+                platform->logMessage("Network configuration changed - sending updates");
+                for (const auto& iface : newInterfaces) {
+                    std::stringstream ss;
+                    ss << "network, " << iface.macAddress << ", " << iface.linkStatus
+                        << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
+                        << iface.dhcp << ", " << iface.name;
+                    sendLineToBmc(ss.str());
                 }
             }
+
+            lastNetworkCheck = now;
         }
-        std::this_thread::sleep_for(std::chrono::seconds(5)); // Increased for easier debugging
+
+        // Short sleep for serial responsiveness (100ms instead of 5s)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     sendLineToBmc("appExit, shutting down serial thread...");
@@ -320,10 +344,20 @@ int main(int argc, char* argv[]) {
                 currentState.sessionState = sessionState;
                 sendLineToBmc("sessionState, " + sessionState);
 
+                // When user logs off, set username to "none"
                 if (sessionState == "6") { // WTS_SESSION_LOGOFF
                     if (currentState.username != "none") {
                         currentState.username = "none";
                         sendLineToBmc("username, none");
+                    }
+                }
+                // When user logs on, update username
+                else if (sessionState == "5") { // WTS_SESSION_LOGON
+                    // Get the actual username
+                    std::string newUsername = platform->getLoggedInUser();
+                    if (currentState.username != newUsername) {
+                        currentState.username = newUsername;
+                        sendLineToBmc("username, " + currentState.username);
                     }
                 }
             }
