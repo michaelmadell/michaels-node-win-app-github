@@ -1,17 +1,13 @@
 <#
 .SYNOPSIS
-    Stops and removes a specified Windows service.
+    Stops and removes CoreStationHXAgent service.
 .DESCRIPTION
     This script uninstalls a Windows service from the system. It must be run with
     Administrator privileges.
-.PARAMETER ServiceName
-    The name of the service you want to remove. Defaults to 'CoreStationService'.
 #>
 [CmdletBinding()]
 param (
     # Explicitly setting Mandatory to false prevents the prompt
-    [Parameter(Mandatory = $false, HelpMessage = "Enter the service name to remove.")]
-    [ValidateNotNullOrEmpty()]
     [string]$ServiceName = "CoreStationService"
 )
 

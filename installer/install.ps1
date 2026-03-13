@@ -67,6 +67,13 @@ try {
         Write-Host "Existing service removed successfully."
     }
 
+    $existingApp = Get-ChildItem -Path "C:\ProgramData\ahk\nodeWinApp.exe" -ErrorAction SilentlyContinue
+    if ($null -ne $existingApp) {
+        Write-Host "An existing executable was found at 'C:\ProgramData\ahk\nodeWinApp.exe'. Removing it first."
+        Remove-Item -Path "C:\ProgramData\ahk\nodeWinApp.exe" -Force
+        Write-Host "Existing executable removed successfully."
+    }
+
     Copy-Item -Path $ExePath -Destination "C:\ProgramData\ahk"
 
     $NewExePath = "C:\ProgramData\ahk\nodeWinApp.exe"
