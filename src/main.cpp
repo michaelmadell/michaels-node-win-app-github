@@ -2,9 +2,16 @@
 #define _WINSOCKAPI_
 #include <windows.h>
 #endif
-#include "Platform.h"
-#include "SystemState.h"
+
+#include "core/Platform.h"
+#include "core/SystemState.h"
+#include "modules/serial/SerialManager.h"
+#ifdef ENABLE_METRICS
+#include "modules/metrics/MetricsCollector.h"
+#endif
+#include "modules/regedits/Regedit.h"
 #include "version.h"
+
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -13,135 +20,159 @@
 #include <atomic>
 #include <sstream>
 
-
 std::unique_ptr<Platform> platform;
-std::unique_ptr<Platform> createPlatform();
+std::unique_ptr<SerialManager> serialManager;
+#ifdef ENABLE_METRICS
+std::unique_ptr<MetricsCollector> metricsCollector;
+#endif
+std::unique_ptr<Regedit> regedit;
 
 SystemState currentState;
 std::mutex stateMutex;
-
 std::atomic<bool> g_terminate{false};
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
 void sendLineToBmc(const std::string& output_string) {
-    if (!platform) return;
+    if (!serialManager) return;
 
     // --- ADD THIS LINE ---
     std::cout << "[SENDING] " << output_string << std::endl;
 
     platform->logMessage(output_string);
-    platform->writeSerial(output_string + "\r\n");
+    serialManager->Write(output_string + "\r\n");
 }
 
 void heartbeatThread() {
     platform->logMessage("Heartbeat thread started.");
+
+    const auto heartbeatInterval = std::chrono::seconds(30);
+    auto lastHeartbeat = std::chrono::steady_clock::now();
+
     while (!g_terminate.load()) {
-		std::this_thread::sleep_for(std::chrono::seconds(30)); // Heartbeat interval - 30s for Release Candidate
-        if (g_terminate.load()) {
-            break;
-        }
+        auto now = std::chrono::steady_clock::now();
 
-        platform->updatePdhMetrics();
+        if (now - lastHeartbeat >= heartbeatInterval) {
+            lastHeartbeat = now;
 
-        // --- NEW METRIC COLLECTION & REPORTING ---
-        try {
-            int cpuUsage = platform->getCpuUsagePercent();
-            int ramUsage = platform->getRamUsagePercent();
-            std::string freeDisk = platform->getFreeDiskSpaceGB("C:"); // Collects C: drive space
-            std::string updateState = platform->getWindowsUpdateState();
-            float diskQueue = platform->getDiskQueueLength();
-            float netRetrans = platform->getNetworkRetransRate();
-            std::string uptime = platform->getSystemUptime();
-            std::string gpuInfo = platform->getGpuDriverInfo();
-            float gpuUsage = platform->getGpuUsagePercent();
-            std::string highRamProcs = platform->getHighRamProcesses();
+            if (g_terminate.load()) break;
+#ifdef ENABLE_METRICS
+            if (metricsCollector) {
+                metricsCollector->UpdateCounters();
+            }
+#endif
+            try {
+#ifdef ENABLE_METRICS
+                auto metrics = metricsCollector->CollectAll();
+                {
+                    std::lock_guard<std::mutex> lock(stateMutex);
 
-            {
-                std::lock_guard<std::mutex> lock(stateMutex);
+                    currentState.cpuUsagePercent = metrics.performance.cpuUsage;
+                    currentState.ramUsagePercent = metrics.performance.ramUsage;
+                    currentState.freeDiskSpaceGB = metrics.performance.freeDiskSpace;
+                    currentState.windowsUpdateState = metrics.updates.state;
+                    currentState.diskQueueLength = metrics.performance.diskQueue;
+                    currentState.networkRetransRate = metrics.performance.netRetrans;
+                    currentState.systemUptime = metrics.performance.uptime;
+                    currentState.gpuDriverInfo = metrics.gpu.driverInfo;
+                    currentState.gpuUsagePercent = metrics.gpu.usage;
+                    currentState.highRamProcesses = metrics.processes.highRamProcesses;
 
-                // Update SystemState (not strictly necessary for reporting, but good practice)
-                currentState.cpuUsagePercent = cpuUsage;
-                currentState.ramUsagePercent = ramUsage;
-                currentState.freeDiskSpaceGB = freeDisk;
-                currentState.windowsUpdateState = updateState;
-                currentState.diskQueueLength = diskQueue;
-                currentState.networkRetransRate = netRetrans;
-                currentState.systemUptime = uptime;
-                currentState.gpuDriverInfo = gpuInfo;
-                currentState.gpuUsagePercent = gpuUsage;
-                currentState.highRamProcesses = highRamProcs;
+                    sendLineToBmc("cpuUsage, " + std::to_string(metrics.performance.cpuUsage) + "%");
+                    sendLineToBmc("ramUsage, " + std::to_string(metrics.performance.ramUsage) + "%");
+                    sendLineToBmc("freeDisk, " + metrics.performance.freeDiskSpace + "GB");
+                    sendLineToBmc("wuState, " + metrics.updates.state);
+                    sendLineToBmc("diskQueue, " + std::to_string(metrics.performance.diskQueue));
+                    sendLineToBmc("netRetrans, " + std::to_string(metrics.performance.netRetrans) + "/s");
+                    sendLineToBmc("uptime, " + metrics.performance.uptime);
+                    sendLineToBmc("gpuInfo, " + metrics.gpu.driverInfo);
+                    sendLineToBmc("gpuUsage, " + std::to_string(metrics.gpu.usage) + "%");
+                    sendLineToBmc("highRamProcs, " + metrics.processes.highRamProcesses);
 
-                // Send the metrics
-                sendLineToBmc("cpuUsage, " + std::to_string(cpuUsage) + "%");
-                sendLineToBmc("ramUsage, " + std::to_string(ramUsage) + "%");
-                sendLineToBmc("freeDisk, " + freeDisk + "GB");
-                sendLineToBmc("wuState, " + updateState);
-                sendLineToBmc("diskQueue, " + std::to_string(diskQueue));
-                sendLineToBmc("netRetrans, " + std::to_string(netRetrans) + "/s");
-                sendLineToBmc("uptime, " + uptime);
-                sendLineToBmc("gpuInfo, " + gpuInfo);
-                sendLineToBmc("gpuUsage, " + std::to_string(gpuUsage) + "%");
-                sendLineToBmc("highRamProcs, " + highRamProcs);
+                    std::stringstream logMsg;
+                    logMsg << "Metrics: CPU=" << metrics.performance.cpuUsage << "%, "
+                        << "RAM = " << metrics.performance.ramUsage << "%, "
+                        << "Disk = " << metrics.performance.freeDiskSpace << "GB, "
+                        << "WU = " << metrics.updates.state << ", "
+                        << "DiskQ=" << metrics.performance.diskQueue << ", "
+                        << "NetR = " << metrics.performance.netRetrans << " / s, "
+                        << "Uptime = " << metrics.performance.uptime << " | "
+                        << "GPU=" << metrics.gpu.usage << "% | "
+                        << metrics.gpu.driverInfo << " | "
+                        << "HighRam={" << metrics.processes.highRamProcesses << "}";
+                    platform->logMessage(logMsg.str());
+                }
+#endif
 
-                // Log the metrics for confirmation (ensuring logging is used)
-                std::stringstream logMsg;
-                logMsg << "Metrics: CPU=" << cpuUsage << "%, RAM=" << ramUsage << "%, Disk=" << freeDisk << "GB, WU=" << updateState;
-                logMsg << ", DiskQ=" << diskQueue << ", NetR=" << netRetrans << "/s, Uptime=" << uptime;
-                logMsg << " | GPU=" << gpuUsage << "% | " << gpuInfo;
-                logMsg << " | HighRam={" << highRamProcs << "}";
-                platform->logMessage(logMsg.str());
+                sendLineToBmc("HB");
+            } catch (const std::exception& e) {
+                std::cerr << "[ERROR] Exception in heartbeatThread: " << e.what() << std::endl;
+                platform->logMessage("[ERROR] Exception in heartbeatThread: " + std::string(e.what()));
             }
         }
-        catch (const std::exception& e) {
-            std::cerr << "[ERROR] Exception in heartbeatThread: " << e.what() << std::endl;
-            platform->logMessage("[ERROR] Exception in heartbeatThread: " + std::string(e.what()));
-        }
-        // --- END NEW METRIC COLLECTION & REPORTING ---
 
-        // Existing Heartbeat (HB) message (kept last)
-        sendLineToBmc("HB");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     platform->logMessage("Heartbeat thread finished");
 }
 
 void checkSystemState() {
-    SystemState previousState;
-    {
+    static SystemState previousState;
+
+    auto newInterfaces = platform->getNetworkInterfaces();
+    auto newHostname = platform->getHostname();
+    auto newUsername = platform->getLoggedInUser();
+
+    bool hasChanges = false;
+
+    // Check hostname changes
+    if (currentState.hostname != newHostname) {
         std::lock_guard<std::mutex> lock(stateMutex);
-        previousState = currentState;
+        currentState.hostname = newHostname;
+        sendLineToBmc("hostname, " + newHostname);
+        platform->logMessage("Hostname changed to: " + newHostname);
+        hasChanges = true;
     }
 
-    currentState.networkInterfaces = platform->getNetworkInterfaces();
-    currentState.hostname = platform->getHostname();
-    currentState.username = platform->getLoggedInUser();
+    // Check username changes
+    if (currentState.username != newUsername) {
+        std::lock_guard<std::mutex> lock(stateMutex);
+        currentState.username = newUsername;
+        sendLineToBmc("username, " + newUsername);
+        platform->logMessage("Username changed to: " + newUsername);
+        hasChanges = true;
+    }
 
-    if (currentState != previousState){
-        // check change logic
-        if (currentState.hostname != previousState.hostname) {
-            sendLineToBmc("hostname, " + currentState.hostname);
-		}
-        if (currentState.username != previousState.username) {
-            sendLineToBmc("username, " + currentState.username);
+    // Check network interface changes
+    if (currentState.networkInterfaces != newInterfaces) {
+        std::lock_guard<std::mutex> lock(stateMutex);
+        currentState.networkInterfaces = newInterfaces;
+
+        platform->logMessage("Network configuration changed - sending updates");
+        for (const auto& iface : newInterfaces) {
+            std::stringstream ss;
+            ss << "network, " << iface.macAddress << ", " << iface.linkStatus
+                << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
+                << iface.dhcp << ", " << iface.name;
+            sendLineToBmc(ss.str());
         }
-        if (currentState.networkInterfaces != previousState.networkInterfaces) {
-            for (const auto& iface : currentState.networkInterfaces) {
-                std::stringstream ss;
-                ss << "network, " << iface.macAddress << ", " << iface.linkStatus << ", " << iface.ipv4 << ", " << iface.ipv6 << ", " << iface.dhcp << ", " << iface.name;
-                sendLineToBmc(ss.str());
-            }
-        }
+        hasChanges = true;
     }
 }
 
 void processIncomingCommand(const std::string& command) {
     const std::string prefix = "c2a, ";
+
     if (command.size() > prefix.size() && command.substr(0, prefix.size()) == prefix) {
         std::string message = command.substr(prefix.size());
         platform->logMessage("Received C2A Command: " + message);
-        std::cout << "[DEBUG] Received C2A Command: " << message << std::endl;
+        std::cout << "[RX] Received C2A Command: " << message << std::endl;
         platform->showMessageDialog("Command from BMC", message);
+    }
+    else {
+        platform->logMessage("Received: " + command);
+        std::cout << "[RX] " << command << std::endl;
     }
 }
 
@@ -203,7 +234,13 @@ void serialThread() {
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
     platform->logMessage("Serial Thread Started. Attempting to open port " + portName);
 
-    if (!platform->openSerialPort(portName, 115200)) {
+    serialManager = std::make_unique<SerialManager>(
+        [](const std::string& command) {
+            processIncomingCommand(command);
+        }
+    );
+
+    if (!serialManager->Open(portName, 115200)) {
         std::cerr << "[DEBUG] FATAL: platform->openSerialPort() returned false. Thread is exiting." << std::endl;
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);
 #ifdef _WIN32
@@ -229,70 +266,55 @@ void serialThread() {
     sendLineToBmc("appVersion, " + versionStream.str());
     sendLineToBmc("winVersion, " + platform->getOsVersion());
     sendLineToBmc("osBuild, " + platform->getOsBuild());
+
     std::string initialSessionState = platform->getCurrentSessionState();
     sendLineToBmc("sessionState, " + initialSessionState);  // Initial state
-    std::cout << "[DEBUG] Initial messages sent." << std::endl;
 
     // Send initial username
-    currentState.username = platform->getLoggedInUser();
-    sendLineToBmc("username, " + currentState.username);
+    {
+        std::lock_guard<std::mutex> lock(stateMutex);
+        currentState.username = platform->getLoggedInUser();
+        sendLineToBmc("username, " + currentState.username);
 
-    // Send initial network state
-    currentState.networkInterfaces = platform->getNetworkInterfaces();
-    for (const auto& iface : currentState.networkInterfaces) {
-        std::stringstream ss;
-        ss << "network, " << iface.macAddress << ", " << iface.linkStatus
-            << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
-            << iface.dhcp << ", " << iface.name;
-        sendLineToBmc(ss.str());
+        // Send initial network state
+        currentState.networkInterfaces = platform->getNetworkInterfaces();
+        for (const auto& iface : currentState.networkInterfaces) {
+            std::stringstream ss;
+            ss << "network, " << iface.macAddress << ", " << iface.linkStatus
+                << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
+                << iface.dhcp << ", " << iface.name;
+            sendLineToBmc(ss.str());
+        }
     }
 
-    // Periodic check timer (network and hostname only - session is event-driven now)
+    std::cout << "[DEBUG] Initial messages sent." << std::endl;
+
+    // Periodic check timer for network and hostname
     auto lastNetworkCheck = std::chrono::steady_clock::now();
-    const auto networkCheckInterval = std::chrono::seconds(30);  // Check every 30s
+    const auto networkCheckInterval = std::chrono::seconds(30);
 
     while (!g_terminate.load()) {
         // Process incoming serial data
-        processIncomingSerialData();
+        serialManager->ProcessIncomingData();
+
+        // Try to reconnect if disconnected
+        if (!serialManager->IsOpen()) {
+            serialManager->TryReconnect();
+        }
 
         // Periodic network and hostname check
         auto now = std::chrono::steady_clock::now();
         if (now - lastNetworkCheck >= networkCheckInterval) {
-
-            // Check hostname changes (rare, but possible)
-            std::string newHostname = platform->getHostname();
-            if (currentState.hostname != newHostname) {
-                std::lock_guard<std::mutex> lock(stateMutex);
-                currentState.hostname = newHostname;
-                sendLineToBmc("hostname, " + currentState.hostname);
-                platform->logMessage("Hostname changed to: " + newHostname);
-            }
-
-            // Check network interface changes
-            std::vector<NetworkInterface> newInterfaces = platform->getNetworkInterfaces();
-            if (currentState.networkInterfaces != newInterfaces) {
-                std::lock_guard<std::mutex> lock(stateMutex);
-                currentState.networkInterfaces = newInterfaces;
-
-                platform->logMessage("Network configuration changed - sending updates");
-                for (const auto& iface : newInterfaces) {
-                    std::stringstream ss;
-                    ss << "network, " << iface.macAddress << ", " << iface.linkStatus
-                        << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
-                        << iface.dhcp << ", " << iface.name;
-                    sendLineToBmc(ss.str());
-                }
-            }
-
+            checkSystemState();
             lastNetworkCheck = now;
         }
 
-        // Short sleep for serial responsiveness (100ms instead of 5s)
+        // Short sleep for serial responsiveness
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     sendLineToBmc("appExit, shutting down serial thread...");
-    platform->closeSerialPort();
+    serialManager->Close();
     platform->logMessage("Serial thread finished.");
 }
 
@@ -301,6 +323,10 @@ int main(int argc, char* argv[]) {
     std::cout << "[DEBUG] Application starting. Creating platform object." << std::endl;
     
     platform = createPlatform();
+#ifdef ENABLE_METRICS
+    metricsCollector = std::make_unique<MetricsCollector>(platform.get());
+#endif
+
     std::thread workerThread;
     std::thread hbThread;
 
@@ -320,8 +346,12 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
 			OutputDebugStringW(L"on_stop callback EXECUTED. Stopping serial Thread.\n");
 #endif
-            platform->closeSerialPort();
             g_terminate = true;
+
+            if (serialManager) {
+                serialManager->Close();
+            }
+
             if (workerThread.joinable()) {
                 workerThread.join();
             }
@@ -353,7 +383,6 @@ int main(int argc, char* argv[]) {
                 }
                 // When user logs on, update username
                 else if (sessionState == "5") { // WTS_SESSION_LOGON
-                    // Get the actual username
                     std::string newUsername = platform->getLoggedInUser();
                     if (currentState.username != newUsername) {
                         currentState.username = newUsername;

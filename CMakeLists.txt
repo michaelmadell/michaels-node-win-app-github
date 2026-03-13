@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-# Project copnfiguration
+# Project configuration
 project(CoreStationHXAgent
     VERSION 20.26.2.1
     DESCRIPTION "CoreStation Host Agent for serial monitoring"
@@ -8,8 +8,10 @@ project(CoreStationHXAgent
 )
 
 # Build options
-option(BUILD_METRIC_CACHE "Build with metric caching support" ON)
+option(BUILD_METRICS "Build with metric support" ON)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
+option(BUILD_TRAY_APP "Build with system tray application (Windows only)" ON)
+option(BUILD_REGEDIT "Build with registry editing components (Windows only" ON)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
@@ -101,7 +103,6 @@ namespace GitInfo {
     message(STATUS "Git branch: ${GIT_BRANCH}")
     message(STATUS "Git hash: ${GIT_HASH}")
 else()
-    # Create a default git_info.h if Git is not available
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/git_info.h")
         file(WRITE "${CMAKE_SOURCE_DIR}/git_info.h"
 "#pragma once
@@ -117,55 +118,97 @@ namespace GitInfo {
     message(STATUS "Git not found - using default git_info.h")
 endif()
 
-# Platform-specific build files
-
 # Core Sources
 set(CORE_SOURCES
     src/main.cpp
 )
 
+# Module Sources
+set(MODULE_SOURCES
+    src/modules/serial/SerialManager.cpp
+)
+
 # Platform-specific sources
 if(WIN32)
     list(APPEND CORE_SOURCES
-        src/WindowsPlatform.cpp
+        src/platform/WindowsPlatform.cpp
     )
     
+    if(BUILD_TRAY_APP)
+        list(APPEND MODULE_SOURCES
+            src/modules/tray/TrayApp.cpp
+        )
+    endif()
+    
+    if(BUILD_SESSION_MONITOR)
+        list(APPEND MODULE_SOURCES
+            src/modules/session/SessionMonitor.cpp
+        )
+    endif()
+
+    if(BUILD_METRICS)
+        list(APPEND MODULE_SOURCES
+            src/modules/metrics/MetricsCollector.cpp
+        )
+    endif()
+
+    if(BUILD_REGEDIT)
+            list(APPEND MODULE_SOURCES
+            src/modules/regedits/Regedit.cpp
+        )
+    endif()
 elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES
-        src/LinuxPlatform.cpp
+        src/platform/LinuxPlatform.cpp
     )
 endif()
 
 # Header files (for IDE organization)
 set(HEADER_FILES
-    src/Platform.h
-    src/SystemState.h
+    src/core/Platform.h
+    src/core/SystemState.h
     src/version.h
+    src/modules/serial/SerialManager.h
 )
 
-if(BUILD_METRIC_CACHE)
-    list(APPEND HEADER_FILES src/MetricCache.h)
+if(BUILD_METRICS)
+    list(APPEND HEADER_FILES src/modules/metrics/MetricCache.h)
 endif()
 
-if(WIN32 AND BUILD_TRAYAPP AND EXISTS "${CMAKE_SOURCE_DIR}/src/TrayApp.h")
-    list(APPEND HEADER_FILES src/TrayApp.h)
+if(WIN32)
+    list(APPEND HEADER_FILES src/platform/Windows_Addon.h)
+    
+    if(BUILD_TRAY_APP)
+        list(APPEND HEADER_FILES src/modules/tray/TrayApp.h)
+    endif()
+    
+    if(BUILD_SESSION_MONITOR)
+        list(APPEND HEADER_FILES src/modules/session/SessionMonitor.h)
+    endif()
+
+    if(BUILD_REGEDIT)
+        list(APPEND HEADER_FILES src/modules/regedits/Regedit.h)
+        endif()
 endif()
 
-## Create Executable
-add_executable(${PROJECT_NAME} ${CORE_SOURCES} ${HEADER_FILES})
+# Create Executable
+add_executable(${PROJECT_NAME} ${CORE_SOURCES} ${MODULE_SOURCES} ${HEADER_FILES})
 
-#windows resources
+# Windows resources
 if(WIN32 AND EXISTS "${CMAKE_SOURCE_DIR}/app.rc")
     target_sources(${PROJECT_NAME} PRIVATE app.rc)
 endif()
 
-## Include directories
+# Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/core
+    ${CMAKE_SOURCE_DIR}/src/platform
+    ${CMAKE_SOURCE_DIR}/src/modules
     ${CMAKE_SOURCE_DIR}
 )
 
-## Compiler Definitions
+# Compiler Definitions
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     $<$<PLATFORM_ID:Windows>:_WIN32>
     $<$<PLATFORM_ID:Windows>:UNICODE>
@@ -176,25 +219,33 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     $<$<CONFIG:Release>:NDEBUG>
 )    
 
-if(BUILD_METRIC_CACHE)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_METRIC_CACHE)
+if(BUILD_METRICS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_METRICS)
 endif()
 
 if(BUILD_SESSION_MONITOR)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SESSION_MONITOR)
 endif()
 
-## Compiler Flags
+if(BUILD_TRAY_APP AND WIN32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_TRAY_APP)
+endif()
+
+if(BUILD_REGEDIT AND WIN32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_REGEDIT)
+endif()
+
+# Compiler Flags
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE
-        /W3                     # Warning level 3
-        /EHsc                   # Exception handling
-        /MP                     # Multi-processor compilation
-        $<$<CONFIG:Release>:/O2>    # Optimize for speed
-        $<$<CONFIG:Release>:/MT>    # Static runtime
-        $<$<CONFIG:Debug>:/Od>      # No optimization
-        $<$<CONFIG:Debug>:/MTd>     # Static runtime (debug)
-        $<$<CONFIG:Debug>:/Zi>      # Debug info
+        /W3
+        /EHsc
+        /MP
+        $<$<CONFIG:Release>:/O2>
+        $<$<CONFIG:Release>:/MT>
+        $<$<CONFIG:Debug>:/Od>
+        $<$<CONFIG:Debug>:/MTd>
+        $<$<CONFIG:Debug>:/Zi>
     )
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE
@@ -206,20 +257,20 @@ else()
     )
 endif()
 
-## Platform-specific libraries
+# Platform-specific libraries
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-        iphlpapi        # IP Helper API
-        ws2_32          # WinSock 2
-        wtsapi32        # Windows Terminal Services
-        setupapi        # Setup API
-        user32          # User interface
-        gdi32           # Graphics Device Interface
-        shell32         # Shell API
-        advapi32        # Advanced Windows API
-        comctl32        # Common Controls
-        winmm           # Windows Multimedia
-        pdh             # Performance Data Helper
+        iphlpapi
+        ws2_32
+        wtsapi32
+        setupapi
+        user32
+        gdi32
+        shell32
+        advapi32
+        comctl32
+        winmm
+        pdh
     )
 elseif(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
@@ -228,13 +279,13 @@ elseif(UNIX AND NOT APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${DBUS_LIBRARIES})
 endif()
 
-## Output Directory
+# Output Directory
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
     OUTPUT_NAME "CoreStationHXAgent"
 )
 
-## Installation rules
+# Installation rules
 if(WIN32)
     install(TARGETS ${PROJECT_NAME}
         RUNTIME DESTINATION bin
@@ -251,7 +302,7 @@ elseif(UNIX AND NOT APPLE)
     endif()
 endif()
 
-## Packaging (CPACK)
+# Packaging (CPACK)
 set(CPACK_PACKAGE_NAME "corestationhxagent")
 set(CPACK_PACKAGE_VENDOR "Amulet Hotkey Ltd")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CoreStation Host Agent for serial monitoring")
@@ -269,13 +320,13 @@ endif()
 
 include(CPack)
 
-## Testing (OPTIONAL)
+# Testing (OPTIONAL)
 if(ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
-## Print configuration summary
+# Print configuration summary
 message(STATUS "")
 message(STATUS "================================================")
 message(STATUS "CoreStationHXAgent Build Configuration")
@@ -287,13 +338,14 @@ message(STATUS "Compiler:          ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER
 message(STATUS "Platform:          ${CMAKE_SYSTEM_NAME}")
 message(STATUS "")
 message(STATUS "Features:")
-message(STATUS "  TrayApp:         ${BUILD_TRAYAPP}")
-message(STATUS "  Metric Cache:    ${BUILD_METRIC_CACHE}")
+message(STATUS "  TrayApp:         ${BUILD_TRAY_APP}")
+message(STATUS "  Metrics:         ${BUILD_METRICS}")
 message(STATUS "  Session Monitor: ${BUILD_SESSION_MONITOR}")
+message(STATUS "  Registry Edit:   ${BUILD_REGEDIT}")
 message(STATUS "  Testing:         ${ENABLE_TESTING}")
 message(STATUS "")
 message(STATUS "Source Files:")
-foreach(src ${CORE_SOURCES})
+foreach(src ${CORE_SOURCES} ${MODULE_SOURCES})
     message(STATUS "  - ${src}")
 endforeach()
 message(STATUS "================================================")
@@ -316,7 +368,7 @@ message(STATUS "")
 #   make -j$(nproc)
 #
 # To change options:
-#   cmake .. -DBUILD_TRAYAPP=OFF
+#   cmake .. -DBUILD_METRIC_CACHE=OFF
 #   cmake .. -DCMAKE_BUILD_TYPE=Debug
 #
 # To clean:

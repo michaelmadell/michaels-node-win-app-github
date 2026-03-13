@@ -2,7 +2,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
-#include "Platform.h"
+#include "WindowsPlatform.h"
 #include <iostream>
 #undef min
 #undef max
@@ -28,7 +28,13 @@
 #include <chrono>
 #include <cctype>
 #include "Windows_Addon.h"
-#include "MetricCache.h"
+#include "../modules/metrics/MetricCache.h"
+
+#ifdef ENABLE_TRAY_APP
+#include "../modules/tray/TrayApp.h"
+#endif
+
+#include "../modules/session/SessionMonitor.h"
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -51,8 +57,6 @@
 
 static const wchar_t* const LOG_DIR_PATH = L"C:\\ProgramData\\ahk";
 static const wchar_t* const LOG_FILE_PATH = L"C:\\ProgramData\\ahk\\node-win-app.log";
-static const char* const TRAY_PIPE_NAME = "\\\\.\\pipe\\corestation_tray";
-static const UINT WM_TRAY_UPDATE = WM_APP + 1;
 
 static ULONGLONG FileTimeToInt64(const FILETIME& ft) {
     return ((ULONGLONG)ft.dwHighDateTime) << 32 | ((ULONGLONG)ft.dwLowDateTime);
@@ -70,9 +74,6 @@ std::string WideToUtf8(const std::wstring &wstr)
 
 typedef LONG(WINAPI *RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
-// Forward declaration so TrayApp can hold a pointer
-class WindowsPlatform;
-
 static std::string Trim(const std::string& input) {
     if (input.empty()) {
         return std::string();
@@ -88,152 +89,143 @@ static std::string Trim(const std::string& input) {
     return input.substr(start, end - start + 1);
 }
 
-class TrayApp;
+static WindowsPlatform* g_platform_instance = nullptr;
 
-class TrayApp {
-public:
-    explicit TrayApp(WindowsPlatform* platform);
-    ~TrayApp();
+void WINAPI ServiceMain(DWORD, LPTSTR*) {
+    if (!g_platform_instance)
+        return;
 
-    bool Start();
-    void Stop();
-    void UpdateData(const std::string& hostname, const std::string& ip, const std::string& uptime);
+    g_platform_instance->registerServiceHandler();
+    g_platform_instance->reportStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
+    g_platform_instance->startService();
+    g_platform_instance->reportStatus(SERVICE_RUNNING, NO_ERROR, 0);
+    WaitForSingleObject(g_platform_instance->getStopEvent(), INFINITE);
+    g_platform_instance->reportStatus(SERVICE_STOPPED, NO_ERROR, 0);
+}
 
-private:
-    static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    void UiThreadProc();
-    void PipeThreadProc();
-    void ApplyTooltip();
-    void Log(const std::string& msg);
+void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
+    switch (ctrlCode) {
+    case SERVICE_CONTROL_STOP:
+    case SERVICE_CONTROL_SHUTDOWN:
+        if (g_platform_instance) {
+            g_platform_instance->reportStatus(SERVICE_STOP_PENDING, NO_ERROR, 0);
+            g_platform_instance->stopService();
+        }
+        break;
+    }
+}
 
-    WindowsPlatform* platform_ = nullptr;
-    HWND hwnd_ = nullptr;
-    NOTIFYICONDATAW nid_{};
-    std::thread uiThread_;
-    std::thread pipeThread_;
-    std::mutex dataMutex_;
-    std::condition_variable hwndReadyCv_;
-    std::string hostname_ = "Waiting...";
-    std::string ip_ = "Waiting...";
-    std::string uptime_ = "Waiting...";
-    std::atomic<bool> stop_{false};
-    HANDLE stopEvent_ = nullptr;
-    std::wstring windowClassName_ = L"NodeWinTrayWindow";
-};
+std::unique_ptr<Platform> createPlatform() {
+    return std::make_unique<WindowsPlatform>();
+}
 
-// --- 1. DEFINE THE CLASS FIRST ---
-// The class definition must come before it is used.
-class WindowsPlatform : public Platform
+WindowsPlatform::WindowsPlatform()
 {
-public:
-    WindowsPlatform();
-    ~WindowsPlatform();
+    g_platform_instance = this;
+    g_stop_event = UniqueHandle(CreateEvent(NULL, TRUE, FALSE, NULL));
 
-    std::vector<NetworkInterface> getNetworkInterfaces() override;
-    std::string getHostname() override;
-    std::string getLoggedInUser() override;
-    std::string getOsVersion() override;
-    std::string getOsBuild() override;
-    bool openSerialPort(const std::string &portName, int baudrate) override;
-    void closeSerialPort() override;
-    bool writeSerial(const std::string &data) override;
-    bool readSerial(std::string &readData) override;
-    void logMessage(const std::string &message) override;
-    int getCpuUsagePercent() override;
-    int getRamUsagePercent() override;
-    std::string getFreeDiskSpaceGB(const std::string& drivePath) override;
-    std::string getWindowsUpdateState() override;
-    float getDiskQueueLength() override;
-    float getNetworkRetransRate() override;
-    std::string getSystemUptime() override;
-    void updatePdhMetrics() override;
-    std::string getGpuDriverInfo() override;
-    float getGpuUsagePercent() override;
-    std::string getHighRamProcesses() override;
-    void showMessageDialog(const std::string& title, const std::string& message) override;
+    startSessionMonitor();
+    updateCpuTimes();
 
-    int run(
-        int argc, char *argv[],
-        VoidCallback on_start,
-        VoidCallback on_stop,
-        PowerStateCallback power_cb,
-        SessionStateCallback session_cb) override;
+    PDH_HQUERY rawQuery = NULL;
+    if (PdhOpenQuery(NULL, 0, &rawQuery) == ERROR_SUCCESS && rawQuery != NULL) {
+        // Store the raw handle in the unique_ptr wrapper
+        m_hQuery = UniquePdhQuery(rawQuery);
+        if (m_hQuery) {
 
-    // Helper methods for the service
-    void reportStatus(DWORD currentState, DWORD win32ExitCode, DWORD waitHint);
-    void registerServiceHandler();
-    HANDLE getStopEvent();
-    void startService();
-    void stopService();
-    std::string getCurrentSessionState();
+            // Counter for Avg. Disk Queue Length for the entire physical disk subsystem
+            PdhAddCounterA(m_hQuery.get(), "\\PhysicalDisk(_Total)\\Avg. Disk Queue Length", 0, &m_hDiskCounter);
+            // Counter for Segments Retransmitted/sec for IPv4 traffic
+            PdhAddCounterA(m_hQuery.get(), "\\TCPv4\\Segments Retransmitted/sec", 0, &m_hNetRetransCounter);
 
-private:
-    UniqueHandle hSerial = UniqueHandle(INVALID_HANDLE_VALUE);
-    VoidCallback on_start_callback;
-    VoidCallback on_stop_callback;
-    PowerStateCallback power_callback;
-    SessionStateCallback session_callback;
-    SERVICE_STATUS g_service_status = {};
-    SERVICE_STATUS_HANDLE g_status_handle = nullptr;
-    UniqueHandle g_stop_event = nullptr;
-    ULONGLONG m_previousIdleTime = 0;
-    ULONGLONG m_previousKernelTime = 0;
-    ULONGLONG m_previousUserTime = 0;
-    UniquePdhQuery m_hQuery = nullptr;
-    PDH_HCOUNTER m_hDiskCounter = NULL;
-    PDH_HCOUNTER m_hNetRetransCounter = NULL;
-    PDH_HCOUNTER m_hGpuTotalCounter = NULL;
+            PdhAddCounterW(m_hQuery.get(), L"\\GPU Engine(*)\\Utilization Percentage", 0, &m_hGpuTotalCounter);
 
-    ComInitializer com_initializer;
+            // Collect initial data sample for counters that require two samples (like averages/rates)
+            PdhCollectQueryData(m_hQuery.get());
+        }
+    }
+    else {
+        logMessage("[WARNING] Failed to open PDH Query for system metrics.");
+    }
 
-    std::unique_ptr<TrayApp> tray_app_;
+    if (!com_initializer.Succeeded()) {
+        logMessage("[WARNING] Failed to initialize COM for WMI access.");
+    }
+}
 
-    void updateCpuTimes();
-    std::string getProcessName(HANDLE hProcess);
-    void startTrayApp();
-    void stopTrayApp();
+WindowsPlatform::~WindowsPlatform()
+{
+    stopSessionMonitor();
+}
 
-    bool hasSwitch(int argc, char* argv[], const char* sw);
-    bool hasSwitchCmd(const wchar_t* sw);
-    bool runningUnderServiceControlManager();
+int WindowsPlatform::run(
+    int argc, char* argv[],
+    VoidCallback on_start,
+    VoidCallback on_stop,
+    PowerStateCallback power_cb,
+    SessionStateCallback session_cb)
+{
+    this->on_start_callback = on_start;
+    this->on_stop_callback = on_stop;
+    this->power_callback = power_cb;
+    this->session_callback = session_cb;
 
-    std::chrono::steady_clock::time_point lastSerialAttempt_;
-    const int SERIAL_RETRY_DELAY_MS = 5000;
+    // Ensure stop event exists and is unsignaled
+    if (!g_stop_event)
+        g_stop_event = UniqueHandle(CreateEvent(NULL, TRUE, FALSE, NULL));
+    else
+        ResetEvent(g_stop_event.get());
 
-	std::mutex platformMutex_;
+    const bool forceInteractive =
+        hasSwitch(argc, argv, "--interactive") ||
+        hasSwitchCmd(L"--interactive") ||
+        hasSwitchCmd(L"/interactive");
+    const bool forceService =
+        hasSwitch(argc, argv, "--service") ||
+        hasSwitchCmd(L"--service") ||
+        hasSwitchCmd(L"/service");
+    const bool isServiceLaunch = runningUnderServiceControlManager();
 
-    MetricCache<int> cpuCache_{ CacheDurations::CPU_USAGE };
-	MetricCache<int> ramCache_{ CacheDurations::RAM_USAGE };
-	MetricCache<std::string> diskSpaceCache_{ CacheDurations::FREE_DISK_SPACE };
-	MetricCache<std::string> windowsUpdateCache_{ CacheDurations::WINDOWS_UPDATE };
-	MetricCache<float> diskQueueCache_{ CacheDurations::DISK_QUEUE };
-	MetricCache<float> netRetransCache_{ CacheDurations::NET_RETRANS };
-	MetricCache<std::string> uptimeCache_{ CacheDurations::SYSTEM_UPTIME };
-	MetricCache<std::string> gpuDriverCache_{ CacheDurations::GPU_DRIVER_INFO };
-	MetricCache<float> gpuUsageCache_{ CacheDurations::GPU_USAGE };
-	MetricCache<std::string> highRamProcsCache_{ CacheDurations::HIGH_RAM_PROCS };
+    {
+        std::ostringstream oss;
+        oss << "Mode Detection: forceInteractive=" << (forceInteractive ? "true" : "false")
+            << ", forceService=" << (forceService ? "true" : "false")
+            << ", isServiceLaunch=" << (isServiceLaunch ? "true" : "false");
+        logMessage(oss.str());
+    }
 
-	int getCpuUsagePercentImpl();
-	int getRamUsagePercentImpl();
-	std::string getFreeDiskSpaceGBImpl(const std::string& drivePath);
-	std::string getWindowsUpdateStateImpl();
-	float getDiskQueueLengthImpl();
-	float getNetworkRetransRateImpl();
-	std::string getSystemUptimeImpl();
-	std::string getGpuDriverInfoImpl();
-	float getGpuUsagePercentImpl();
-	std::string getHighRamProcessesImpl();
+    // Only go to SCM when truly launched by it or explicitly forced
+    if (!forceInteractive && (forceService || isServiceLaunch))
+    {
+        SERVICE_TABLE_ENTRYW ServiceTable[] = {
+            { (LPWSTR)L"CoreStationHXAgent", (LPSERVICE_MAIN_FUNCTIONW)ServiceMain },
+            { NULL, NULL }
+        };
 
-    HWND sessionMonitorWindow_ = nullptr;
-    std::thread sessionMonitorThread_;
-    std::atomic<bool> sessionMonitorActive_{ false };
+        if (StartServiceCtrlDispatcherW(ServiceTable))
+            return 0;
 
-    void startSessionMonitor();
-    void stopSessionMonitor();
-    void sessionMonitorThreadProc();
-    static LRESULT CALLBACK SessionMonitorWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    void handleSessionChange(DWORD sessionChangeType, DWORD sessionId);
-};
+        DWORD err = GetLastError();
+        std::ostringstream oss;
+        oss << "StartServiceCtrlDispatcher failed (" << err << "), falling back to interactive mode.";
+        logMessage(oss.str());
+    }
+
+    logMessage("Running in interactive mode.");
+#ifdef ENABLE_TRAY_APP
+    startTrayApp();
+#endif
+    if (on_start_callback)
+        on_start_callback();
+    std::cout << "Service running interactively. Press Enter to stop." << std::endl;
+    std::cin.get();
+    if (on_stop_callback)
+        on_stop_callback();
+#ifdef ENABLE_TRAY_APP
+    stopTrayApp();
+#endif
+    return 0;
+}
 
 bool WindowsPlatform::hasSwitch(int argc, char* argv[], const char* sw)
 {
@@ -295,247 +287,23 @@ bool WindowsPlatform::runningUnderServiceControlManager()
 }
 
 void WindowsPlatform::startSessionMonitor() {
-    sessionMonitorActive_ = true;
-    sessionMonitorThread_ = std::thread([this]() {sessionMonitorThreadProc(); });
-    logMessage("Session state monitor started");
+    session_monitor_ = std::make_unique<SessionMonitor>(this, session_callback);
+    session_monitor_->Start();
 }
 
 void WindowsPlatform::stopSessionMonitor() {
-    sessionMonitorActive_ = false;
-    if (sessionMonitorWindow_) {
-        PostMessage(sessionMonitorWindow_, WM_CLOSE, 0, 0);
-    }
-
-    if (sessionMonitorThread_.joinable()) {
-        sessionMonitorThread_.join();
-    }
-
-    logMessage("Session state monitor stopped");
-}
-
-void WindowsPlatform::sessionMonitorThreadProc() {
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-
-    WNDCLASSEXW wcex = { 0 };
-    wcex.cbSize = sizeof(WNDCLASSEXW);
-    wcex.lpfnWndProc = WindowsPlatform::SessionMonitorWndProc;
-    wcex.hInstance = hInstance;
-    wcex.lpszClassName = L"SessionMonitorWindow";
-
-    RegisterClassExW(&wcex);
-
-    sessionMonitorWindow_ = CreateWindowExW(
-        0,
-        L"SessionMonitorWindow",
-        L"Session Monitor",
-        0,
-        0, 0, 0, 0,
-        HWND_MESSAGE,
-        NULL,
-        hInstance,
-        this
-    );
-
-    if (!sessionMonitorWindow_) {
-        logMessage("ERROR: Failed to create session monitor window");
-        return;
-    }
-
-    if (!WTSRegisterSessionNotification(sessionMonitorWindow_, NOTIFY_FOR_THIS_SESSION)) {
-        DWORD err = GetLastError();
-        logMessage("ERROR: WTSRegisterSessionNotification failed, error: " + std::to_string(err));
-        DestroyWindow(sessionMonitorWindow_);
-        return;
-    }
-
-    logMessage("Session monitor registered successfully");
-
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0) > 0 && sessionMonitorActive_) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    WTSUnRegisterSessionNotification(sessionMonitorWindow_);
-    DestroyWindow(sessionMonitorWindow_);
-    sessionMonitorWindow_ = nullptr;
-}
-
-LRESULT CALLBACK WindowsPlatform::SessionMonitorWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    WindowsPlatform* self = nullptr;
-
-    if (msg == WM_CREATE) {
-        auto createStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
-        self = reinterpret_cast<WindowsPlatform*>(createStruct->lpCreateParams);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
-    }
-    else {
-        self = reinterpret_cast<WindowsPlatform*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-    }
-
-    switch (msg) {
-    case WM_WTSSESSION_CHANGE:
-        if (self) {
-            DWORD sessionChangeType = wParam;
-            DWORD sessionId = lParam;
-            self->handleSessionChange(sessionChangeType, sessionId);
-        }
-        return 0;
-
-    case WM_CLOSE:
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+    if (session_monitor_) {
+        session_monitor_->Stop();
+        session_monitor_.reset();
     }
 }
 
-void WindowsPlatform::handleSessionChange(DWORD sessionChangeType, DWORD sessionId) {
-    std::string eventName;
-    std::string stateValue;
-
-    switch (sessionChangeType) {
-    case WTS_CONSOLE_CONNECT:
-        eventName = "Console Connect";
-        stateValue = "1";
-        break;
-
-    case WTS_CONSOLE_DISCONNECT:
-        eventName = "Console Disconnect";
-        stateValue = "2";
-        break;
-
-    case WTS_REMOTE_CONNECT:
-        eventName = "Remote Connect (RDP)";
-        stateValue = "3";
-        break;
-
-    case WTS_REMOTE_DISCONNECT:
-        eventName = "Remote Disconnect (RDP)";
-        stateValue = "4";
-        break;
-
-    case WTS_SESSION_LOGON:
-        eventName = "Session Logon";
-        stateValue = "5";
-        break;
-
-    case WTS_SESSION_LOGOFF:
-        eventName = "Session Logoff";
-        stateValue = "6";
-        break;
-
-    case WTS_SESSION_LOCK:
-        eventName = "Session Lock";
-        stateValue = "7";
-        break;
-
-    case WTS_SESSION_UNLOCK:
-        eventName = "Session Unlock";
-        stateValue = "8";
-        break;
-
-    case WTS_SESSION_REMOTE_CONTROL:
-        eventName = "Remote Control";
-        stateValue = "9";
-        break;
-
-    case WTS_SESSION_CREATE:
-        eventName = "Session Create";
-        stateValue = "10";
-        break;
-
-    case WTS_SESSION_TERMINATE:
-        eventName = "Session Terminate";
-        stateValue = "11";
-        break;
-
-    default:
-        eventName = "Unknown";
-        stateValue = std::to_string(sessionChangeType);
-        break;
-    }
-
-    logMessage("Session State Change: " + eventName + " (Type: " + stateValue + ", Session ID: " + std::to_string(sessionId) + ")");
-
-    if (session_callback) {
-        session_callback(stateValue);
-    }
-}
 
 std::string WindowsPlatform::getCurrentSessionState() {
-    DWORD sessionId = WTSGetActiveConsoleSessionId();
-    if (sessionId == 0xFFFFFFFF) {
-        logMessage("No active console session detected");
-        return "0";
+    if (session_monitor_) {
+        return session_monitor_->GetCurrentSessionState();
     }
-
-    HDESK hDesk = OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS);
-    if (hDesk == NULL) {
-        logMessage("Workstation appears to be locked");
-        CloseDesktop(hDesk);
-        return "7";
-    }
-
-    char desktopName[256] = { 0 };
-    DWORD needed = 0;
-    if (GetUserObjectInformation(hDesk, UOI_NAME, desktopName, sizeof(desktopName), &needed)) {
-        std::string deskName(desktopName);
-        logMessage("Current Desktop: " + deskName);
-
-        if (deskName.find("Winlogon") != std::string::npos) {
-            CloseDesktop(hDesk);
-            logMessage("Desktop is Winlogon - workstation is locked");
-            return "7";
-        }
-    }
-    CloseDesktop(hDesk);
-
-    if (GetSystemMetrics(SM_REMOTESESSION)) {
-        logMessage("Running in RDP Session");
-        return "3";
-    }
-
-    LPWSTR pBuffer = NULL;
-    DWORD bytesReturned = 0;
-
-    if (WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, sessionId, WTSConnectState, &pBuffer, &bytesReturned)) {
-        WTS_CONNECTSTATE_CLASS state = *((WTS_CONNECTSTATE_CLASS*)pBuffer);
-        WTSFreeMemory(pBuffer);
-
-        switch (state) {
-        case WTSActive:
-            logMessage("Session is active and connected");
-            return "5";
-
-        case WTSConnected:
-            logMessage("Session is connected");
-            return "1";
-
-        case WTSDisconnected:
-            logMessage("Session is Disconnected");
-            return "2";
-
-        case WTSIdle:
-            logMessage("Session is Idle");
-            return "5";
-
-        default:
-            logMessage("Session state: " + std::to_string(state));
-            return "6";
-        }
-    }
-
-    std::string username = getLoggedInUser();
-    if (username.empty() || username == "none" || username == "SYSTEM") {
-        logMessage("No user logged in");
-        return "6";
-    }
-
-    logMessage("User logged in: " + username);
-    return "5";
+    return "0";
 }
 
 void WindowsPlatform::updateCpuTimes() {
@@ -547,474 +315,28 @@ void WindowsPlatform::updateCpuTimes() {
     }
 }
 
-// --- 2. DEFINE GLOBALS AND HANDLERS THAT USE THE CLASS ---
-static WindowsPlatform *g_platform_instance = nullptr;
-
-void WINAPI ServiceMain(DWORD, LPTSTR *)
-{
-    if (!g_platform_instance)
-        return;
-    g_platform_instance->registerServiceHandler();
-    g_platform_instance->reportStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
-    g_platform_instance->startService();
-    g_platform_instance->reportStatus(SERVICE_RUNNING, NO_ERROR, 0);
-    WaitForSingleObject(g_platform_instance->getStopEvent(), INFINITE);
-    g_platform_instance->reportStatus(SERVICE_STOPPED, NO_ERROR, 0);
-}
-
-void WINAPI ServiceCtrlHandler(DWORD ctrlCode)
-{
-    switch (ctrlCode)
-    {
-    case SERVICE_CONTROL_STOP:
-    case SERVICE_CONTROL_SHUTDOWN:
-        if (g_platform_instance)
-        {
-            g_platform_instance->reportStatus(SERVICE_STOP_PENDING, NO_ERROR, 0);
-            g_platform_instance->stopService();
-        }
-        break;
-    }
-}
-
-// --- 3. IMPLEMENT THE FACTORY FUNCTION AND CLASS METHODS ---
-std::unique_ptr<Platform> createPlatform()
-{
-    return std::make_unique<WindowsPlatform>();
-}
-
-TrayApp::TrayApp(WindowsPlatform* platform) : platform_(platform) {
-    stopEvent_ = CreateEvent(NULL, TRUE, FALSE, NULL);
-}
-
-TrayApp::~TrayApp() {
-    Stop();
-    if (stopEvent_) {
-        CloseHandle(stopEvent_);
-        stopEvent_ = nullptr;
-    }
-}
-
-bool TrayApp::Start() {
-    stop_ = false;
-
-    if (stopEvent_) {
-        ResetEvent(stopEvent_);
-    }
-
-    uiThread_ = std::thread([this]() { UiThreadProc(); });
-
-    {
-        std::unique_lock<std::mutex> lock(dataMutex_);
-        hwndReadyCv_.wait_for(lock, std::chrono::seconds(5), [this]() { return hwnd_ != nullptr || stop_.load(); });
-    }
-
-    pipeThread_ = std::thread([this]() { PipeThreadProc(); });
-    return true;
-}
-
-void TrayApp::Stop() {
-    if (stop_.exchange(true)) {
-        return;
-    }
-
-    if (stopEvent_) {
-        SetEvent(stopEvent_);
-    }
-
-    if (hwnd_) {
-        PostMessage(hwnd_, WM_CLOSE, 0, 0);
-    }
-
-    if (pipeThread_.joinable()) {
-        pipeThread_.join();
-    }
-    if (uiThread_.joinable()) {
-        uiThread_.join();
-    }
-}
-
-void TrayApp::Log(const std::string& msg) {
-    if (platform_) {
-        platform_->logMessage("[Tray] " + msg);
-    }
-}
-
-void TrayApp::UpdateData(const std::string& hostname, const std::string& ip, const std::string& uptime) {
-    {
-        std::lock_guard<std::mutex> lock(dataMutex_);
-        hostname_ = hostname.empty() ? "Unknown" : hostname;
-        ip_ = ip.empty() ? "Unknown" : ip;
-        uptime_ = uptime.empty() ? "Unknown" : uptime;
-    }
-
-    if (hwnd_) {
-        PostMessage(hwnd_, WM_TRAY_UPDATE, 0, 0);
-    }
-}
-
-void TrayApp::ApplyTooltip() {
-    std::string tooltip;
-    {
-        std::lock_guard<std::mutex> lock(dataMutex_);
-        tooltip = "Host: " + hostname_ + " | IP: " + ip_ + " | Up: " + uptime_;
-    }
-
-    if (tooltip.size() >= sizeof(nid_.szTip)) {
-        tooltip.resize(sizeof(nid_.szTip) - 1);
-    }
-
-    std::wstring wtip(tooltip.begin(), tooltip.end());
-    wcsncpy_s(nid_.szTip, wtip.c_str(), _TRUNCATE);
-    nid_.uFlags = NIF_TIP;
-    Shell_NotifyIconW(NIM_MODIFY, &nid_);
-}
-
-LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (msg == WM_CREATE) {
-        auto createStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
-        if (createStruct && createStruct->lpCreateParams) {
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
-        }
-    }
-
-    auto self = reinterpret_cast<TrayApp*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-
-    switch (msg) {
-    case WM_TRAY_UPDATE:
-        if (self) {
-            self->ApplyTooltip();
-        }
-        return 0;
-    case WM_DESTROY:
-        if (self) {
-            Shell_NotifyIconW(NIM_DELETE, &self->nid_);
-        }
-        PostQuitMessage(0);
-        return 0;
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
-    }
-}
-
-void TrayApp::UiThreadProc() {
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-
-    WNDCLASSEXW wcex = {0};
-    wcex.cbSize = sizeof(WNDCLASSEXW);
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = TrayApp::WndProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(NULL, IDI_INFORMATION);
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = windowClassName_.c_str();
-    wcex.hIconSm = LoadIcon(NULL, IDI_INFORMATION);
-
-    RegisterClassExW(&wcex);
-
-    hwnd_ = CreateWindowExW(
-        0,
-        windowClassName_.c_str(),
-        L"NodeWinTrayWindow",
-        WS_OVERLAPPED,
-        CW_USEDEFAULT, CW_USEDEFAULT,
-        CW_USEDEFAULT, CW_USEDEFAULT,
-        HWND_MESSAGE,
-        NULL,
-        hInstance,
-        this);
-
-    {
-        std::lock_guard<std::mutex> lock(dataMutex_);
-        hwndReadyCv_.notify_all();
-    }
-
-    if (!hwnd_) {
-        Log("Failed to create tray window");
-        return;
-    }
-
-    ZeroMemory(&nid_, sizeof(NOTIFYICONDATAW));
-    nid_.cbSize = sizeof(NOTIFYICONDATAW);
-    nid_.hWnd = hwnd_;
-    nid_.uID = 1;
-    nid_.uFlags = NIF_ICON | NIF_TIP;
-    nid_.hIcon = LoadIcon(NULL, IDI_INFORMATION);
-
-    {
-        std::string tooltip;
-        {
-            std::lock_guard<std::mutex> lock(dataMutex_);
-            tooltip = "Host: " + hostname_ + " | IP: " + ip_ + " | Up: " + uptime_;
-        }
-
-        if (tooltip.size() >= sizeof(nid_.szTip)) {
-            tooltip.resize(sizeof(nid_.szTip) - 1);
-        }
-
-        std::wstring wtip(tooltip.begin(), tooltip.end());
-        wcsncpy_s(nid_.szTip, wtip.c_str(), _TRUNCATE);
-    }
-
-    if (!Shell_NotifyIconW(NIM_ADD, &nid_)) {
-        Log("Failed to add tray icon");
-    } else {
-        nid_.uVersion = NOTIFYICON_VERSION_4;
-        Shell_NotifyIconW(NIM_SETVERSION, &nid_);
-        ApplyTooltip();
-    }
-
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0) > 0) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-
-void TrayApp::PipeThreadProc() {
-    Log("Named pipe listener started");
-
-    while (!stop_.load()) {
-        HANDLE hPipe = CreateNamedPipeA(
-            TRAY_PIPE_NAME,
-            PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-            1,
-            1024,
-            1024,
-            0,
-            NULL);
-
-        if (hPipe == INVALID_HANDLE_VALUE) {
-            Log("Failed to create named pipe");
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            continue;
-        }
-
-        OVERLAPPED ovConnect = {};
-        ovConnect.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-        BOOL connected = ConnectNamedPipe(hPipe, &ovConnect);
-        DWORD err = GetLastError();
-
-        if (!connected && err == ERROR_IO_PENDING) {
-            HANDLE handles[2] = {ovConnect.hEvent, stopEvent_};
-            DWORD wait = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
-            if (wait == WAIT_OBJECT_0 + 1) {
-                CancelIoEx(hPipe, &ovConnect);
-            } else {
-                connected = TRUE;
-            }
-        } else if (!connected && err == ERROR_PIPE_CONNECTED) {
-            connected = TRUE;
-        }
-
-        if (connected && !stop_.load()) {
-            for (;;) {
-                char buffer[512] = {0};
-                DWORD bytesRead = 0;
-                OVERLAPPED ovRead = {};
-                ovRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-                BOOL readOk = ReadFile(hPipe, buffer, sizeof(buffer) - 1, NULL, &ovRead);
-                if (!readOk) {
-                    DWORD readErr = GetLastError();
-                    if (readErr == ERROR_IO_PENDING) {
-                        HANDLE handles[2] = {ovRead.hEvent, stopEvent_};
-                        DWORD wait = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
-                        if (wait == WAIT_OBJECT_0 + 1) {
-                            CancelIoEx(hPipe, &ovRead);
-                            CloseHandle(ovRead.hEvent);
-                            break;
-                        }
-                        GetOverlappedResult(hPipe, &ovRead, &bytesRead, FALSE);
-                    } else {
-                        CloseHandle(ovRead.hEvent);
-                        break;
-                    }
-                } else {
-                    GetOverlappedResult(hPipe, &ovRead, &bytesRead, TRUE);
-                }
-
-                CloseHandle(ovRead.hEvent);
-
-                if (bytesRead == 0) {
-                    break;
-                }
-
-                buffer[bytesRead] = '\0';
-                std::string payload(buffer);
-
-                std::istringstream iss(payload);
-                std::string line;
-                std::string host;
-                std::string ip;
-                std::string up;
-
-                {
-                    std::lock_guard<std::mutex> lock(dataMutex_);
-                    host = hostname_;
-                    ip = ip_;
-                    up = uptime_;
-                }
-
-                while (std::getline(iss, line)) {
-                    line = Trim(line);
-                    if (line.empty()) continue;
-                    size_t pos = line.find('=');
-                    if (pos == std::string::npos) {
-                        pos = line.find(':');
-                    }
-                    if (pos == std::string::npos) continue;
-                    std::string key = Trim(line.substr(0, pos));
-                    std::string value = Trim(line.substr(pos + 1));
-                    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                    if (key == "hostname") {
-                        host = value;
-                    } else if (key == "ip" || key == "ipaddress" || key == "address") {
-                        ip = value;
-                    } else if (key == "uptime") {
-                        up = value;
-                    }
-                }
-
-                UpdateData(host, ip, up);
-            }
-        }
-
-        if (ovConnect.hEvent) {
-            CloseHandle(ovConnect.hEvent);
-        }
-        DisconnectNamedPipe(hPipe);
-        CloseHandle(hPipe);
-    }
-
-    Log("Named pipe listener stopped");
-}
-
-WindowsPlatform::WindowsPlatform()
-{
-    g_platform_instance = this;
-    g_stop_event = UniqueHandle(CreateEvent(NULL, TRUE, FALSE, NULL));
-    
-    startSessionMonitor();
-    updateCpuTimes();
-
-    PDH_HQUERY rawQuery = NULL;
-    if (PdhOpenQuery(NULL, 0, &rawQuery) == ERROR_SUCCESS && rawQuery != NULL) {
-        // Store the raw handle in the unique_ptr wrapper
-        m_hQuery = UniquePdhQuery(rawQuery);
-	if (m_hQuery) {
-
-        // Counter for Avg. Disk Queue Length for the entire physical disk subsystem
-        PdhAddCounterA(m_hQuery.get(), "\\PhysicalDisk(_Total)\\Avg. Disk Queue Length", 0, &m_hDiskCounter);
-        // Counter for Segments Retransmitted/sec for IPv4 traffic
-        PdhAddCounterA(m_hQuery.get(), "\\TCPv4\\Segments Retransmitted/sec", 0, &m_hNetRetransCounter);
-
-        PdhAddCounterW(m_hQuery.get(), L"\\GPU Engine(*)\\Utilization Percentage", 0, &m_hGpuTotalCounter);
-
-        // Collect initial data sample for counters that require two samples (like averages/rates)
-        PdhCollectQueryData(m_hQuery.get());
-	}
-    }
-    else {
-        logMessage("[WARNING] Failed to open PDH Query for system metrics.");
-    }
-
-    if (!com_initializer.Succeeded()) {
-        logMessage("[WARNING] Failed to initialize COM for WMI access.");
-    }
-}
-
-WindowsPlatform::~WindowsPlatform()
-{
-    stopSessionMonitor();
-}
-
-int WindowsPlatform::run(
-    int argc, char *argv[],
-    VoidCallback on_start,
-    VoidCallback on_stop,
-    PowerStateCallback power_cb,
-    SessionStateCallback session_cb)
-{
-    this->on_start_callback = on_start;
-    this->on_stop_callback = on_stop;
-    this->power_callback = power_cb;
-    this->session_callback = session_cb;
-
-    // Ensure stop event exists and is unsignaled
-    if (!g_stop_event)
-        g_stop_event = UniqueHandle(CreateEvent(NULL, TRUE, FALSE, NULL));
-    else
-        ResetEvent(g_stop_event.get());
-
-    const bool forceInteractive =
-        hasSwitch(argc, argv, "--interactive") ||
-        hasSwitchCmd(L"--interactive") ||
-        hasSwitchCmd(L"/interactive");
-    const bool forceService =
-        hasSwitch(argc, argv, "--service") ||
-        hasSwitchCmd(L"--service") ||
-        hasSwitchCmd(L"/service");
-    const bool isServiceLaunch = runningUnderServiceControlManager();
-
-    {
-        std::ostringstream oss;
-        oss << "Mode Detection: forceInteractive=" << (forceInteractive ? "true" : "false")
-            << ", forceService=" << (forceService ? "true" : "false")
-            << ", isServiceLaunch=" << (isServiceLaunch ? "true" : "false");
-        logMessage(oss.str());
-    }
-
-    // Only go to SCM when truly launched by it or explicitly forced
-    if (!forceInteractive && (forceService || isServiceLaunch))
-    {
-        SERVICE_TABLE_ENTRYW ServiceTable[] = {
-            { (LPWSTR)L"CoreStationHXAgent", (LPSERVICE_MAIN_FUNCTIONW)ServiceMain },
-            { NULL, NULL }
-        };
-
-        if (StartServiceCtrlDispatcherW(ServiceTable))
-            return 0;
-
-        DWORD err = GetLastError();
-        std::ostringstream oss;
-        oss << "StartServiceCtrlDispatcher failed (" << err << "), falling back to interactive mode.";
-        logMessage(oss.str());
-    }
-
-    logMessage("Running in interactive mode.");
-    startTrayApp();
-    if (on_start_callback)
-        on_start_callback();
-    std::cout << "Service running interactively. Press Enter to stop." << std::endl;
-    std::cin.get();
-    if (on_stop_callback)
-        on_stop_callback();
-    stopTrayApp();
-    return 0;
-}
-
 void WindowsPlatform::startTrayApp()
 {
+#ifdef ENABLE_TRAY_APP
     if (!tray_app_)
     {
         tray_app_ = std::make_unique<TrayApp>(this);
         tray_app_->Start();
+        logMessage("Tray App Started.");
     }
+#endif
 }
 
 void WindowsPlatform::stopTrayApp()
 {
+#ifdef ENABLE_TRAY_APP
     if (tray_app_)
     {
         tray_app_->Stop();
         tray_app_.reset();
+        logMessage("Tray App Stopped.");
     }
+#endif
 }
 
 // Implementations for the core virtual methods
@@ -1090,6 +412,7 @@ std::vector<NetworkInterface> WindowsPlatform::getNetworkInterfaces()
     }
     return interfaces;
 }
+
 std::string WindowsPlatform::getHostname()
 {
     char hostnameChar[MAX_COMPUTERNAME_LENGTH + 1];
@@ -1100,6 +423,7 @@ std::string WindowsPlatform::getHostname()
     }
     return "Unknown Host";
 }
+
 std::string WindowsPlatform::getLoggedInUser()
 {
     PWTS_SESSION_INFOW pSessionInfo = NULL;
@@ -1678,7 +1002,7 @@ float WindowsPlatform::getGpuUsagePercent() {
 }
 
 float WindowsPlatform::getGpuUsagePercentImpl() {
-    if (m_hQuery.get() == NULL | m_hGpuTotalCounter == NULL) return 0.0f;
+    if (m_hQuery.get() == NULL || m_hGpuTotalCounter == NULL) return 0.0f;
 
     PDH_FMT_COUNTERVALUE_ITEM_W* items = nullptr;
     DWORD bufferSize = 0;
