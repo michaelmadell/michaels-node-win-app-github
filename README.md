@@ -120,7 +120,7 @@ This project was developed on a Win 11 Pro CoreStation Node
 
 
 ### Debug output
-Unless the build version is a GA, all output to the serial port will also be stored in `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`
+Only RC builds write serial output to `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`
 
 ### Tray helper (interactive mode)
 - When the app runs interactively (StartServiceCtrlDispatcher fails), a tray icon is created using the Windows notification area.

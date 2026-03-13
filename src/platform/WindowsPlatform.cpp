@@ -28,6 +28,7 @@
 #include <chrono>
 #include <cctype>
 #include "Windows_Addon.h"
+#include "../version.h"
 #include "../modules/metrics/MetricCache.h"
 
 #ifdef ENABLE_TRAY_APP
@@ -660,6 +661,10 @@ void WindowsPlatform::showMessageDialog(const std::string& title, const std::str
 
 void WindowsPlatform::logMessage(const std::string &message)
 {
+    if (std::string(VERSION_EXTRAVERSION) != "rc") {
+        return;
+    }
+
     const size_t MAX_LOG_SIZE = 10 * 1024 * 1024;
 
     std::ifstream checkSize(LOG_FILE_PATH, std::ios::ate | std::ios::binary);
