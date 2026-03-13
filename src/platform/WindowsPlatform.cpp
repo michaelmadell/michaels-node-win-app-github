@@ -195,8 +195,9 @@ int WindowsPlatform::run(
         logMessage(oss.str());
     }
 
-    // Only go to SCM when truly launched by it or explicitly forced
-    if (!forceInteractive && (forceService || isServiceLaunch))
+    // Attempt SCM dispatch unless interactive mode is explicitly requested.
+    // This avoids false negatives from parent-process heuristics in some environments.
+    if (!forceInteractive)
     {
         SERVICE_TABLE_ENTRYW ServiceTable[] = {
             { (LPWSTR)L"CoreStationHXAgent", (LPSERVICE_MAIN_FUNCTIONW)ServiceMain },
@@ -207,6 +208,14 @@ int WindowsPlatform::run(
             return 0;
 
         DWORD err = GetLastError();
+        if (forceService || err != ERROR_FAILED_SERVICE_CONTROLLER_CONNECT)
+        {
+            std::ostringstream oss;
+            oss << "StartServiceCtrlDispatcher failed (" << err << "), cannot continue.";
+            logMessage(oss.str());
+            return static_cast<int>(err);
+        }
+
         std::ostringstream oss;
         oss << "StartServiceCtrlDispatcher failed (" << err << "), falling back to interactive mode.";
         logMessage(oss.str());

@@ -1,90 +1,21 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: --- NEW: Initialise the MSVC Environment ---
-if not defined DevEnvDir (
-    for /f "usebackq tokens=*" %%i in (`"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
-        set "VS_PATH=%%i"
-    )
-    if exist "!VS_PATH!\VC\Auxiliary\Build\vcvarsall.bat" (
-        call "!VS_PATH!\VC\Auxiliary\Build\vcvarsall.bat" x64
-    ) else (
-        echo Could not find vcvarsall.bat, please ensure Visual Studio with C++ tools is installed.
-        exit /b 1
-    )
-)
-:: --- END NEW: Initialise the MSVC Environment ---
-
-REM check the target .exe is writeable (local machine might be running it)
-
-
-REM Attempt to open the file for appending without modifying it
 set "OUTPUT_EXE_FILE=%~dp0build\CoreStationHXAgent.exe"
 
-if not exist build\ (
-    mkdir build
-)
-
-REM Attempt to append (without modifying) to test writability
->> "%OUTPUT_EXE_FILE%" (
-    REM If appending succeeds, do nothing
-) || (
-    echo File "%OUTPUT_EXE_FILE%" is not writable,
-    echo have you STOPPED the service?
+call "%~dp0build.bat"
+if errorlevel 1 (
+    echo Build failed, skipping sign and deploy steps.
     exit /b 1
 )
 
-
-
-REM Gather git info and create git.h
-
-
-REM Get the current Git branch name
-for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD') do set "GIT_BRANCH=%%i"
-
-REM Get the short commit hash
-for /f "delims=" %%i in ('git rev-parse --short HEAD') do set "GIT_HASH=%%i"
-
-REM Check for uncommitted modifications
-git diff --quiet || set MODIFICATIONS=1
-git diff --cached --quiet || set MODIFICATIONS=1
-
-if not defined MODIFICATIONS (
-    set "MODIFICATIONS=0"
-) else (
-    set "GIT_HASH=!GIT_HASH!-mods"
+if not exist "%OUTPUT_EXE_FILE%" (
+    echo Build output not found at "%OUTPUT_EXE_FILE%"
+    exit /b 1
 )
 
-REM Get the current date and time as build time
-for /f %%i in ('powershell -Command "Get-Date -Format yyyy-MM-dd_HH:mm:ss"') do set "BUILD_TIME=%%i"
-
-REM Generate the C++ header file
-set "HEADER_FILE=git_info.h"
-(
-    echo #pragma once
-    echo #include ^<string^>
-    echo namespace GitInfo {
-    echo     const std::string BRANCH = "!GIT_BRANCH!";
-    echo     const std::string HASH = "!GIT_HASH!";
-    echo     const std::string BUILD_TIME = "!BUILD_TIME!";
-    echo }
-) > %HEADER_FILE%
-
-echo Header file %HEADER_FILE% generated successfully.
-echo Branch: !GIT_BRANCH!
-echo Hash: !GIT_HASH!
-echo Modified: !MODIFICATIONS!
-echo Time: !BUILD_TIME!
-
-echo Compiling Resources...
-rc.exe app.rc
-
-
-REM Copy release notes to output dir
-copy release-notes.txt installer 
-
-REM Build exe file to output dir
-cl.exe /O2 /DNDEBUG /EHsc /MT /nologo /Fe"!OUTPUT_EXE_FILE!" src\main.cpp src\WindowsPlatform.cpp app.res /link user32.lib gdi32.lib shell32.lib advapi32.lib comctl32.lib winmm.lib Wtsapi32.lib
+for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "GIT_BRANCH=%%i"
+if not defined GIT_BRANCH set "GIT_BRANCH=unknown"
 
 
 REM If a release branch 
@@ -117,11 +48,11 @@ if /i not "%userChoice%"=="y" (
 )
 
 REM Build version number string 
-set "VERSION_H=version.h"
+set "VERSION_H=src\version.h"
 
 REM Initialize variables
-set "VERSION_YEAR="
-set "VERSION_MONTH="
+set "VERSION_MAJOR="
+set "VERSION_MINOR="
 set "VERSION_RELEASE="
 set "VERSION_EXTRAVERSION="
 set "VERSION_RC_NO="
@@ -130,8 +61,8 @@ set "VERSION_ADHOC_NO="
 REM Read each line of version.h
 for /f "usebackq tokens=1,2,3 delims= " %%A in ("%VERSION_H%") do (
     if "%%A"=="#define" (
-        if "%%B"=="VERSION_YEAR" set "VERSION_YEAR=%%C"
-        if "%%B"=="VERSION_MONTH" set "VERSION_MONTH=%%C"
+        if "%%B"=="VERSION_MAJOR" set "VERSION_MAJOR=%%C"
+        if "%%B"=="VERSION_MINOR" set "VERSION_MINOR=%%C"
         if "%%B"=="VERSION_RELEASE" set "VERSION_RELEASE=%%C"
         if "%%B"=="VERSION_EXTRAVERSION" set "VERSION_EXTRAVERSION=%%~C"
         if "%%B"=="VERSION_RC_NO" set "VERSION_RC_NO=%%C"
@@ -144,11 +75,11 @@ set "VERSION_EXTRAVERSION=!VERSION_EXTRAVERSION:"=!"
 
 REM Build the VERSION string
 if /i "!VERSION_EXTRAVERSION!"=="rc" (
-    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_rc!VERSION_RC_NO!"
+    set "VERSION=!VERSION_MAJOR!.!VERSION_MINOR!.!VERSION_RELEASE!_rc!VERSION_RC_NO!"
 ) else if /i "!VERSION_EXTRAVERSION!"=="adhoc" (
-    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_adhoc!VERSION_ADHOC_NO!"
+    set "VERSION=!VERSION_MAJOR!.!VERSION_MINOR!.!VERSION_RELEASE!_adhoc!VERSION_ADHOC_NO!"
 ) else if /i "!VERSION_EXTRAVERSION!"=="ga" (
-    set "VERSION=!VERSION_YEAR!.!VERSION_MONTH!.!VERSION_RELEASE!_ga"
+    set "VERSION=!VERSION_MAJOR!.!VERSION_MINOR!.!VERSION_RELEASE!_ga"
 ) else (
     echo Unknown VERSION_EXTRAVERSION: !VERSION_EXTRAVERSION!
     exit /b 1

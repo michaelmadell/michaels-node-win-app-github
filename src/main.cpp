@@ -9,7 +9,9 @@
 #ifdef ENABLE_METRICS
 #include "modules/metrics/MetricsCollector.h"
 #endif
+#ifdef ENABLE_REGEDIT
 #include "modules/regedits/Regedit.h"
+#endif
 #include "version.h"
 
 #include <iostream>
@@ -19,13 +21,16 @@
 #include <mutex>
 #include <atomic>
 #include <sstream>
+#include <string>
 
 std::unique_ptr<Platform> platform;
 std::unique_ptr<SerialManager> serialManager;
 #ifdef ENABLE_METRICS
 std::unique_ptr<MetricsCollector> metricsCollector;
 #endif
+#ifdef ENABLE_REGEDIT
 std::unique_ptr<Regedit> regedit;
+#endif
 
 SystemState currentState;
 std::mutex stateMutex;
@@ -115,6 +120,95 @@ void heartbeatThread() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     platform->logMessage("Heartbeat thread finished");
+}
+
+struct AMTPortInfo {
+    std::wstring comPort;
+    std::wstring instanceId;
+};
+
+AMTPortInfo GetAMTComPort() {
+#ifdef _WIN32
+    HKEY hKey;
+    const wchar_t* serialEnumKey = L"SYSTEM\\CurrentControlSet\\Services\\Serial\\Enum";
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, serialEnumKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        wchar_t amtSerialPortInstanceId[256];
+        DWORD instanceIdSize = sizeof(amtSerialPortInstanceId);
+
+        if (RegQueryValueExW(hKey, L"0", NULL, NULL, (LPBYTE)amtSerialPortInstanceId, &instanceIdSize) == ERROR_SUCCESS) {
+            std::wstring instanceId(amtSerialPortInstanceId);
+            size_t pos = instanceId.find(L"PCI\\VEN_8086&DEV_7773");
+            if (pos != std::wstring::npos) {
+                std::wstring pshAMTGetInfo = L"powershell -Command \"Get-PnpDevice -InstanceId '" + instanceId + L"' | Select-Object -ExpandProperty FriendlyName\"";
+                FILE* pipe = _popen(std::string(pshAMTGetInfo.begin(), pshAMTGetInfo.end()).c_str(), "r");
+                if (pipe) {
+                    char buffer[128];
+                    std::string result;
+                    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+                        result += buffer;
+                    }
+                    _pclose(pipe);
+
+                    size_t comPos = result.find("COM");
+                    if (comPos != std::string::npos) {
+                        size_t digitStart = comPos + 3;
+                        size_t digitEnd = digitStart;
+                        while (digitEnd < result.size() && result[digitEnd] >= '0' && result[digitEnd] <= '9') {
+                            ++digitEnd;
+                        }
+
+                        if (digitEnd > digitStart) {
+                            std::string comPort = result.substr(comPos, digitEnd - comPos);
+                            return {std::wstring(comPort.begin(), comPort.end()), instanceId};
+                        }
+                    }
+                }
+            }
+        }
+
+        RegCloseKey(hKey);
+
+    }
+
+    return {L"", L""};
+#endif
+}
+
+bool disableAMTComPort() {
+#ifdef _WIN32
+    AMTPortInfo amtPortInfo = GetAMTComPort();
+    if (amtPortInfo.instanceId.empty()) {
+        return false;
+    }
+
+    std::string pshDisableCmd = "powershell -Command \"Disable-PnpDevice -InstanceId '" + std::string(amtPortInfo.instanceId.begin(), amtPortInfo.instanceId.end()) + "' -Confirm:0\"";
+    int result = system(pshDisableCmd.c_str());
+    if (result != 0) {
+        std::cerr << "[ERROR] Failed to disable AMT Serial Port. Command: " << pshDisableCmd << std::endl;
+        platform->logMessage("Failed to disable AMT Serial Port. Command: " + pshDisableCmd);
+        return false;
+    }
+    return true;
+#endif
+}
+
+bool enableAMTComPort() {
+#ifdef _WIN32
+    AMTPortInfo amtPortInfo = GetAMTComPort();
+    if (amtPortInfo.instanceId.empty()) {
+        return false;
+    }
+
+    std::string pshEnableCmd = "powershell -Command \"Enable-PnpDevice -InstanceId '" + std::string(amtPortInfo.instanceId.begin(), amtPortInfo.instanceId.end()) + "' -Confirm:0\"";
+    int result = system(pshEnableCmd.c_str());
+    if (result != 0) {
+        std::cerr << "[ERROR] Failed to enable AMT Serial Port. Command: " << pshEnableCmd << std::endl;
+        platform->logMessage("Failed to enable AMT Serial Port. Command: " + pshEnableCmd);
+        return false;
+    }
+    return true;
+#endif
+
 }
 
 void checkSystemState() {
@@ -323,6 +417,45 @@ int main(int argc, char* argv[]) {
     std::cout << "[DEBUG] Application starting. Creating platform object." << std::endl;
     
     platform = createPlatform();
+
+    std::cout << "[DEBUG] Checking current COM assignment for AMT Serial Port" << std::endl;
+    #ifdef _WIN32
+
+    AMTPortInfo AMTInfo = GetAMTComPort();
+
+    if (!AMTInfo.comPort.empty()) {
+        std::wcout << L"[DEBUG] AMT Serial Port is currently assigned to: " << AMTInfo.comPort << std::endl;
+        platform->logMessage("AMT Serial Port COM assignment: " + std::string(AMTInfo.comPort.begin(), AMTInfo.comPort.end()));
+    } else {
+        std::cout << "[DEBUG] No AMT Serial Port COM assignment found." << std::endl;
+        platform->logMessage("No AMT Serial Port COM assignment found.");
+    }
+
+    if (AMTInfo.comPort == L"COM3") {
+        std::cout << "[DEBUG] AMT Serial Port is on COM3. Attempting to disable it to free COM3 for our use." << std::endl;
+        platform->logMessage("AMT Serial Port is on COM3. Attempting to disable it.");
+        if (disableAMTComPort()) {
+            std::cout << "[DEBUG] Successfully disabled AMT Serial Port." << std::endl;
+            platform->logMessage("Successfully disabled AMT Serial Port.");
+            if (enableAMTComPort()) {
+                std::cout << "[DEBUG] Successfully re-enabled AMT Serial Port after disabling." << std::endl;
+                platform->logMessage("Successfully re-enabled AMT Serial Port after disabling.");
+                AMTPortInfo amtPortInfo = GetAMTComPort();
+                if (amtPortInfo.comPort != L"COM3") {
+                    std::cout << "[DEBUG] Verified AMT Serial Port is not back on COM3 after re-enabling." << std::endl;
+                    platform->logMessage("Verified AMT Serial Port is not back on COM3 after re-enabling.");
+                } else {
+                    std::cerr << "[ERROR] After re-enabling, AMT Serial Port is back on COM3. Current assignment: " << std::string(amtPortInfo.comPort.begin(), amtPortInfo.comPort.end()) << std::endl;
+                    platform->logMessage("After re-enabling, AMT Serial Port is back on COM3. Current assignment: " + std::string(amtPortInfo.comPort.begin(), amtPortInfo.comPort.end()));
+                }
+            }
+        } else {
+            std::cerr << "[ERROR] Failed to disable AMT Serial Port. This may cause issues if COM3 is not available." << std::endl;
+            platform->logMessage("Failed to disable AMT Serial Port. COM3 may not be available.");
+        }
+    }
+#endif
+
 #ifdef ENABLE_METRICS
     metricsCollector = std::make_unique<MetricsCollector>(platform.get());
 #endif
