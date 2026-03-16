@@ -49,7 +49,7 @@ bool Regedit::Write(std::string path, std::string value, DWORD type) {
 	subKey = path.substr(0, lastBackslash);
 	valueName = path.substr(lastBackslash + 1);
 
-	LPSTR type = std::to_string(type).c_str();
+	// Removed incorrect LPSTR assignment. Use 'type' parameter directly for registry value type.
 
 	if (!type) {
 		if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_INVALID_FUNCTION) {
@@ -143,7 +143,7 @@ bool Regedit::Write(std::string path, std::string value, DWORD type) {
 		}
 
 		platform_->logMessage("Registry Write Success: " + value);
-		return true
+		return true;
 	}
 }
 
