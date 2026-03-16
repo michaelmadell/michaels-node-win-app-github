@@ -125,7 +125,6 @@ WindowsPlatform::WindowsPlatform()
     g_platform_instance = this;
     g_stop_event = UniqueHandle(CreateEvent(NULL, TRUE, FALSE, NULL));
 
-    startSessionMonitor();
     updateCpuTimes();
 
     PDH_HQUERY rawQuery = NULL;
@@ -222,6 +221,7 @@ int WindowsPlatform::run(
     }
 
     logMessage("Running in interactive mode.");
+    startSessionMonitor();
 #ifdef ENABLE_TRAY_APP
     startTrayApp();
 #endif

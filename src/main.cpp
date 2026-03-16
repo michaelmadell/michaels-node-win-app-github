@@ -137,8 +137,9 @@ AMTPortInfo GetAMTComPort() {
 
         if (RegQueryValueExW(hKey, L"0", NULL, NULL, (LPBYTE)amtSerialPortInstanceId, &instanceIdSize) == ERROR_SUCCESS) {
             std::wstring instanceId(amtSerialPortInstanceId);
-            size_t pos = instanceId.find(L"PCI\\VEN_8086&DEV_7773");
-            if (pos != std::wstring::npos) {
+            const bool matches7773 = instanceId.find(L"PCI\\VEN_8086&DEV_7773") != std::wstring::npos;
+            const bool matches7E73 = instanceId.find(L"PCI\\VEN_8086&DEV_7E73") != std::wstring::npos;
+            if (matches7773 || matches7E73) {
                 std::wstring pshAMTGetInfo = L"powershell -Command \"Get-PnpDevice -InstanceId '" + instanceId + L"' | Select-Object -ExpandProperty FriendlyName\"";
                 FILE* pipe = _popen(std::string(pshAMTGetInfo.begin(), pshAMTGetInfo.end()).c_str(), "r");
                 if (pipe) {

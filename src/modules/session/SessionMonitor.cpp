@@ -64,7 +64,7 @@ void SessionMonitor::ThreadProc() {
         return;
     }
 
-    if (!WTSRegisterSessionNotification(window_, NOTIFY_FOR_THIS_SESSION)) {
+    if (!WTSRegisterSessionNotification(window_, NOTIFY_FOR_ALL_SESSIONS)) {
         DWORD err = GetLastError();
         if (platform_) {
             platform_->logMessage("ERROR: WTSRegisterSessionNotification failed, error: " + std::to_string(err));
