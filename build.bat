@@ -9,7 +9,7 @@ echo ===========================================================================
 
 set "BUILD_DIR=build"
 set "CONFIG=Release"
-set "OUTPUT_EXE_FILE=%BUILD_DIR%\CoreStationHXAgent.exe"
+set "OUTPUT_EXE_FILE=%BUILD_DIR%\..\installer\CoreStationHXAgent.exe"
 set "BUILT_EXE="
 
 echo [1/5] Initializing MSVC environment...

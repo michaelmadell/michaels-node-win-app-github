@@ -35,6 +35,7 @@ std::unique_ptr<Regedit> regedit;
 SystemState currentState;
 std::mutex stateMutex;
 std::atomic<bool> g_terminate{false};
+std::atomic<bool> g_stop_request_sent{false};
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -46,7 +47,20 @@ void sendLineToBmc(const std::string& output_string) {
     std::cout << "[SENDING] " << output_string << std::endl;
 
     platform->logMessage(output_string);
-    serialManager->Write(output_string + "\r\n");
+    serialManager->Write(output_string + "\r\n\0");
+}
+
+void notifyStopRequested(const std::string& stopReason) {
+    if (g_stop_request_sent.exchange(true)) {
+        return;
+    }
+
+    if (!serialManager || !serialManager->IsOpen()) {
+        platform->logMessage("Stop requested before serial port was available: " + stopReason);
+        return;
+    }
+
+    sendLineToBmc("appStopRequested, " + stopReason);
 }
 
 void heartbeatThread() {
@@ -210,6 +224,55 @@ bool enableAMTComPort() {
     return true;
 #endif
 
+}
+
+bool reassignComPort() {
+    #ifdef _WIN32
+    AMTPortInfo amtPortInfo = GetAMTComPort();
+    if (amtPortInfo.instanceId.empty()) {
+        return false;
+    }
+
+    // Reserve COM4 in COM Name Arbiter
+    std::string arbPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\COM Name Arbiter";
+    try {
+        std::string pshReserveCmd = 
+            "powershell -Command \"$arbKey = Get-Item '" + arbPath + "'; $currentValue = $arbKey.GetValue('ComDB'); if ($currentValue -eq $null) { $currentValue = 0 } else { $currentValue = [int]$currentValue }; $newValue = $currentValue -bor 0x10; Set-ItemProperty -Path '" + arbPath + "' -Name 'ComDB' -Value $newValue\"";
+        int result = system(pshReserveCmd.c_str());
+        if (result != 0) {
+            std::cerr << "[ERROR] Failed to reserve COM4 in COM Name Arbiter. Command: " << pshReserveCmd << std::endl;
+            platform->logMessage("Failed to reserve COM4 in COM Name Arbiter. Command: " + pshReserveCmd);
+            return false;
+        }
+
+        // Disable the AMT COM port to free it up for reassignment
+        if (!disableAMTComPort()) {
+            return false;
+        }
+
+        // Re-enable the device to trigger new COM assignment
+        if (!enableAMTComPort()) {
+            return false;
+        }
+
+        // Wait a moment for the system to reassign the COM port
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+        // Check if COM3 is still assigned
+        AMTPortInfo newInfo = GetAMTComPort();
+        if (newInfo.comPort == L"COM3") {
+            std::cerr << "[ERROR] After reassignment attempt, AMT Serial Port is still on COM3." << std::endl;
+            platform->logMessage("After reassignment attempt, AMT Serial Port is still on COM3.");
+            return false;
+        }
+
+        return true;
+    } catch (...) {
+        std::cerr << "[ERROR] Exception occurred while reassigning COM port." << std::endl;
+        platform->logMessage("Exception occurred while reassigning COM port.");
+        return false;
+    }
+    #endif
 }
 
 void checkSystemState() {
@@ -446,13 +509,22 @@ int main(int argc, char* argv[]) {
                     std::cout << "[DEBUG] Verified AMT Serial Port is not back on COM3 after re-enabling." << std::endl;
                     platform->logMessage("Verified AMT Serial Port is not back on COM3 after re-enabling.");
                 } else {
-                    std::cerr << "[ERROR] After re-enabling, AMT Serial Port is back on COM3. Current assignment: " << std::string(amtPortInfo.comPort.begin(), amtPortInfo.comPort.end()) << std::endl;
-                    platform->logMessage("After re-enabling, AMT Serial Port is back on COM3. Current assignment: " + std::string(amtPortInfo.comPort.begin(), amtPortInfo.comPort.end()));
+                    std::cerr << "[ERROR] After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment." << std::endl;
+                    platform->logMessage("After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment.");
+                    if (reassignComPort()) {
+                        std::cout << "[DEBUG] Successfully reassigned AMT Serial Port to a different COM port." << std::endl;
+                        platform->logMessage("Successfully reassigned AMT Serial Port to a different COM port.");
+                    } else {
+                        std::cerr << "[ERROR] Failed to reassign AMT Serial Port. COM3 may still be occupied." << std::endl;
+                        platform->logMessage("Failed to reassign AMT Serial Port. COM3 may still be occupied.");
+                        exit(1);
+                    }
                 }
             }
         } else {
             std::cerr << "[ERROR] Failed to disable AMT Serial Port. This may cause issues if COM3 is not available." << std::endl;
             platform->logMessage("Failed to disable AMT Serial Port. COM3 may not be available.");
+            exit(1);
         }
     }
 #endif
@@ -475,22 +547,23 @@ int main(int argc, char* argv[]) {
             hbThread = std::thread(heartbeatThread);
         },
         // on_stop callback
-        [&]() {
-            std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread." << std::endl;
+        [&](const std::string& stopReason) {
+            std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread. Reason: " << stopReason << std::endl;
 #ifdef _WIN32
 			OutputDebugStringW(L"on_stop callback EXECUTED. Stopping serial Thread.\n");
 #endif
+            notifyStopRequested(stopReason);
             g_terminate = true;
-
-            if (serialManager) {
-                serialManager->Close();
-            }
 
             if (workerThread.joinable()) {
                 workerThread.join();
             }
             if (hbThread.joinable()) {
                 hbThread.join();
+            }
+
+            if (serialManager) {
+                serialManager->Close();
             }
         },
         // powerState callback

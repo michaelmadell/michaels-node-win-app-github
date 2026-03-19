@@ -61,7 +61,7 @@ public:
     int run(
         int argc, char* argv[],
         VoidCallback on_start,
-        VoidCallback on_stop,
+        StringCallback on_stop,
         PowerStateCallback power_cb,
         SessionStateCallback session_cb) override;
 
@@ -70,7 +70,7 @@ public:
     void registerServiceHandler();
     HANDLE getStopEvent();
     void startService();
-    void stopService();
+    void stopService(const std::string& stopReason);
 
     // Delete copy constructor and assignment operator
     WindowsPlatform(const WindowsPlatform&) = delete;
@@ -84,7 +84,7 @@ private:
 
     // Callbacks
     VoidCallback on_start_callback;
-    VoidCallback on_stop_callback;
+    StringCallback on_stop_callback;
     PowerStateCallback power_callback;
     SessionStateCallback session_callback;
 
@@ -92,6 +92,8 @@ private:
     SERVICE_STATUS g_service_status = {};
     SERVICE_STATUS_HANDLE g_status_handle = nullptr;
     UniqueHandle g_stop_event = nullptr;
+    std::atomic<bool> stop_requested_{ false };
+    DWORD service_checkpoint_ = 1;
 
     // CPU monitoring
     ULONGLONG m_previousIdleTime = 0;

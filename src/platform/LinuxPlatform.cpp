@@ -220,7 +220,7 @@ public:
     int run(
         int argc, char* argv[],
         VoidCallback on_start,
-        VoidCallback on_stop,
+        StringCallback on_stop,
         PowerStateCallback power_cb,
         SessionStateCallback session_cb
     ) override;
@@ -243,7 +243,7 @@ std::unique_ptr<Platform> createPlatform() {
 int LinuxPlatform::run(
     int argc, char* argv[],
     VoidCallback on_start,
-    VoidCallback on_stop,
+    StringCallback on_stop,
     PowerStateCallback power_cb,
     SessionStateCallback session_cb
 ) {
@@ -273,7 +273,7 @@ int LinuxPlatform::run(
     }
 
     if (on_stop) {
-        on_stop();
+        on_stop("shutdown");
     }
     std::cout << "[DEBUG] Application terminating cleanly." << std::endl;
     closelog();

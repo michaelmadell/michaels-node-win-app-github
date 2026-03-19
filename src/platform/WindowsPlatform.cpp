@@ -92,6 +92,16 @@ static std::string Trim(const std::string& input) {
 
 static WindowsPlatform* g_platform_instance = nullptr;
 
+static const char* ServiceControlToReason(DWORD ctrlCode) {
+    switch (ctrlCode) {
+    case SERVICE_CONTROL_SHUTDOWN:
+        return "shutdown";
+    case SERVICE_CONTROL_STOP:
+    default:
+        return "stop";
+    }
+}
+
 void WINAPI ServiceMain(DWORD, LPTSTR*) {
     if (!g_platform_instance)
         return;
@@ -109,8 +119,7 @@ void WINAPI ServiceCtrlHandler(DWORD ctrlCode) {
     case SERVICE_CONTROL_STOP:
     case SERVICE_CONTROL_SHUTDOWN:
         if (g_platform_instance) {
-            g_platform_instance->reportStatus(SERVICE_STOP_PENDING, NO_ERROR, 0);
-            g_platform_instance->stopService();
+            g_platform_instance->stopService(ServiceControlToReason(ctrlCode));
         }
         break;
     }
@@ -161,7 +170,7 @@ WindowsPlatform::~WindowsPlatform()
 int WindowsPlatform::run(
     int argc, char* argv[],
     VoidCallback on_start,
-    VoidCallback on_stop,
+    StringCallback on_stop,
     PowerStateCallback power_cb,
     SessionStateCallback session_cb)
 {
@@ -230,7 +239,7 @@ int WindowsPlatform::run(
     std::cout << "Service running interactively. Press Enter to stop." << std::endl;
     std::cin.get();
     if (on_stop_callback)
-        on_stop_callback();
+        on_stop_callback("interactive-stop");
 #ifdef ENABLE_TRAY_APP
     stopTrayApp();
 #endif
@@ -882,9 +891,23 @@ void WindowsPlatform::reportStatus(DWORD currentState, DWORD win32ExitCode, DWOR
 {
     if (g_status_handle == nullptr)
         return;
+
     g_service_status.dwCurrentState = currentState;
     g_service_status.dwWin32ExitCode = win32ExitCode;
     g_service_status.dwWaitHint = waitHint;
+
+    if (currentState == SERVICE_START_PENDING || currentState == SERVICE_STOP_PENDING) {
+        g_service_status.dwControlsAccepted = 0;
+        g_service_status.dwCheckPoint = service_checkpoint_++;
+    }
+    else {
+        g_service_status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+        g_service_status.dwCheckPoint = 0;
+        if (currentState == SERVICE_RUNNING || currentState == SERVICE_STOPPED) {
+            service_checkpoint_ = 1;
+        }
+    }
+
     SetServiceStatus(g_status_handle, &g_service_status);
 }
 
@@ -1127,7 +1150,11 @@ void WindowsPlatform::registerServiceHandler()
 {
     g_status_handle = RegisterServiceCtrlHandlerW(L"CoreStationHXAgent", ServiceCtrlHandler);
     g_service_status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-    g_service_status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+    g_service_status.dwServiceSpecificExitCode = 0;
+    g_service_status.dwCheckPoint = 0;
+    g_service_status.dwWaitHint = 0;
+    service_checkpoint_ = 1;
+    stop_requested_.store(false);
     reportStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
 }
 
@@ -1143,11 +1170,18 @@ void WindowsPlatform::startService()
         on_start_callback();
 }
 
-void WindowsPlatform::stopService()
+void WindowsPlatform::stopService(const std::string& stopReason)
 {
+    if (stop_requested_.exchange(true)) {
+        logMessage("Ignoring duplicate service stop request: " + stopReason);
+        return;
+    }
+
+    logMessage("Service stop requested: " + stopReason);
+    reportStatus(SERVICE_STOP_PENDING, NO_ERROR, 15000);
     stopSessionMonitor();
     if (on_stop_callback)
-        on_stop_callback();
+        on_stop_callback(stopReason);
     SetEvent(g_stop_event.get());
 }
 

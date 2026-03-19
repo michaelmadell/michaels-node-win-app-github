@@ -46,7 +46,7 @@ class Platform{
     virtual int run(
         int argc, char* argv[], 
         VoidCallback on_start,
-        VoidCallback on_stop,
+        StringCallback on_stop,
         PowerStateCallback powerCb, 
         SessionStateCallback sessionCb) = 0;
 };
