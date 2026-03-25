@@ -23,6 +23,18 @@
 #include <sstream>
 #include <string>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0A00
+#include <wbemidl.h>
+#include <comdef.h>
+#include <cstdio>
+
+#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "oleaut32.lib")
+#endif
+
 std::unique_ptr<Platform> platform;
 std::unique_ptr<SerialManager> serialManager;
 #ifdef ENABLE_METRICS
@@ -365,6 +377,69 @@ bool reassignComPort() {
 #endif
 }
 
+static int CountPnpDevices(IWbemServices* svc, const wchar_t* vendorDeviceId)
+{
+    #ifdef _WIN32
+    std::wstring wql =
+        std::wstring(L"SELECT PNPDeviceID FROM Win32_PnPEntity WHERE PNPDeviceID LIKE '%")
+        + vendorDeviceId + L"%'";
+ 
+    IEnumWbemClassObject* enumerator = nullptr;
+    HRESULT hr = svc->ExecQuery(
+        _bstr_t(L"WQL"),
+        _bstr_t(wql.c_str()),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        nullptr,
+        &enumerator);
+ 
+    if (FAILED(hr) || !enumerator) return 0;
+ 
+    int count = 0;
+    IWbemClassObject* obj = nullptr;
+    ULONG returned = 0;
+    while (enumerator->Next(WBEM_INFINITE, 1, &obj, &returned) == S_OK) {
+        ++count;
+        obj->Release();
+    }
+    enumerator->Release();
+    return count;
+    #endif
+}
+
+bool hasHX3000Nics() {
+    #ifdef _WIN32
+    IWbemLocator* locator = nullptr;
+    IWbemServices* services = nullptr;
+
+    HRESULT hr = CoCreateInstance(
+        CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator, reinterpret_cast<void**>(&locator));
+    
+    if (FAILED(hr)) return false;
+
+    hr = locator->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr,
+        0, nullptr, nullptr, &services);
+    
+    if (FAILED(hr)) { locator->Release(); return false; }
+
+    CoSetProxyBlanket(
+        services,
+        RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+        nullptr, EOAC_NONE
+    );
+
+    const int i226Count = CountPnpDevices(services, L"VEN_8086&DEV_125B"); // I226-LM
+    const int e610Count = CountPnpDevices(services, L"VEN_8086&DEV_5780"); // E610 10GbE
+
+    services->Release();
+    locator->Release();
+
+    return (i226Count > 0) || (e610Count > 0);
+    #endif
+}
+
 void checkSystemState() {
     static SystemState previousState;
 
@@ -475,6 +550,13 @@ void serialThread() {
 
 #ifdef _WIN32
     const std::string portName = SERIAL_PORT;
+    if (hasHX3000Nics()) {
+        std::cout << "[DEBUG] Detected HX3000 NICs. Setting portName to COM1." << std::endl;
+        platform->logMessage("Detected HX3000 NICs. Setting portName to COM1.");
+        portName == "COM1";
+    } else {
+        portName == SERIAL_PORT;
+    }
 #else
     const std::string portName = "/dev/ttyUSB0";
 #endif
@@ -572,6 +654,10 @@ int main(int argc, char* argv[]) {
     
     platform = createPlatform();
 
+    #ifdef _WIN32
+    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    #endif
+
     std::cout << "[DEBUG] Checking current COM assignment for AMT Serial Port" << std::endl;
     #ifdef _WIN32
 
@@ -642,6 +728,7 @@ int main(int argc, char* argv[]) {
             std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread. Reason: " << stopReason << std::endl;
 #ifdef _WIN32
 			OutputDebugStringW(L"on_stop callback EXECUTED. Stopping serial Thread.\n");
+            CoUninitialize();
 #endif
             notifyStopRequested(stopReason);
             g_terminate = true;
@@ -692,6 +779,7 @@ int main(int argc, char* argv[]) {
     );
 
     std::cout << "[DEBUG] platform->run() has exited. Application terminating." << std::endl;
+    CoUninitialize();
     return 0;
 }
 
