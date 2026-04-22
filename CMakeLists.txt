@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project configuration
 project(CoreStationHXAgent
-    VERSION 20.26.2.1
-    DESCRIPTION "CoreStation Host Agent for serial monitoring"
+    VERSION 20.26.3.1
+    DESCRIPTION "CoreStation Host Agent for serial monitoring - HX3000 test"
     LANGUAGES CXX
 )
 

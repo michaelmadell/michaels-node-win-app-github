@@ -549,13 +549,13 @@ void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
 #ifdef _WIN32
-    const std::string portName = SERIAL_PORT;
+    std::string portName = SERIAL_PORT;
     if (hasHX3000Nics()) {
         std::cout << "[DEBUG] Detected HX3000 NICs. Setting portName to COM1." << std::endl;
         platform->logMessage("Detected HX3000 NICs. Setting portName to COM1.");
-        portName == "COM1";
+        portName = "COM1";
     } else {
-        portName == SERIAL_PORT;
+        portName = SERIAL_PORT;
     }
 #else
     const std::string portName = "/dev/ttyUSB0";
