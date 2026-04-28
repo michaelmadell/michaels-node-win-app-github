@@ -400,7 +400,7 @@ std::vector<NetworkInterface> WindowsPlatform::getNetworkInterfaces()
             }
             iface.macAddress = macStream.str();
 
-            if (iface.macAddress.compare(0, 5, "00:17") == 0 || iface.macAddress.compare(0, 5, "00:13") == 0)
+            if (iface.macAddress.compare(0, 5, "00:17") == 0 || iface.macAddress.compare(0, 5, "00:13") == 0 || iface.macAddress.compare(0, 5, "00:07")) 
             {
                 iface.name = pAdapter->FriendlyName ? WideToUtf8(pAdapter->FriendlyName) : "Unknown";
                 iface.linkStatus = (pAdapter->OperStatus == IfOperStatusUp) ? "up" : "down";
