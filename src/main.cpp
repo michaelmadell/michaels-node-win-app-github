@@ -446,7 +446,7 @@ bool HasHX3000Nics() {
     );
 
     const int i226Count = CountPnpDevices(services, L"VEN_8086&DEV_125B"); // I226-LM
-    const int e610Count = CountPnpDevices(services, L"VEN_8086&DEV_5780"); // E610 10Gbe
+    const int e610Count = CountPnpDevices(services, L"VEN_8086&DEV_57B0"); // E610 10Gbe
 
     services->Release();
     locator->Release();
