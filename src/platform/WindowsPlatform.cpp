@@ -400,7 +400,9 @@ std::vector<NetworkInterface> WindowsPlatform::getNetworkInterfaces()
             }
             iface.macAddress = macStream.str();
 
-            if (iface.macAddress.compare(0, 5, "00:17") == 0 || iface.macAddress.compare(0, 5, "00:13") == 0 || iface.macAddress.compare(0, 5, "00:07")) 
+            if (iface.macAddress.compare(0, 8, "00:17:FD") == 0 || // Amulet Hotkey MAC
+                iface.macAddress.compare(0, 8, "00:07:32") == 0 || // AAEON MAC
+                iface.macAddress.compare(0, 8, "00:13:95") == 0)   // Congatec MAC
             {
                 iface.name = pAdapter->FriendlyName ? WideToUtf8(pAdapter->FriendlyName) : "Unknown";
                 iface.linkStatus = (pAdapter->OperStatus == IfOperStatusUp) ? "up" : "down";
