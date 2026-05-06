@@ -18,6 +18,7 @@
 #include "core/Platform.h"
 #include "core/SystemState.h"
 #include "modules/serial/SerialManager.h"
+#include "modules/3kcheck/3kcheck.h"
 #ifdef ENABLE_METRICS
 #include "modules/metrics/MetricsCollector.h"
 #endif
@@ -377,84 +378,6 @@ bool reassignComPort() {
 #endif
 }
 
-static int CountPnpDevices(IWbemServices* svc, const wchar_t* vendorDeviceId) {
-    #ifdef _WIN32
-
-    std::wstring wql = 
-        std::wstring(L"SELECT PNPDeviceID FROM Win32_PnPEntity WHERE PNPDeviceID LIKE '%")
-        + vendorDeviceId + L"%'";
-
-    IEnumWbemClassObject* enumerator = nullptr;
-    HRESULT hr = svc->ExecQuery(
-        _bstr_t(L"WQL"),
-        _bstr_t(wql.c_str()),
-        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-        nullptr,
-        &enumerator
-    );
-
-    if (FAILED(hr) || !enumerator) {
-        return 0;
-    }
-
-    int count = 0;
-    IWbemClassObject* obj = nullptr;
-    ULONG returned = 0;
-    while (enumerator->Next(WBEM_INFINITE, 1, &obj, &returned) == S_OK) {
-        ++count;
-        obj->Release();
-    }
-
-    enumerator->Release();
-
-    return count;
-
-    #endif
-}
-
-// This may change in the future if we allow for removing E610 or replacing with anouther NIC, this is fine for now
-bool HasHX3000Nics() {
-    #ifdef _WIN32
-
-    IWbemLocator* locator = nullptr;
-    IWbemServices* services = nullptr;
-
-    HRESULT hr = CoCreateInstance(
-        CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER,
-        IID_IWbemLocator, reinterpret_cast<void**>(&locator)
-    );
-
-    if (FAILED(hr) || !locator) {
-        return false;
-    }
-
-    hr = locator->ConnectServer(
-        _bstr_t(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr,
-        0, nullptr, nullptr, &services
-    );
-
-    if (FAILED(hr) || !services) {
-        locator->Release();
-        return false;
-    }
-
-    CoSetProxyBlanket(
-        services, 
-        RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
-        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
-        nullptr, EOAC_NONE
-    );
-
-    const int i226Count = CountPnpDevices(services, L"VEN_8086&DEV_125B"); // I226-LM
-    const int e610Count = CountPnpDevices(services, L"VEN_8086&DEV_57B0"); // E610 10Gbe
-
-    services->Release();
-    locator->Release();
-
-    return (i226Count == 2 && e610Count == 2);
-
-    #endif
-}
 
 void checkSystemState() {
     static SystemState previousState;
@@ -566,13 +489,16 @@ void serialThread() {
 
 #ifdef _WIN32
     std::string portName = SERIAL_PORT;
-    if (HasHX3000Nics()) {
-        std::cout << "[DEBUG] Detected HX3000 NIC Config. Setting port to COM1..." << std::endl;
-        platform->logMessage("Detected HX3000 NIC Config. Setting port to COM1...");
-        portName = "COM1";
+    CPUInfo cpuInfo = GetCpuInfo();
+    std::cout << "[DEBUG] CPUInfo: " << cpuInfo.manufacturer << " " << cpuInfo.model << " " << cpuInfo.clockspeed << std::endl;
+    if (IsHX2KCPU(&cpuInfo)) {
+        std::cout << "[DEBUG] Detected HX2000 CPU. Setting port to COM3..." << std::endl;
+        platform->logMessage("Detected HX2000 CPU. Setting port to COM3...");
+        portName = "COM3";
     } else {
-        std::cout << "[DEBUG] No HX3000 NIC Config detected. Using default COM3..." << std::endl;
-        platform->logMessage("No HX3000 NIC Config detected. Using default COM3...");
+        std::cout << "[DEBUG] No HX2000 CPU detected. Using COM1..." << std::endl;
+        platform->logMessage("No HX2000 CPU detected. Using COM1...");
+        portName = "COM1";
     }
 #else
     const std::string portName = "/dev/ttyUSB0";

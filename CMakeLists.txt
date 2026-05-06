@@ -139,6 +139,7 @@ set(CORE_SOURCES
 # Module Sources
 set(MODULE_SOURCES
     src/modules/serial/SerialManager.cpp
+    src/modules/3kcheck/3kcheck.cpp
 )
 
 # Platform-specific sources
