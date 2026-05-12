@@ -89,49 +89,26 @@ unsigned long long getTcpValue(int index) {
 }
 
 std::string getDhcpStatus(const std::string& interfaceName) {
-    // std::string connectionName;
-    // char buffer[256];
+    try {
+        std::string addrCmd = "ip -4 -o addr show dev " + interfaceName;
+        std::string addrOutput = executeCommand(addrCmd);
 
-    // // Step 1: Find the active connection name for the given device interface
-    // std::string cmd1 = "nmcli -t -f GENERAL.CONNECTION dev show " + interfaceName;
-    // FILE* pipe1 = popen(cmd1.c_str(), "r");
-    // if (!pipe1) return "unknown";
-    
-    // if (fgets(buffer, sizeof(buffer), pipe1) != nullptr) {
-    //     connectionName = std::string(buffer);
-    //     // Remove trailing newline
-    //     connectionName.erase(connectionName.find_last_not_of("\n\r") + 1);
-    //     // The output is "GENERAL.CONNECTION:<name>", so we find the colon and take the rest
-    //     size_t colon_pos = connectionName.find(':');
-    //     if (colon_pos != std::string::npos) {
-    //         connectionName = connectionName.substr(colon_pos + 1);
-    //     }
-    // }
-    // pclose(pipe1);
+        if (addrOuput.find(" dynamic ") != std::string::npos) {
+            return "DHCP";
+        }
 
-    // if (connectionName.empty()) {
-    //     return "unknown";
-    // }
+        std::string routeCmd = "ip -4 -o route show dev " + interfaceName;
+        std::string routeOutput = executeCommand(routeCmd);
 
-    // // Step 2: Get the ipv4.method for that connection
-    // std::string result = "unknown";
-    // std::string cmd2 = "nmcli -t -f ipv4.method con show \"" + connectionName + "\"";
-    // FILE* pipe2 = popen(cmd2.c_str(), "r");
-    // if (!pipe2) return "unknown";
+        if (routeOutput.find("proto dhcp") != std::string::npos) {
+            return "DHCP";
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error checking interface: " << e.what() << std::endl;
+        return "STATIC";
+    }
 
-    // if (fgets(buffer, sizeof(buffer), pipe2) != nullptr) {
-    //     std::string line(buffer);
-    //     if (line.find("auto") != std::string::npos) {
-    //         result = "dhcp";
-    //     } else if (line.find("manual") != std::string::npos) {
-    //         result = "static";
-    //     }
-    // }
-    // pclose(pipe2);
-    
-    // return result;
-
-    return "unknown"; // Placeholder until a reliable method is implemented
+    return "STATIC";
 }
 
 class LinuxPlatform;
@@ -367,6 +344,7 @@ bool LinuxPlatform::writeSerial(const std::string& data) {
 
 std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
     std::map<std::string, NetworkInterface> interfaces_map;
+
     struct ifaddrs *ifaddr, *ifa;
 
     if (getifaddrs(&ifaddr) == -1) {
@@ -379,13 +357,23 @@ std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
 
         std::string name = ifa->ifa_name;
 
+        std::string carrierPath = "/sys/class/net/" + name + "/operstate";
+        std::ifstream carrierFile(carrierPath);
+        std::string operstate;
+
         if ( (ifa->ifa_flags & IFF_LOOPBACK) ) {
             continue;
         }
 
         if (interfaces_map.find(name) == interfaces_map.end()) {
             interfaces_map[name].name = name;
-            interfaces_map[name].linkStatus = "up";
+            
+            if (carrierFile >> operstate && operstate == "up") {
+                interfaces_map[name].linkStatus = "up";
+            } else {
+                interfaces_map[name].linkStatus = "down";
+            }
+
             interfaces_map[name].ipv4 = "none";
             interfaces_map[name].ipv6 = "none";
             interfaces_map[name].macAddress = "none";
@@ -397,7 +385,7 @@ std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
             struct sockaddr_ll* s = (struct sockaddr_ll*)ifa->ifa_addr;
             std::stringstream ss;
             for (int i = 0; i < s->sll_halen; i++) {
-                ss << std::hex << std::setw(2) << std::setfill('0') << (int)s->sll_addr[i];
+                ss << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << (int)s->sll_addr[i];
                 if (i < s->sll_halen - 1) ss << ":";
             }
 
@@ -419,7 +407,12 @@ std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
 
     std::vector<NetworkInterface> result_vector;
     for (auto const& [name, iface] : interfaces_map) {
-        result_vector.push_back(iface);
+        const std::string& mac = iface.macAddress;
+        if (mac.compare(0, 8, "00:17:fd") == 0 || // Amulet Hotkey
+            mac.compare(0, 8, "00:13:95") == 0 || // Congatec
+            mac.compare(0, 8, "00:07:32") == 0) { // AAEON
+            result_vector.push_back(iface);
+        }
     }
     return result_vector;
 }
