@@ -161,9 +161,11 @@ static const wchar_t* kAMTDeviceHwids[] = {
     nullptr
 };
 
+
 // Find the first AMT device full instance ID by enumerating PCI\Enum directly.
 // Works regardless of whether the device is currently enabled or disabled.
 static std::wstring GetAMTInstanceId() {
+#ifdef _WIN32
     for (int i = 0; kAMTDeviceHwids[i] != nullptr; ++i) {
         std::wstring devKeyPath = std::wstring(L"SYSTEM\\CurrentControlSet\\Enum\\PCI\\") + kAMTDeviceHwids[i];
         HKEY hDevKey = nullptr;
@@ -179,6 +181,7 @@ static std::wstring GetAMTInstanceId() {
         RegCloseKey(hDevKey);
     }
     return L"";
+    #endif
 }
 
 // Read the current COM port assignment for the AMT serial device from
@@ -501,7 +504,7 @@ void serialThread() {
         portName = "COM1";
     }
 #else
-    const std::string portName = "/dev/ttyUSB0";
+    const std::string portName = "/dev/ttyS2";
 #endif
 
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
