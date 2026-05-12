@@ -1,5 +1,7 @@
-corestationhxagent (2025.9.1) jammy; urgency=medium
+corestationhxagent (2026.5.1) jammy; urgency=medium
 
-  * Initial Linux Release.
+  * Sync with Windows build 20.26.5.1_rc3.
+  * Added robust HX2K/HX3K CPU detection.
+  * Improved MAC address filtering for AAEON devices.
 
- -- Michael Madell <michael.madell@amulethotkey.com>  Wed, 24 Sep 2025 14:20:00 +0100
+ -- Michael Madell <michael.madell@amulethotkey.com>  Mon, 12 May 2026 00:00:00 +0000

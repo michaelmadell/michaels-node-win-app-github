@@ -11,7 +11,7 @@ project(CoreStationHXAgent
 option(BUILD_METRICS "Build with metric support" OFF)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
 option(BUILD_TRAY_APP "Build with system tray application (Windows only)" OFF)
-option(BUILD_REGEDIT "Build with registry editing components (Windows only" ON)
+option(BUILD_REGEDIT "Build with registry editing components (Windows only)" ON)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
@@ -139,13 +139,16 @@ set(CORE_SOURCES
 # Module Sources
 set(MODULE_SOURCES
     src/modules/serial/SerialManager.cpp
-    src/modules/3kcheck/3kcheck.cpp
 )
 
 # Platform-specific sources
 if(WIN32)
     list(APPEND CORE_SOURCES
         src/platform/WindowsPlatform.cpp
+    )
+
+    list(APPEND MODULE_SOURCES
+        src/modules/3kcheck/3kcheck.cpp
     )
     
     if(BUILD_TRAY_APP)
@@ -237,7 +240,7 @@ if(BUILD_METRICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_METRICS)
 endif()
 
-if(BUILD_SESSION_MONITOR)
+if(BUILD_SESSION_MONITOR AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SESSION_MONITOR)
 endif()
 

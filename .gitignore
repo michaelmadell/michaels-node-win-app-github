@@ -101,3 +101,5 @@ build.sh-example
 
 .vs/
 .vscode/
+
+debian/files

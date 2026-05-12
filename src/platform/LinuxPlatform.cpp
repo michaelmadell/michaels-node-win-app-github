@@ -151,25 +151,34 @@ void dbusThread() {
 
     const char* match_rule = "type='signal',interface='org.freedesktop.login1.Session',member='Unlock'";
     const char* match_rule2 = "type='signal',interface='org.freedesktop.login1.Session',member='Lock'";
+    const char* match_rule3 = "type='signal',interface='org.freedesktop.login1.Manager',member='SessionNew'";
+    const char* match_rule4 = "type='signal',interface='org.freedesktop.login1.Manager',member='SessionRemoved'";
     dbus_bus_add_match(conn, match_rule, &err);
     dbus_bus_add_match(conn, match_rule2, &err);
+    dbus_bus_add_match(conn, match_rule3, &err);
+    dbus_bus_add_match(conn, match_rule4, &err);
     
     syslog(LOG_INFO, "D-Bus thread started and listening for session signals.");
 
-    while (true) {
-        dbus_connection_read_write_dispatch(conn, -1);
+    while (!g_terminate.load()) {
+        dbus_connection_read_write_dispatch(conn, 200);
         DBusMessage* msg = dbus_connection_pop_message(conn);
-
         if (msg == NULL) continue;
 
         if (dbus_message_is_signal(msg, "org.freedesktop.login1.Session", "Lock")) {
             if (g_session_callback) g_session_callback("7");
-        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Session", "Unlock")){
+        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Session", "Unlock")) {
             if (g_session_callback) g_session_callback("8");
+        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "SessionNew")) {
+            if (g_session_callback) g_session_callback("5");
+        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "SessionRemoved")) {
+            if (g_session_callback) g_session_callback("6");
         }
-
         dbus_message_unref(msg);
     }
+
+    syslog(LOG_INFO, "D-Bus thread terminating.");
+    dbus_connection_unref(conn);
 }
 
 void signal_handler(int signum) {
@@ -195,6 +204,8 @@ public:
     void closeSerialPort() override;
     bool writeSerial(const std::string& data) override;
     void logMessage(const std::string& message) override;
+
+    std::string getCurrentSessionState() override;
 
     // --- Performance Metrics (Need Stubs or Linux Implementation) ---
     // Note: readSerial was missing a declaration too, but is implemented below.
@@ -679,6 +690,27 @@ std::string LinuxPlatform::getLoggedInUser() {
 
     pclose(pipe);
     return result.empty() ? "none" : result;
+}
+
+std::string LinuxPlatform::getCurrentSessionState() {
+    std::string sessionId = executeCommand(
+        "loginctl list-sessions --no-legend 2>/dev/null | awk 'NR==1{print $1}'"
+    );
+
+    if (sessionId.empty()) {
+        return "unknown";
+    }
+    std::string locked = executeCommand(
+        "loginctl show-session " + sessionId + " -p LockedHint --value 2>/dev/null"
+    );
+
+    locked.erase(locked.find_last_not_of("\n\r \t") + 1);
+
+    if (locked == "yes") {
+        return "7"; // Locked
+    }
+
+    return "5";
 }
 
 #endif
