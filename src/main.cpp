@@ -504,7 +504,7 @@ void serialThread() {
         portName = "COM1";
     }
 #else
-    const std::string portName = "/dev/ttyUSB0";
+    const std::string portName = "/dev/ttyS2";
 #endif
 
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
