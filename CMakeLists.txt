@@ -314,7 +314,7 @@ elseif(UNIX AND NOT APPLE)
     
     if(EXISTS "${CMAKE_SOURCE_DIR}/CoreStationHXAgent.service")
         install(FILES CoreStationHXAgent.service
-            DESTINATION /lib/systemd/system
+            DESTINATION /usr/lib/systemd/system
         )
     endif()
 endif()

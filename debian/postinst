@@ -16,9 +16,8 @@ case "$1" in
 
         echo "Starting CoreStationHXAgent Service..."
 
-        if [ -x "/bin/systemctl" ] || [ -x "/usr/bin/systemctl" ]; then
-            systemctl daemon-reload >/dev/null || true
-            systemctl restart CoreStationHXAgent.service >/dev/null || true
+        if [ -x "/usr/bin/deb-systemd-invoke" ]; then
+            deb-systemd-invoke restart CoreStationHXAgent.service >/dev/null || true
         fi
         
         echo "--- postinst script finished ---"

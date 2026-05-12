@@ -4,13 +4,9 @@ set -e
 case "$1" in
     remove|upgrade)
         # Use the official systemd helper if it exists
+        echo "Stopping CoreStationHXAgent Service..."
         if [ -x "/usr/bin/deb-systemd-helper" ]; then
-            echo "Stopping CoreStationHXAgent Service..."
             deb-systemd-helper stop CoreStationHXAgent.service >/dev/null || true
-        else
-            # Fallback for older systems
-            echo "Stopping CoreStationHXAgent Service..."
-            systemctl stop CoreStationHXAgent.service >/dev/null || true
         fi
     ;;
 esac

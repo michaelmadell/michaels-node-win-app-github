@@ -4,4 +4,4 @@ corestationhxagent (2026.5.1) jammy; urgency=medium
   * Added robust HX2K/HX3K CPU detection.
   * Improved MAC address filtering for AAEON devices.
 
- -- Michael Madell <michael.madell@amulethotkey.com>  Mon, 12 May 2026 00:00:00 +0000
+ -- Michael Madell <michael.madell@amulethotkey.com>  Tue, 12 May 2026 00:00:00 +0000

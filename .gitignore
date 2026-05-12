@@ -104,3 +104,8 @@ build.sh-example
 
 debian/files
 obj-x86_64-linux-gnu/
+debian/corestationhxagent.postrm.debhelper
+debian/corestationhxagent.substvars
+debian/debhelper-build-stamp
+debian/.debhelper
+debian/corestationhxagent
