@@ -103,3 +103,4 @@ build.sh-example
 .vscode/
 
 debian/files
+obj-x86_64-linux-gnu/
