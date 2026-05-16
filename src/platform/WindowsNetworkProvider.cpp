@@ -1,10 +1,10 @@
 // Windows network interface and OS version discovery (read-only, no retained handles).
 #ifdef _WIN32
-#include <winsock2.h>
+#include "WindowsNetworkProvider.h"   // own header first — verifies self-containment
+#include "Windows_Addon.h"
+#include <winsock2.h>                 // must precede windows.h to avoid ws2def.h conflict
 #include <ws2tcpip.h>
 #include <windows.h>
-#include "WindowsNetworkProvider.h"
-#include "Windows_Addon.h"
 #include <wtsapi32.h>
 #include <iphlpapi.h>
 #include <vector>
@@ -16,6 +16,9 @@
 // because GetVersionEx lies about the version when there is no manifest.
 typedef LONG(WINAPI *RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
+/* NOT CALLED: Trim was present in WindowsPlatform.cpp but is not used by any method
+   in this provider. Retained here in case getLoggedInUser or getOsVersion need
+   whitespace trimming in a future update.
 static std::string Trim(const std::string& input) {
     if (input.empty()) {
         return std::string();
@@ -30,6 +33,7 @@ static std::string Trim(const std::string& input) {
     size_t end = input.find_last_not_of(whitespace);
     return input.substr(start, end - start + 1);
 }
+*/
 
 std::vector<NetworkInterface> WindowsNetworkProvider::getNetworkInterfaces()
 {
