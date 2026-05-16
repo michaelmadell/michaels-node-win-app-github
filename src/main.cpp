@@ -22,7 +22,7 @@
 #ifdef ENABLE_METRICS
 #include "modules/metrics/MetricsCollector.h"
 #endif
-#ifdef ENABLE_REGEDIT
+#ifdef _WIN32
 #include "modules/regedits/Regedit.h"
 #endif
 #include "version.h"
@@ -41,7 +41,7 @@ std::unique_ptr<SerialManager> serialManager;
 #ifdef ENABLE_METRICS
 std::unique_ptr<MetricsCollector> metricsCollector;
 #endif
-#ifdef ENABLE_REGEDIT
+#ifdef _WIN32
 std::unique_ptr<Regedit> regedit;
 #endif
 
@@ -599,6 +599,12 @@ int main(int argc, char* argv[]) {
     std::cout << "[DEBUG] Application starting. Creating platform object." << std::endl;
     
     platform = createPlatform();
+#ifdef _WIN32
+    // Regedit is always initialized on Windows — used by AMT COM port management below.
+    regedit = std::make_unique<Regedit>([](const std::string& msg) {
+        platform->logMessage(msg);
+    });
+#endif
 
     std::cout << "[DEBUG] Checking current COM assignment for AMT Serial Port" << std::endl;
     #ifdef _WIN32

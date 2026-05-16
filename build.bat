@@ -34,7 +34,7 @@ echo [2/5] Ensuring build directory exists...
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 
 echo [3/5] Configuring CMake...
-cmake -S . -B "%BUILD_DIR%" -A x64 -DBUILD_REGEDIT=OFF
+cmake -S . -B "%BUILD_DIR%" -A x64
 if errorlevel 1 (
     echo ERROR: CMake configure failed
     exit /b 1
