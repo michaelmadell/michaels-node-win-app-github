@@ -158,16 +158,16 @@ void heartbeatThread() {
 // conflicts with the CoreStation BMC serial connection. The functions below
 // detect, disable, and reassign the AMT COM port at startup.
 
-// Target COM port for the CoreStation BMC serial link.
-static constexpr char kBmcComPort[]    = "COM3";
+// NOT USED: AMT comparisons use kBmcComPortW; narrow form has no current call site.
+// static constexpr char kBmcComPort[]    = "COM3";
 // kBmcComPort in wide-string form for comparison with Win32 registry values.
 static constexpr wchar_t kBmcComPortW[] = L"COM3";
 // COM port AMT SOL is reassigned to when it conflicts with kBmcComPort.
 static constexpr char kAmtTargetPort[] = "COM4";
-// kAmtTargetPort in wide-string form for Win32 registry calls.
-static constexpr wchar_t kAmtTargetPortW[] = L"COM4";
+// NOT USED: Regedit::Write takes narrow strings; wide form has no current call site after registry wiring.
+// static constexpr wchar_t kAmtTargetPortW[] = L"COM4";
 // AMT SOL device display name written to the registry after reassignment.
-static constexpr wchar_t kAmtFriendlyName[] = L"Intel(R) Active Management Technology - SOL (COM4)";
+static constexpr char kAmtFriendlyName[] = "Intel(R) Active Management Technology - SOL (COM4)";
 // COM Name Arbiter ComDB bitmask for COM4.
 // ComDB is a binary array; COM N occupies bit (N-1) in byte floor((N-1)/8).
 // COM4 = bit index 3 → byte[0] bit 3 → 0x08.
@@ -373,7 +373,7 @@ bool reassignComPort() {
             std::string portPath     = narrowDevKey + "\\" + narrowInstance + "\\Device Parameters\\PortName";
 
             // Write FriendlyName and PortName via Regedit (creates Device Parameters subkey if absent).
-            regedit->Write(friendlyPath, "Intel(R) Active Management Technology - SOL (COM4)", HKEY_LOCAL_MACHINE);
+            regedit->Write(friendlyPath, kAmtFriendlyName, HKEY_LOCAL_MACHINE);
             if (regedit->Write(portPath, kAmtTargetPort, HKEY_LOCAL_MACHINE)) {
                 platform->logMessage("Set PortName=COM4 for: " + std::string(instancePath.begin(), instancePath.end()));
             } else {
