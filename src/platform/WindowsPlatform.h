@@ -3,6 +3,7 @@
 #ifdef _WIN32
 #include "core/Platform.h"
 #include "Windows_Addon.h"
+#include "WindowsNetworkProvider.h"
 #include "modules/metrics/MetricCache.h"
 #include <windows.h>
 #include <wtsapi32.h>
@@ -117,6 +118,9 @@ private:
 #ifdef ENABLE_SESSION_MONITOR
     std::unique_ptr<SessionMonitor> session_monitor_;
 #endif
+
+    // Network/OS discovery provider
+    WindowsNetworkProvider networkProvider_;
 
     // Thread safety
     std::mutex platformMutex_;

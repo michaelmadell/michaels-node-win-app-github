@@ -146,6 +146,7 @@ set(MODULE_SOURCES
 if(WIN32)
     list(APPEND CORE_SOURCES
         src/platform/WindowsPlatform.cpp
+        src/platform/WindowsNetworkProvider.cpp
     )
 
     list(APPEND MODULE_SOURCES
