@@ -1,3 +1,5 @@
+// Windows platform implementation — service lifecycle, session monitoring, logging, and metrics.
+// Network discovery delegated to WindowsNetworkProvider; serial I/O delegated to WindowsSerialProvider.
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>

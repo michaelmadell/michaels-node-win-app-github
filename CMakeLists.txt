@@ -172,7 +172,7 @@ if(WIN32)
         )
     endif()
 
-    # Registry module always compiled on Windows — no flag needed.
+    # Registry module is unconditional on Windows — required for AMT COM port management at runtime.
     list(APPEND MODULE_SOURCES
         src/modules/regedits/Regedit.cpp
     )
