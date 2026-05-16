@@ -4,6 +4,7 @@
 #include <memory>
 #include <pdh.h>
 #include <objbase.h>
+#include <string>
 
 struct HandleCloser {
     void operator()(HANDLE h) const {
@@ -46,7 +47,18 @@ class ComInitializer {
         HRESULT GetHResult() const { return hr_; }
         ComInitializer(const ComInitializer&) = delete;
         ComInitializer& operator=(const ComInitializer&) = delete;
-    
+
     private:
         HRESULT hr_;
 };
+
+// UTF-16 to UTF-8 conversion used across Windows platform files.
+inline std::string WideToUtf8(const std::wstring& wstr) {
+    if (wstr.empty()) return {};
+    int size = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(),
+                                   nullptr, 0, nullptr, nullptr);
+    std::string result(size, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(),
+                        &result[0], size, nullptr, nullptr);
+    return result;
+}

@@ -63,16 +63,6 @@ static ULONGLONG FileTimeToInt64(const FILETIME& ft) {
     return ((ULONGLONG)ft.dwHighDateTime) << 32 | ((ULONGLONG)ft.dwLowDateTime);
 }
 
-std::string WideToUtf8(const std::wstring &wstr)
-{
-    if (wstr.empty())
-        return std::string();
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
-    std::string strTo(size_needed, 0);
-    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
-    return strTo;
-}
-
 typedef LONG(WINAPI *RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
 static std::string Trim(const std::string& input) {
