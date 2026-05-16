@@ -96,6 +96,7 @@ bool WindowsSerialProvider::write(const std::string& data)
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             now - lastAttempt_).count();
 
+        if (lastPortName_.empty()) return false;
         if (elapsed >= RETRY_DELAY_MS) {
             lastAttempt_ = now;
             log_("Attempting to reconnect serial port...");
@@ -107,7 +108,14 @@ bool WindowsSerialProvider::write(const std::string& data)
     }
 
     DWORD bytesWritten = 0;
-    if (WriteFile(hSerial_.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
+    // PRE-EXISTING BUG IN ORIGINAL: condition was inverted — fired on SUCCESS, not failure.
+    // if (WriteFile(hSerial_.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
+    //     DWORD err = GetLastError();
+    //     log_("WriteFile failed (Error " + std::to_string(err) + "), closing serial port");
+    //     close();
+    //     return false;
+    // }
+    if (!WriteFile(hSerial_.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
         DWORD err = GetLastError();
         log_("WriteFile failed (Error " + std::to_string(err) + "), closing serial port");
         close();
@@ -122,7 +130,7 @@ bool WindowsSerialProvider::write(const std::string& data)
 }
 
 bool WindowsSerialProvider::read(std::string& readData) {
-    if (!hSerial_) {
+    if (!isOpen()) {
         return false;
     }
 
