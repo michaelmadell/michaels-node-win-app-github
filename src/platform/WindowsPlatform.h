@@ -4,6 +4,7 @@
 #include "core/Platform.h"
 #include "Windows_Addon.h"
 #include "WindowsNetworkProvider.h"
+#include "WindowsSerialProvider.h"
 #include "modules/metrics/MetricCache.h"
 #include <windows.h>
 #include <wtsapi32.h>
@@ -79,9 +80,7 @@ public:
 
 private:
     // Serial communication
-    UniqueHandle hSerial = UniqueHandle(INVALID_HANDLE_VALUE);
-    std::chrono::steady_clock::time_point lastSerialAttempt_;
-    static constexpr int SERIAL_RETRY_DELAY_MS = 5000;
+    WindowsSerialProvider serialProvider_;
 
     // Callbacks
     VoidCallback on_start_callback;
