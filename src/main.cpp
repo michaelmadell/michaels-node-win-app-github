@@ -35,6 +35,7 @@
 #include <atomic>
 #include <sstream>
 #include <string>
+#include <vector>
 
 std::unique_ptr<Platform> platform;
 std::unique_ptr<SerialManager> serialManager;
@@ -149,6 +150,32 @@ void heartbeatThread() {
     platform->logMessage("Heartbeat thread finished");
 }
 
+// =============================================================================
+// === AMT COM Port Management =================================================
+// =============================================================================
+// Intel AMT Serial-over-LAN (SOL) uses a virtual COM port managed by the
+// Windows PnP driver. On HX2000 hardware, AMT defaults to COM3, which
+// conflicts with the CoreStation BMC serial connection. The functions below
+// detect, disable, and reassign the AMT COM port at startup.
+
+// Target COM port for the CoreStation BMC serial link.
+static constexpr char kBmcComPort[]    = "COM3";
+// kBmcComPort in wide-string form for comparison with Win32 registry values.
+static constexpr wchar_t kBmcComPortW[] = L"COM3";
+// COM port AMT SOL is reassigned to when it conflicts with kBmcComPort.
+static constexpr char kAmtTargetPort[] = "COM4";
+// kAmtTargetPort in wide-string form for Win32 registry calls.
+static constexpr wchar_t kAmtTargetPortW[] = L"COM4";
+// AMT SOL device display name written to the registry after reassignment.
+static constexpr wchar_t kAmtFriendlyName[] = L"Intel(R) Active Management Technology - SOL (COM4)";
+// COM Name Arbiter ComDB bitmask for COM4.
+// ComDB is a binary array; COM N occupies bit (N-1) in byte floor((N-1)/8).
+// COM4 = bit index 3 → byte[0] bit 3 → 0x08.
+static constexpr BYTE kComDbCom4Bit = 0x08;
+// Registry path for the COM Name Arbiter database (includes value name at end).
+static constexpr char kComArbiterPath[] =
+    "SYSTEM\\CurrentControlSet\\Control\\COM Name Arbiter\\ComDB";
+
 struct AMTPortInfo {
     std::wstring comPort;
     std::wstring instanceId;
@@ -199,25 +226,65 @@ AMTPortInfo GetAMTComPort() {
         wchar_t instanceName[256];
         DWORD instanceNameSize = _countof(instanceName);
         while (RegEnumKeyExW(hDevKey, index, instanceName, &instanceNameSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS) {
-            std::wstring paramPath = devKeyPath + L"\\" + instanceName + L"\\Device Parameters";
-            HKEY hParamKey = nullptr;
-            if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, paramPath.c_str(), 0, KEY_READ, &hParamKey) == ERROR_SUCCESS) {
-                wchar_t portName[64] = {};
-                DWORD portNameSize = sizeof(portName);
-                if (RegQueryValueExW(hParamKey, L"PortName", nullptr, nullptr, (LPBYTE)portName, &portNameSize) == ERROR_SUCCESS) {
-                    RegCloseKey(hParamKey);
+                // Build narrow path — HWID and instance IDs are ASCII-safe for conversion.
+                std::string narrowDevKey(devKeyPath.begin(), devKeyPath.end());
+                std::string narrowInstance(instanceName, instanceName + wcslen(instanceName));
+                std::string portPath = narrowDevKey + "\\" + narrowInstance + "\\Device Parameters\\PortName";
+
+                std::string portNameA;
+                if (regedit->Read(portPath, portNameA, HKEY_LOCAL_MACHINE)) {
                     RegCloseKey(hDevKey);
+                    std::wstring portNameW(portNameA.begin(), portNameA.end());
                     std::wstring fullId = std::wstring(L"PCI\\") + kAMTDeviceHwids[i] + L"\\" + instanceName;
-                    return {std::wstring(portName), fullId};
+                    return {portNameW, fullId};
                 }
-                RegCloseKey(hParamKey);
-            }
             ++index;
             instanceNameSize = _countof(instanceName);
         }
         RegCloseKey(hDevKey);
     }
     return {L"", L""};
+#endif
+}
+
+// Launch powershell.exe directly via CreateProcessW — avoids system() and the
+// shell-injection risk that comes with it. The command line is built from a
+// known-safe instance ID that was read from the registry, not from user input.
+static bool runPowerShellPnpCommand(const std::wstring& verb, const std::wstring& instanceId) {
+#ifdef _WIN32
+    // Build: powershell.exe -NoProfile -NonInteractive -Command "<verb>-PnpDevice ..."
+    std::wstring cmdLine =
+        L"powershell.exe -NoProfile -NonInteractive -Command \""
+        + verb + L"-PnpDevice -InstanceId '" + instanceId + L"' -Confirm:$false\"";
+
+    STARTUPINFOW si = {};
+    si.cb = sizeof(si);
+    PROCESS_INFORMATION pi = {};
+
+    // CreateProcessW requires a mutable buffer for lpCommandLine.
+    std::vector<wchar_t> buf(cmdLine.begin(), cmdLine.end());
+    buf.push_back(L'\0');
+
+    if (!CreateProcessW(
+            nullptr,      // use PATH lookup — no hard-coded powershell path
+            buf.data(),
+            nullptr, nullptr,
+            FALSE,
+            CREATE_NO_WINDOW,
+            nullptr, nullptr,
+            &si, &pi)) {
+        return false;
+    }
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    DWORD exitCode = 1;
+    GetExitCodeProcess(pi.hProcess, &exitCode);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return exitCode == 0;
+#else
+    (void)verb; (void)instanceId;
+    return false;
 #endif
 }
 
@@ -229,10 +296,7 @@ bool disableAMTComPort() {
         return false;
     }
 
-    std::string pshDisableCmd = "powershell -Command \"Disable-PnpDevice -InstanceId '" + std::string(instanceId.begin(), instanceId.end()) + "' -Confirm:0\"";
-    int result = system(pshDisableCmd.c_str());
-    if (result != 0) {
-        std::cerr << "[ERROR] Failed to disable AMT Serial Port. Command: " << pshDisableCmd << std::endl;
+    if (!runPowerShellPnpCommand(L"Disable", instanceId)) {
         platform->logMessage("Failed to disable AMT Serial Port.");
         return false;
     }
@@ -248,16 +312,12 @@ bool enableAMTComPort() {
         return false;
     }
 
-    std::string pshEnableCmd = "powershell -Command \"Enable-PnpDevice -InstanceId '" + std::string(instanceId.begin(), instanceId.end()) + "' -Confirm:0\"";
-    int result = system(pshEnableCmd.c_str());
-    if (result != 0) {
-        std::cerr << "[ERROR] Failed to enable AMT Serial Port. Command: " << pshEnableCmd << std::endl;
+    if (!runPowerShellPnpCommand(L"Enable", instanceId)) {
         platform->logMessage("Failed to enable AMT Serial Port.");
         return false;
     }
     return true;
 #endif
-
 }
 
 // Directly implements the PS COM port assignment script:
@@ -271,30 +331,24 @@ bool reassignComPort() {
 
     // --- Step 1: COM Name Arbiter — reserve COM4 ---
     // ComDB is a binary bitmask. COM N occupies bit (N-1) in byte floor((N-1)/8).
-    // COM4 = bit index 3 → byte[0] bit 3 → mask 0x08
+    // COM4 = bit index 3 → byte[0] bit 3 → kComDbCom4Bit (0x08)
     {
-        HKEY hArbiter = nullptr;
-        const wchar_t* arbPath = L"SYSTEM\\CurrentControlSet\\Control\\COM Name Arbiter";
-        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, arbPath, 0, KEY_READ | KEY_WRITE, &hArbiter) == ERROR_SUCCESS) {
-            BYTE comDb[8] = {};
-            DWORD dbSize = sizeof(comDb);
-            RegQueryValueExW(hArbiter, L"ComDB", nullptr, nullptr, comDb, &dbSize);
-            if (!(comDb[0] & 0x08)) {
-                comDb[0] |= 0x08;
-                RegSetValueExW(hArbiter, L"ComDB", 0, REG_BINARY, comDb, sizeof(comDb));
+        std::vector<BYTE> comDb;
+        if (regedit->ReadBinary(kComArbiterPath, comDb, HKEY_LOCAL_MACHINE)) {
+            if (comDb.size() < 1) comDb.resize(8, 0);
+            if (!(comDb[0] & kComDbCom4Bit)) {
+                comDb[0] |= kComDbCom4Bit;
+                regedit->WriteBinary(kComArbiterPath, comDb, HKEY_LOCAL_MACHINE);
                 platform->logMessage("COM Name Arbiter: COM4 reserved.");
             } else {
                 platform->logMessage("COM Name Arbiter: COM4 was already reserved.");
             }
-            RegCloseKey(hArbiter);
         } else {
-            platform->logMessage("WARNING: Could not open COM Name Arbiter — continuing anyway.");
+            platform->logMessage("WARNING: Could not read COM Name Arbiter — continuing anyway.");
         }
     }
 
     // --- Step 2: Write PortName and FriendlyName for all matching device instances ---
-    const wchar_t* targetPort    = L"COM4";
-    const wchar_t* friendlyName  = L"Intel(R) Active Management Technology - SOL (COM4)";
     bool anyDeviceFound = false;
 
     for (int i = 0; kAMTDeviceHwids[i] != nullptr; ++i) {
@@ -312,33 +366,18 @@ bool reassignComPort() {
             anyDeviceFound = true;
             std::wstring instancePath = devKeyPath + L"\\" + instanceName;
 
-            // Set FriendlyName on the instance key
-            HKEY hInstanceKey = nullptr;
-            if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, instancePath.c_str(), 0, KEY_SET_VALUE, &hInstanceKey) == ERROR_SUCCESS) {
-                RegSetValueExW(hInstanceKey, L"FriendlyName", 0, REG_SZ,
-                    (LPBYTE)friendlyName,
-                    (DWORD)((wcslen(friendlyName) + 1) * sizeof(wchar_t)));
-                RegCloseKey(hInstanceKey);
-            }
+            // Build narrow key paths — HWID and instance IDs are ASCII-safe for conversion.
+            std::string narrowDevKey(devKeyPath.begin(), devKeyPath.end());
+            std::string narrowInstance(instanceName, instanceName + wcslen(instanceName));
+            std::string friendlyPath = narrowDevKey + "\\" + narrowInstance + "\\FriendlyName";
+            std::string portPath     = narrowDevKey + "\\" + narrowInstance + "\\Device Parameters\\PortName";
 
-            // Create (if absent) or open Device Parameters and set PortName
-            std::wstring paramPath = instancePath + L"\\Device Parameters";
-            HKEY hParamKey = nullptr;
-            DWORD disposition = 0;
-            LONG ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, paramPath.c_str(), 0, nullptr,
-                REG_OPTION_NON_VOLATILE, KEY_SET_VALUE, nullptr, &hParamKey, &disposition);
-            if (ret == ERROR_SUCCESS) {
-                ret = RegSetValueExW(hParamKey, L"PortName", 0, REG_SZ,
-                    (LPBYTE)targetPort,
-                    (DWORD)((wcslen(targetPort) + 1) * sizeof(wchar_t)));
-                if (ret == ERROR_SUCCESS) {
-                    platform->logMessage("Set PortName=COM4 for: " + std::string(instancePath.begin(), instancePath.end()));
-                } else {
-                    platform->logMessage("ERROR: Failed to write PortName for: " + std::string(instancePath.begin(), instancePath.end()));
-                }
-                RegCloseKey(hParamKey);
+            // Write FriendlyName and PortName via Regedit (creates Device Parameters subkey if absent).
+            regedit->Write(friendlyPath, "Intel(R) Active Management Technology - SOL (COM4)", HKEY_LOCAL_MACHINE);
+            if (regedit->Write(portPath, kAmtTargetPort, HKEY_LOCAL_MACHINE)) {
+                platform->logMessage("Set PortName=COM4 for: " + std::string(instancePath.begin(), instancePath.end()));
             } else {
-                platform->logMessage("ERROR: Failed to open/create Device Parameters for: " + std::string(instancePath.begin(), instancePath.end()));
+                platform->logMessage("ERROR: Failed to write PortName for: " + std::string(instancePath.begin(), instancePath.end()));
             }
 
             ++index;
@@ -370,7 +409,7 @@ bool reassignComPort() {
         platform->logMessage("reassignComPort: Device not found after cycle — cannot verify assignment.");
         return false;
     }
-    if (newInfo.comPort == L"COM3") {
+    if (newInfo.comPort == kBmcComPortW) {
         platform->logMessage("reassignComPort: Device is still on COM3 after reassignment attempt.");
         return false;
     }
@@ -380,6 +419,10 @@ bool reassignComPort() {
     return true;
 #endif
 }
+
+// =============================================================================
+// === End AMT COM Port Management =============================================
+// =============================================================================
 
 
 void checkSystemState() {
@@ -459,33 +502,37 @@ void processIncomingSerialData() {
     }
 }
 
+/* NOT CALLED: serialThread() reads incoming data via serialManager->ProcessIncomingData()
+   and platform->readSerial() directly. This worker stub was never wired into any thread.
+
 void readSerialPortWorker() {
     platform->logMessage("Serial worker thread started.");
     std::string readData;
     // ... other variables
 
     while (!g_terminate.load()) {
-        
+
         // This call is now NON-BLOCKING (returns immediately if no data is ready)
         if (platform->readSerial(readData)) {
             // --- SUCCESSFUL READ / Data Processing ---
             // ... your processing logic
-        } 
-        
+        }
+
         else {
             // --- FAILED READ / No Data Available ---
-            
+
             // CRITICAL: Check exit flag immediately
             if (g_terminate.load()) {
-                break; 
+                break;
             }
-            
+
             // CRITICAL: Sleep briefly to prevent 100% CPU spin when no data is available
-            std::this_thread::sleep_for(std::chrono::milliseconds(5)); 
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
     platform->logMessage("Serial worker thread finished cleanly.");
 }
+*/
 
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
@@ -619,7 +666,7 @@ int main(int argc, char* argv[]) {
         platform->logMessage("No AMT Serial Port COM assignment found.");
     }
 
-    if (AMTInfo.comPort == L"COM3") {
+    if (AMTInfo.comPort == kBmcComPortW) {
         std::cout << "[DEBUG] AMT Serial Port is on COM3. Attempting to disable it to free COM3 for our use." << std::endl;
         platform->logMessage("AMT Serial Port is on COM3. Attempting to disable it.");
         if (disableAMTComPort()) {
@@ -630,7 +677,7 @@ int main(int argc, char* argv[]) {
                 platform->logMessage("Successfully re-enabled AMT Serial Port after disabling.");
                 std::this_thread::sleep_for(std::chrono::seconds(2));
                 AMTPortInfo amtPortInfo = GetAMTComPort();
-                if (!amtPortInfo.comPort.empty() && amtPortInfo.comPort != L"COM3") {
+                if (!amtPortInfo.comPort.empty() && amtPortInfo.comPort != kBmcComPortW) {
                     std::cout << "[DEBUG] Verified AMT Serial Port is not back on COM3 after re-enabling." << std::endl;
                     platform->logMessage("Verified AMT Serial Port is not back on COM3 after re-enabling.");
                 } else {
