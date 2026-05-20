@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <windowsx.h>
 
 // Define constants
 const char* const TrayApp::TRAY_PIPE_NAME = "\\\\.\\pipe\\corestation_tray";
@@ -131,6 +132,15 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             self->ApplyTooltip();
         }
         return 0;
+    case WM_TRAY_CALLBACK:
+        if (self) {
+            UINT event = LOWORD(lParam);
+            if (event == WM_RBUTTONUP || event == WM_LBUTTONUP) {
+                // ShowContextMenu added in step 1.5
+                self->Log("Tray clicked — context menu not yet implemented");
+            }
+        }
+        return 0;
     case WM_DESTROY:
         if (self) {
             Shell_NotifyIconW(NIM_DELETE, &self->nid_);
@@ -187,7 +197,8 @@ void TrayApp::UiThreadProc() {
     nid_.cbSize = sizeof(NOTIFYICONDATAW);
     nid_.hWnd = hwnd_;
     nid_.uID = 1;
-    nid_.uFlags = NIF_ICON | NIF_TIP;
+    nid_.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+    nid_.uCallbackMessage = WM_TRAY_CALLBACK;
     nid_.hIcon = LoadIcon(NULL, IDI_INFORMATION);
 
     {

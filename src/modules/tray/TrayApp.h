@@ -87,7 +87,8 @@ private:
 
     // Constants
     static const char* const TRAY_PIPE_NAME;
-    static const UINT WM_TRAY_UPDATE = WM_APP + 1;
+    static const UINT WM_TRAY_UPDATE    = WM_APP + 1;
+    static const UINT WM_TRAY_CALLBACK  = WM_APP + 2;
 
     // Member variables
     WindowsPlatform* platform_ = nullptr;

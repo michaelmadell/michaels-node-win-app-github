@@ -109,3 +109,5 @@ debian/corestationhxagent.substvars
 debian/debhelper-build-stamp
 debian/.debhelper
 debian/corestationhxagent
+PLAN.md
+linux-build-todo.md
