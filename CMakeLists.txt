@@ -288,6 +288,7 @@ if(WIN32)
         comctl32
         winmm
         pdh
+        userenv
     )
 elseif(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)

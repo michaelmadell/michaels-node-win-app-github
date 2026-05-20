@@ -25,6 +25,9 @@
 #ifdef ENABLE_REGEDIT
 #include "modules/regedits/Regedit.h"
 #endif
+#ifdef ENABLE_TRAY_APP
+#include "platform/WindowsPlatform.h"
+#endif
 #include "version.h"
 
 #include <iostream>
@@ -595,9 +598,28 @@ void serialThread() {
 }
 
 int main(int argc, char* argv[]) {
+#if defined(_WIN32) && defined(ENABLE_TRAY_APP)
+    // Tray-helper mode: the service (Session 0) spawns this exe into the user
+    // session with --tray-only so the tray icon appears on the user's desktop.
+    // Must be checked before any service/AMT logic runs.
+    for (int i = 1; i < argc; i++) {
+        if (_stricmp(argv[i], "--tray-only") == 0) {
+            DWORD parentPid = 0;
+            for (int j = i + 1; j < argc - 1; j++) {
+                if (_stricmp(argv[j], "--parent-pid") == 0) {
+                    parentPid = static_cast<DWORD>(atoi(argv[j + 1]));
+                    break;
+                }
+            }
+            platform = createPlatform();
+            return static_cast<WindowsPlatform*>(platform.get())->runAsTrayHelper(parentPid);
+        }
+    }
+#endif
+
     // This message should always appear
     std::cout << "[DEBUG] Application starting. Creating platform object." << std::endl;
-    
+
     platform = createPlatform();
 
     std::cout << "[DEBUG] Checking current COM assignment for AMT Serial Port" << std::endl;

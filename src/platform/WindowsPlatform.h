@@ -72,6 +72,11 @@ public:
     void startService();
     void stopService(const std::string& stopReason);
 
+    // Tray-helper mode: called when this process is spawned by the service
+    // into the user session via CreateProcessAsUser. Runs the tray app until
+    // the parent service process exits, then returns.
+    int runAsTrayHelper(DWORD parentPid);
+
     // Delete copy constructor and assignment operator
     WindowsPlatform(const WindowsPlatform&) = delete;
     WindowsPlatform& operator=(const WindowsPlatform&) = delete;
@@ -155,10 +160,17 @@ private:
     void startSessionMonitor();
     void stopSessionMonitor();
 
+    // Spawn a tray helper process in the active user session (called when
+    // running as a Session 0 service where direct tray creation is invisible).
+    void spawnTrayHelper();
+
     // Mode detection
     bool hasSwitch(int argc, char* argv[], const char* sw);
     bool hasSwitchCmd(const wchar_t* sw);
     bool runningUnderServiceControlManager();
+
+    // Handle to the tray helper child process (valid when service is in Session 0)
+    HANDLE hTrayHelperProcess_ = INVALID_HANDLE_VALUE;
 };
 
 #endif // _WIN32
