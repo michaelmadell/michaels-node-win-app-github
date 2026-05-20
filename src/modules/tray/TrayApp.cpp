@@ -98,8 +98,10 @@ void TrayApp::ApplyTooltip() {
         tooltip = hostname_ + "  |  " + ipList + "  |  " + winVersion_;
     }
 
-    if (tooltip.size() >= sizeof(nid_.szTip)) {
-        tooltip.resize(sizeof(nid_.szTip) - 1);
+    // szTip is WCHAR[128]; clamp narrow source to 127 chars before widening
+    const size_t maxChars = (sizeof(nid_.szTip) / sizeof(wchar_t)) - 1;
+    if (tooltip.size() > maxChars) {
+        tooltip.resize(maxChars);
     }
 
     std::wstring wtip(tooltip.begin(), tooltip.end());
