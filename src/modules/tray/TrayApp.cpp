@@ -3,6 +3,9 @@
 #include "../../platform/WindowsPlatform.h"
 #include <windowsx.h>
 
+// Must match IDI_ICON1 in app.rc
+#define TRAY_ICON_RESOURCE_ID 101
+
 
 TrayApp::TrayApp(WindowsPlatform* platform) : platform_(platform) {
     stopEvent_ = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -95,7 +98,7 @@ void TrayApp::ApplyTooltip() {
             ipList += ip;
         }
         if (ipList.empty()) ipList = "None";
-        tooltip = hostname_ + "  |  " + ipList + "  |  " + winVersion_;
+        tooltip = "CoreStation HX Agent\n" + hostname_ + "  |  " + ipList + "\n" + winVersion_;
     }
 
     // szTip is WCHAR[128]; clamp narrow source to 127 chars before widening
@@ -227,13 +230,16 @@ void TrayApp::UiThreadProc() {
     wcex.lpfnWndProc = TrayApp::WndProc;
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
+    HICON hAppIcon = LoadIcon(hInstance, MAKEINTRESOURCE(TRAY_ICON_RESOURCE_ID));
+    if (!hAppIcon) hAppIcon = LoadIcon(NULL, IDI_APPLICATION);
+
     wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(NULL, IDI_INFORMATION);
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wcex.hIcon     = hAppIcon;
+    wcex.hCursor   = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName = NULL;
+    wcex.lpszMenuName  = NULL;
     wcex.lpszClassName = windowClassName_.c_str();
-    wcex.hIconSm = LoadIcon(NULL, IDI_INFORMATION);
+    wcex.hIconSm = hAppIcon;
 
     wmTaskbarCreated_ = RegisterWindowMessageW(L"TaskbarCreated");
 
@@ -267,7 +273,7 @@ void TrayApp::UiThreadProc() {
     nid_.uID = 1;
     nid_.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
     nid_.uCallbackMessage = WM_TRAY_CALLBACK;
-    nid_.hIcon = LoadIcon(NULL, IDI_INFORMATION);
+    nid_.hIcon = hAppIcon;
 
     wcsncpy_s(nid_.szTip, L"CoreStation HX Agent", _TRUNCATE);
 
