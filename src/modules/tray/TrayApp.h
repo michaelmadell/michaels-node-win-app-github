@@ -38,6 +38,10 @@ private:
     // Builds and shows the right/left-click context menu at screen coords (x, y).
     void ShowContextMenu(int x, int y);
 
+    // Adds/re-adds the notification icon. Called at startup and on WM_TASKBARCREATED
+    // (fired when Explorer restarts or initialises after service start).
+    void AddTrayIcon();
+
     void Log(const std::string& msg);
 
     // Constants
@@ -59,6 +63,7 @@ private:
     std::atomic<bool> stop_{ false };
     HANDLE stopEvent_ = nullptr;
     std::wstring windowClassName_ = L"NodeWinTrayWindow";
+    UINT wmTaskbarCreated_ = 0;
 };
 
 #endif // _WIN32

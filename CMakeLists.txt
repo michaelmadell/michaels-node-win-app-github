@@ -10,8 +10,8 @@ project(CoreStationHXAgent
 # Build options
 option(BUILD_METRICS "Build with metric support" OFF)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
-option(BUILD_TRAY_APP "Build with system tray application (Windows only)" OFF)
-option(BUILD_REGEDIT "Build with registry editing components (Windows only)" ON)
+option(BUILD_TRAY_APP "Build with system tray application (Windows only)" ON)
+option(BUILD_REGEDIT "Build with registry editing components (Windows only)" OFF)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard

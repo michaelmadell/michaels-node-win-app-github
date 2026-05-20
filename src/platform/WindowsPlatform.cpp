@@ -1168,6 +1168,9 @@ HANDLE WindowsPlatform::getStopEvent()
 void WindowsPlatform::startService()
 {
     startSessionMonitor();
+#ifdef ENABLE_TRAY_APP
+    startTrayApp();
+#endif
     if (on_start_callback)
         on_start_callback();
 }

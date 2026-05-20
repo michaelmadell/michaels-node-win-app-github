@@ -110,6 +110,18 @@ void TrayApp::ApplyTooltip() {
     Shell_NotifyIconW(NIM_MODIFY, &nid_);
 }
 
+void TrayApp::AddTrayIcon() {
+    if (!Shell_NotifyIconW(NIM_ADD, &nid_)) {
+        DWORD err = GetLastError();
+        Log("Shell_NotifyIconW(NIM_ADD) failed, error=" + std::to_string(err));
+        return;
+    }
+    nid_.uVersion = NOTIFYICON_VERSION_4;
+    Shell_NotifyIconW(NIM_SETVERSION, &nid_);
+    SetTimer(hwnd_, 1, 30000, NULL);
+    RefreshFromPlatform();
+}
+
 void TrayApp::ShowContextMenu(int x, int y) {
     HMENU hMenu = CreatePopupMenu();
     if (!hMenu) return;
@@ -162,6 +174,13 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     auto self = reinterpret_cast<TrayApp*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
+    // WM_TASKBARCREATED is a registered message (runtime ID >= 0xC000) — check before switch.
+    // Windows sends it when Explorer restarts or the notification area is first ready.
+    if (self && self->wmTaskbarCreated_ && msg == self->wmTaskbarCreated_) {
+        self->AddTrayIcon();
+        return 0;
+    }
+
     switch (msg) {
     case WM_TRAY_UPDATE:
         if (self) {
@@ -190,6 +209,7 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         KillTimer(hwnd, 1);
         if (self) {
             Shell_NotifyIconW(NIM_DELETE, &self->nid_);
+            self->hwnd_ = nullptr;
         }
         PostQuitMessage(0);
         return 0;
@@ -214,6 +234,8 @@ void TrayApp::UiThreadProc() {
     wcex.lpszMenuName = NULL;
     wcex.lpszClassName = windowClassName_.c_str();
     wcex.hIconSm = LoadIcon(NULL, IDI_INFORMATION);
+
+    wmTaskbarCreated_ = RegisterWindowMessageW(L"TaskbarCreated");
 
     RegisterClassExW(&wcex);
 
@@ -249,15 +271,7 @@ void TrayApp::UiThreadProc() {
 
     wcsncpy_s(nid_.szTip, L"CoreStation HX Agent", _TRUNCATE);
 
-    if (!Shell_NotifyIconW(NIM_ADD, &nid_)) {
-        Log("Failed to add tray icon");
-    }
-    else {
-        nid_.uVersion = NOTIFYICON_VERSION_4;
-        Shell_NotifyIconW(NIM_SETVERSION, &nid_);
-        SetTimer(hwnd_, 1, 30000, NULL);
-        RefreshFromPlatform();
-    }
+    AddTrayIcon();
 
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0) > 0) {
