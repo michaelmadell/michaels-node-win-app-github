@@ -80,6 +80,13 @@ private:
     void ApplyTooltip();
 
     /**
+     * @brief Query hostname, non-APIPA IPs, and Windows version directly
+     *        from the platform and refresh the tooltip. Called at startup
+     *        and every 30 seconds via WM_TIMER.
+     */
+    void RefreshFromPlatform();
+
+    /**
      * @brief Log a message through the parent platform
      * @param msg Message to log
      */
@@ -99,9 +106,10 @@ private:
     std::mutex dataMutex_;
     std::condition_variable hwndReadyCv_;
 
-    std::string hostname_ = "Waiting...";
-    std::string ip_ = "Waiting...";
-    std::string uptime_ = "Waiting...";
+    std::string hostname_   = "Waiting...";
+    std::string ip_         = "Waiting...";
+    std::string uptime_     = "Waiting...";
+    std::string winVersion_ = "Waiting...";
 
     std::atomic<bool> stop_{ false };
     HANDLE stopEvent_ = nullptr;

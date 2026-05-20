@@ -98,6 +98,34 @@ void TrayApp::UpdateData(const std::string& hostname, const std::string& ip, con
     }
 }
 
+void TrayApp::RefreshFromPlatform() {
+    if (!platform_) return;
+
+    std::string hostname = platform_->getHostname();
+    std::string winVer   = platform_->getOsVersion() + " (" + platform_->getOsBuild() + ")";
+
+    auto ifaces = platform_->getNetworkInterfaces();
+    std::string ip;
+    for (const auto& iface : ifaces) {
+        if (iface.ipv4.empty()) continue;
+        if (iface.ipv4.size() >= 8 && iface.ipv4.substr(0, 8) == "169.254.") continue;
+        if (!ip.empty()) ip += ", ";
+        ip += iface.ipv4;
+    }
+    if (ip.empty()) ip = "None";
+
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        hostname_   = hostname.empty() ? "Unknown" : hostname;
+        ip_         = ip;
+        winVersion_ = winVer;
+    }
+
+    if (hwnd_) {
+        PostMessage(hwnd_, WM_TRAY_UPDATE, 0, 0);
+    }
+}
+
 void TrayApp::ApplyTooltip() {
     std::string tooltip;
     {
@@ -141,7 +169,18 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             }
         }
         return 0;
+    case WM_TIMER:
+        if (self && wParam == 1) {
+            self->RefreshFromPlatform();
+        }
+        return 0;
+    case WM_COMMAND:
+        if (self && LOWORD(wParam) == 1001) {
+            self->RefreshFromPlatform();
+        }
+        return 0;
     case WM_DESTROY:
+        KillTimer(hwnd, 1);
         if (self) {
             Shell_NotifyIconW(NIM_DELETE, &self->nid_);
         }
@@ -222,7 +261,8 @@ void TrayApp::UiThreadProc() {
     else {
         nid_.uVersion = NOTIFYICON_VERSION_4;
         Shell_NotifyIconW(NIM_SETVERSION, &nid_);
-        ApplyTooltip();
+        SetTimer(hwnd_, 1, 30000, NULL);
+        RefreshFromPlatform();
     }
 
     MSG msg;
