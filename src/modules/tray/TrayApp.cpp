@@ -108,6 +108,47 @@ void TrayApp::ApplyTooltip() {
     Shell_NotifyIconW(NIM_MODIFY, &nid_);
 }
 
+void TrayApp::ShowContextMenu(int x, int y) {
+    HMENU hMenu = CreatePopupMenu();
+    if (!hMenu) return;
+
+    // Title row
+    AppendMenuW(hMenu, MF_STRING | MF_GRAYED, 0, L"CoreStation HX Agent");
+    AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
+
+    // Snapshot data under lock, convert to wide strings for the menu
+    std::wstring hostItem, osItem;
+    std::vector<std::wstring> ipItems;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        hostItem = L"Host:  " + std::wstring(hostname_.begin(), hostname_.end());
+        osItem   = L"OS:    " + std::wstring(winVersion_.begin(), winVersion_.end());
+        for (const auto& ip : ips_) {
+            ipItems.push_back(L"IP:    " + std::wstring(ip.begin(), ip.end()));
+        }
+    }
+    if (ipItems.empty()) {
+        ipItems.push_back(L"IP:    None");
+    }
+
+    AppendMenuW(hMenu, MF_STRING | MF_GRAYED, 0, hostItem.c_str());
+    AppendMenuW(hMenu, MF_STRING | MF_GRAYED, 0, osItem.c_str());
+    for (const auto& ipItem : ipItems) {
+        AppendMenuW(hMenu, MF_STRING | MF_GRAYED, 0, ipItem.c_str());
+    }
+
+    AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(hMenu, MF_STRING, 1001, L"Refresh");
+
+    // SetForegroundWindow is required by TrackPopupMenu to dismiss the menu
+    // correctly when the user clicks elsewhere.
+    SetForegroundWindow(hwnd_);
+    TrackPopupMenu(hMenu, TPM_RIGHTBUTTON | TPM_BOTTOMALIGN | TPM_LEFTALIGN,
+                   x, y, 0, hwnd_, nullptr);
+    PostMessage(hwnd_, WM_NULL, 0, 0);
+    DestroyMenu(hMenu);
+}
+
 LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_CREATE) {
         auto createStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
@@ -129,8 +170,7 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         if (self) {
             UINT event = LOWORD(lParam);
             if (event == WM_RBUTTONUP || event == WM_LBUTTONUP) {
-                // ShowContextMenu added in step 1.5
-                self->Log("Tray clicked — context menu not yet implemented");
+                self->ShowContextMenu(GET_X_LPARAM(wParam), GET_Y_LPARAM(wParam));
             }
         }
         return 0;

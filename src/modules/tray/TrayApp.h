@@ -35,6 +35,9 @@ private:
     // the platform. Called once at startup and every 30s via WM_TIMER.
     void RefreshFromPlatform();
 
+    // Builds and shows the right/left-click context menu at screen coords (x, y).
+    void ShowContextMenu(int x, int y);
+
     void Log(const std::string& msg);
 
     // Constants
