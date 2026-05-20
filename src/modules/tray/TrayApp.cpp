@@ -109,7 +109,7 @@ void TrayApp::ApplyTooltip() {
 
     std::wstring wtip(tooltip.begin(), tooltip.end());
     wcsncpy_s(nid_.szTip, wtip.c_str(), _TRUNCATE);
-    nid_.uFlags = NIF_TIP;
+    nid_.uFlags = NIF_TIP | NIF_SHOWTIP;
     Shell_NotifyIconW(NIM_MODIFY, &nid_);
 }
 
@@ -271,7 +271,7 @@ void TrayApp::UiThreadProc() {
     nid_.cbSize = sizeof(NOTIFYICONDATAW);
     nid_.hWnd = hwnd_;
     nid_.uID = 1;
-    nid_.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+    nid_.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE | NIF_SHOWTIP;
     nid_.uCallbackMessage = WM_TRAY_CALLBACK;
     nid_.hIcon = hAppIcon;
 
