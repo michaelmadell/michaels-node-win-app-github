@@ -4,6 +4,12 @@
 CoreStation HX Agent Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+20.26.5.1_rc8
+-------------
+- fix missing tray app after reboot
+- fix double tray app after service restart
+
+
 20.26.5.1_rc7
 -------------
 - Made c2a Dialog show on user desktop
