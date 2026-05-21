@@ -187,7 +187,7 @@ if(WIN32)
         set(WITH_GNUTLS  OFF CACHE BOOL "" FORCE)
         set(WITH_PNG     OFF CACHE BOOL "" FORCE)
         set(WITH_JPEG    ON  CACHE BOOL "" FORCE)
-        set(WITH_ZLIB    OFF CACHE BOOL "" FORCE)
+        set(WITH_ZLIB    ON  CACHE BOOL "" FORCE)
         set(BUILD_SHARED_LIBS           OFF CACHE BOOL "" FORCE)
         set(LIBVNCSERVER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
         set(LIBVNCSERVER_INSTALL        OFF CACHE BOOL "" FORCE)
@@ -209,6 +209,11 @@ if(WIN32)
         # CMake 4.x removed. This overrides the version floor for that subdirectory.
         set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
         FetchContent_MakeAvailable(libvncserver)
+
+        # Locate the optional libs so we can forward their include paths to
+        # our own target (rfbproto.h pulls in zlib.h directly).
+        find_package(ZLIB QUIET)
+        find_package(JPEG QUIET)
 
         list(APPEND MODULE_SOURCES
             src/modules/vnc/VncHelper.cpp
@@ -305,6 +310,15 @@ if(BUILD_VNC AND WIN32)
         ${libvncserver_SOURCE_DIR}
         ${libvncserver_BINARY_DIR}
     )
+    # Forward zlib/jpeg include paths so rfbproto.h can find zlib.h/jpeglib.h
+    if(ZLIB_FOUND)
+        target_include_directories(${PROJECT_NAME} PRIVATE ${ZLIB_INCLUDE_DIRS})
+        target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
+    endif()
+    if(JPEG_FOUND)
+        target_include_directories(${PROJECT_NAME} PRIVATE ${JPEG_INCLUDE_DIRS})
+        target_link_libraries(${PROJECT_NAME} PRIVATE JPEG::JPEG)
+    endif()
 endif()
 
 # Compiler Flags
