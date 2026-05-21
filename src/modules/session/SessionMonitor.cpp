@@ -179,6 +179,11 @@ void SessionMonitor::HandleSessionChange(DWORD sessionChangeType, DWORD sessionI
         stateValue = "11";
         break;
 
+    case 15:
+        eventName = "Session Reconnect";
+        stateValue = "15";
+        break;
+
     default:
         eventName = "Unknown";
         stateValue = std::to_string(sessionChangeType);

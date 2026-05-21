@@ -115,10 +115,14 @@ void TrayApp::ApplyTooltip() {
 
 void TrayApp::AddTrayIcon() {
     if (!Shell_NotifyIconW(NIM_ADD, &nid_)) {
+        // Shell not ready yet (e.g. service started before Explorer loaded).
+        // Retry every 5s via timer ID 2 until it succeeds.
         DWORD err = GetLastError();
-        Log("Shell_NotifyIconW(NIM_ADD) failed, error=" + std::to_string(err));
+        Log("Shell_NotifyIconW(NIM_ADD) failed (error=" + std::to_string(err) + "), retrying in 5s");
+        SetTimer(hwnd_, 2, 5000, NULL);
         return;
     }
+    KillTimer(hwnd_, 2); // Cancel any pending retry
     nid_.uVersion = NOTIFYICON_VERSION_4;
     Shell_NotifyIconW(NIM_SETVERSION, &nid_);
     SetTimer(hwnd_, 1, 30000, NULL);
@@ -201,6 +205,8 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_TIMER:
         if (self && wParam == 1) {
             self->RefreshFromPlatform();
+        } else if (self && wParam == 2) {
+            self->AddTrayIcon();
         }
         return 0;
     case WM_COMMAND:
@@ -210,6 +216,7 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return 0;
     case WM_DESTROY:
         KillTimer(hwnd, 1);
+        KillTimer(hwnd, 2);
         if (self) {
             Shell_NotifyIconW(NIM_DELETE, &self->nid_);
             self->hwnd_ = nullptr;

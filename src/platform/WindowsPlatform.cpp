@@ -318,9 +318,8 @@ void WindowsPlatform::startSessionMonitor() {
         ProcessIdToSessionId(GetCurrentProcessId(), &mySession);
         if (mySession != 0) return; // Only relevant when running as Session 0 service
 
-        // Logon / console-connect / RDP-connect: respawn the tray helper.
-        // Run on a detached thread so we don't block the session monitor's
-        // message loop, and delay briefly to let the user desktop settle.
+        // Logon / console-connect / RDP-connect: always kill any stale helper
+        // and spawn a fresh one. Delay 2s so the user desktop is ready.
         if (state == "5" || state == "1" || state == "3") {
             std::thread([this]() {
                 std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -332,9 +331,34 @@ void WindowsPlatform::startSessionMonitor() {
                 logMessage("[Tray] Helper respawned after session logon.");
             }).detach();
         }
-        // Logoff / disconnect: kill the helper — it will die on its own when
-        // the session ends, but terminating early avoids lingering processes.
-        else if (state == "6" || state == "2" || state == "4") {
+        // Unlock: only spawn if the helper is not already running (e.g. after
+        // reboot where the initial spawn failed because the shell wasn't ready).
+        else if (state == "8") {
+            bool needsSpawn = false;
+            {
+                std::lock_guard<std::mutex> lock(trayHelperMutex_);
+                if (hTrayHelperProcess_ == INVALID_HANDLE_VALUE) {
+                    needsSpawn = true;
+                } else {
+                    DWORD exitCode = 0;
+                    if (!GetExitCodeProcess(hTrayHelperProcess_, &exitCode) ||
+                        exitCode != STILL_ACTIVE) {
+                        CloseHandle(hTrayHelperProcess_);
+                        hTrayHelperProcess_ = INVALID_HANDLE_VALUE;
+                        needsSpawn = true;
+                    }
+                }
+            }
+            if (needsSpawn) {
+                std::thread([this]() {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    spawnTrayHelper();
+                    logMessage("[Tray] Helper spawned after session unlock.");
+                }).detach();
+            }
+        }
+        // Logoff / disconnect / terminate: kill the helper.
+        else if (state == "6" || state == "2" || state == "4" || state == "11") {
             std::lock_guard<std::mutex> lock(trayHelperMutex_);
             killTrayHelper();
             logMessage("[Tray] Helper terminated after session logoff/disconnect.");
@@ -1354,6 +1378,9 @@ void WindowsPlatform::stopService(const std::string& stopReason)
     logMessage("Service stop requested: " + stopReason);
     reportStatus(SERVICE_STOP_PENDING, NO_ERROR, 15000);
     stopSessionMonitor();
+#ifdef ENABLE_TRAY_APP
+    stopTrayApp();
+#endif
     if (on_stop_callback)
         on_stop_callback(stopReason);
     SetEvent(g_stop_event.get());
