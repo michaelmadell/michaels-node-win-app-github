@@ -128,6 +128,19 @@ static void captureFrame(rfbScreenInfoPtr screen) {
     ReleaseDC(NULL, hdcScreen);
 }
 
+// ── Performance Encodings─────────────────────────────────────────────────────
+
+static enum rfbNewClientAction handleNewClient(rfbClientPtr client) {
+#if defined(LIBVNCSERVER_HAVE_LIBZ) || defined(LIBVNCSERVER_HAVE_LIBPNG)
+    client->tightQualityLevel = 6;
+#endif
+#ifdef LIBVNCSERVER_HAVE_LIBJPEG
+    client->tightCompressLevel = 1;
+#endif
+    return RFB_CLIENT_ACCEPT;
+}
+
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 // Static storage required: rfbCheckPasswordByList holds a pointer to this

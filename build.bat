@@ -34,7 +34,9 @@ echo [2/5] Ensuring build directory exists...
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 
 echo [3/5] Configuring CMake...
-cmake -S . -B "%BUILD_DIR%" -A x64
+set "VCPKG_TOOLCHAIN="
+if exist "C:\vcpkg\scripts\buildsystems\vcpkg.cmake" set "VCPKG_TOOLCHAIN=-DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static"
+cmake -S . -B "%BUILD_DIR%" -A x64 %VCPKG_TOOLCHAIN%
 if errorlevel 1 (
     echo ERROR: CMake configure failed
     exit /b 1

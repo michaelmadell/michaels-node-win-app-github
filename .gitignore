@@ -111,3 +111,4 @@ debian/.debhelper
 debian/corestationhxagent
 PLAN.md
 linux-build-todo.md
+vcpkg_installed/
