@@ -627,13 +627,15 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         if (_stricmp(argv[i], "--vnc-only") == 0) {
             DWORD parentPid = 0;
+            std::string vncPassword;
             for (int j = i + 1; j < argc - 1; j++) {
                 if (_stricmp(argv[j], "--parent-pid") == 0) {
                     parentPid = static_cast<DWORD>(atoi(argv[j + 1]));
-                    break;
+                } else if (_stricmp(argv[j], "--vnc-password") == 0) {
+                    vncPassword = argv[j + 1];
                 }
             }
-            return runVncHelper(parentPid);
+            return runVncHelper(parentPid, vncPassword);
         }
     }
 #endif
@@ -708,7 +710,8 @@ int main(int argc, char* argv[]) {
             hbThread = std::thread(heartbeatThread);
 #ifdef ENABLE_VNC
             vncSession = std::make_unique<VncSession>(
-                [](const std::string& msg) { platform->logMessage(msg); });
+                [](const std::string& msg) { platform->logMessage(msg); },
+                [](const std::string& pwd) { sendLineToBmc("vncPassword, " + pwd); });
             vncSession->Start();
 #endif
         },

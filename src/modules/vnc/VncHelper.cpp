@@ -128,9 +128,16 @@ static void captureFrame(rfbScreenInfoPtr screen) {
     ReleaseDC(NULL, hdcScreen);
 }
 
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+// Static storage required: rfbCheckPasswordByList holds a pointer to this
+// for the lifetime of the rfbScreen.
+static char s_vncPassword[16] = {};
+static char* s_passwdList[2]  = { s_vncPassword, nullptr };
+
 // ── Entry point ──────────────────────────────────────────────────────────────
 
-int runVncHelper(DWORD parentPid) {
+int runVncHelper(DWORD parentPid, const std::string& password) {
     int w = GetSystemMetrics(SM_CXSCREEN);
     int h = GetSystemMetrics(SM_CYSCREEN);
 
@@ -146,6 +153,15 @@ int runVncHelper(DWORD parentPid) {
     screen->alwaysShared     = TRUE;
     screen->port             = 5900;
     screen->ipv6port         = 5900;
+
+    // Password auth — use the password passed by the service. VNC DES auth
+    // truncates to 8 chars so we cap the copy at 8 bytes.
+    if (!password.empty()) {
+        strncpy_s(s_vncPassword, password.c_str(), 8);
+        s_vncPassword[8]       = '\0';
+        screen->authPasswdData = s_passwdList;
+        screen->passwordCheck  = rfbCheckPasswordByList;
+    }
 
     // Pixel format: 32bpp BGRA (matches GDI DIB output)
     screen->serverFormat.bitsPerPixel = 32;

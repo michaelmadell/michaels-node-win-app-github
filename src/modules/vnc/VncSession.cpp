@@ -4,6 +4,7 @@
 #include "VncSession.h"
 #include <userenv.h>
 #include <wtsapi32.h>
+#include <wincrypt.h>
 #include <netfw.h>
 #include <oleauto.h>
 #include <chrono>
@@ -77,8 +78,35 @@ static void EnsureFirewallRule(const std::function<void(const std::string&)>& lo
         log("[VNC] Firewall: Add rule failed hr=" + std::to_string(hr));
 }
 
-VncSession::VncSession(std::function<void(const std::string&)> logger)
-    : log_(std::move(logger)) {
+VncSession::VncSession(
+    std::function<void(const std::string&)> logger,
+    std::function<void(const std::string&)> onPassword)
+    : log_(std::move(logger)), onPassword_(std::move(onPassword)) {
+}
+
+std::string VncSession::GeneratePassword() {
+    // 8 chars — VNC DES auth truncates beyond 8 bytes.
+    // Avoid ambiguous chars (0/O, 1/I/l) for readability on the BMC side.
+    static const char kChars[] =
+        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    constexpr int kLen = 8;
+
+    BYTE randBytes[kLen] = {};
+    HCRYPTPROV hProv = 0;
+    if (CryptAcquireContext(&hProv, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+        CryptGenRandom(hProv, kLen, randBytes);
+        CryptReleaseContext(hProv, 0);
+    } else {
+        // Fallback — not cryptographically strong but better than nothing
+        srand(static_cast<unsigned>(GetTickCount64() ^ GetCurrentProcessId()));
+        for (int i = 0; i < kLen; i++) randBytes[i] = static_cast<BYTE>(rand());
+    }
+
+    std::string pwd;
+    pwd.reserve(kLen);
+    for (int i = 0; i < kLen; i++)
+        pwd += kChars[randBytes[i] % (sizeof(kChars) - 1)];
+    return pwd;
 }
 
 VncSession::~VncSession() {
@@ -146,10 +174,17 @@ void VncSession::SpawnHelper() {
     LPVOID pEnv = NULL;
     CreateEnvironmentBlock(&pEnv, hPrimary, FALSE);
 
+    // Generate a fresh password for this session and notify the caller so it
+    // can forward it to the BMC via serial before the helper starts listening.
+    std::string password = GeneratePassword();
+    if (onPassword_) onPassword_(password);
+
     wchar_t exePath[MAX_PATH] = {};
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
-    std::wstring cmdLine = L"\"" + std::wstring(exePath) + L"\" --vnc-only --parent-pid " +
-                           std::to_wstring(GetCurrentProcessId());
+    std::wstring wPassword(password.begin(), password.end());
+    std::wstring cmdLine = L"\"" + std::wstring(exePath) +
+                           L"\" --vnc-only --parent-pid " + std::to_wstring(GetCurrentProcessId()) +
+                           L" --vnc-password " + wPassword;
 
     STARTUPINFOW si = {};
     si.cb = sizeof(si);

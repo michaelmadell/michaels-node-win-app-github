@@ -15,27 +15,32 @@
 // with --vnc-only into the user session and monitors it.
 class VncSession {
 public:
-    explicit VncSession(std::function<void(const std::string&)> logger);
+    // logger    — receives diagnostic log messages.
+    // onPassword — called with each newly generated VNC password so the
+    //              caller can forward it to the BMC via serial.
+    explicit VncSession(
+        std::function<void(const std::string&)> logger,
+        std::function<void(const std::string&)> onPassword = nullptr);
+
     ~VncSession();
 
     void Start();
     void Stop();
 
-    // Call when a session logon/unlock occurs so the helper can be respawned.
     void OnSessionLogon();
-
-    // Call when a session logoff/disconnect occurs.
     void OnSessionLogoff();
 
     VncSession(const VncSession&) = delete;
     VncSession& operator=(const VncSession&) = delete;
 
 private:
+    std::string GeneratePassword();
     void SpawnHelper();
     void KillHelper();
     void WatchThread();
 
     std::function<void(const std::string&)> log_;
+    std::function<void(const std::string&)> onPassword_;
     HANDLE hHelper_  = INVALID_HANDLE_VALUE;
     std::thread watchThread_;
     std::atomic<bool> stop_{ false };
