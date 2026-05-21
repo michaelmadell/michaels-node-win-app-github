@@ -156,23 +156,36 @@ void VncSession::SpawnHelper() {
         return;
     }
 
-    HANDLE hToken = NULL;
-    if (!WTSQueryUserToken(sessionId, &hToken)) {
-        log_("[VNC] WTSQueryUserToken failed: " + std::to_string(GetLastError()));
-        return;
-    }
+    // Duplicate the SYSTEM token (current process) and stamp the user's
+    // session ID onto it. This lets the helper run as SYSTEM inside the
+    // interactive session so it can open any desktop — including the Secure
+    // Desktop used by UAC — without registry changes.
+    HANDLE hSelf = NULL;
+    OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &hSelf);
 
     HANDLE hPrimary = NULL;
-    if (!DuplicateTokenEx(hToken, MAXIMUM_ALLOWED, NULL,
+    if (!DuplicateTokenEx(hSelf, MAXIMUM_ALLOWED, NULL,
                           SecurityImpersonation, TokenPrimary, &hPrimary)) {
         log_("[VNC] DuplicateTokenEx failed: " + std::to_string(GetLastError()));
-        CloseHandle(hToken);
+        CloseHandle(hSelf);
         return;
     }
-    CloseHandle(hToken);
+    CloseHandle(hSelf);
 
+    // Move the token into the user's interactive session
+    if (!SetTokenInformation(hPrimary, TokenSessionId, &sessionId, sizeof(DWORD))) {
+        log_("[VNC] SetTokenInformation(SessionId) failed: " + std::to_string(GetLastError()));
+        CloseHandle(hPrimary);
+        return;
+    }
+
+    // Build environment from the user token (not SYSTEM's) so the helper
+    // inherits proper user-profile paths.
+    HANDLE hUserToken = NULL;
+    WTSQueryUserToken(sessionId, &hUserToken);
     LPVOID pEnv = NULL;
-    CreateEnvironmentBlock(&pEnv, hPrimary, FALSE);
+    CreateEnvironmentBlock(&pEnv, hUserToken, FALSE);
+    if (hUserToken) CloseHandle(hUserToken);
 
     // Generate a fresh password for this session and notify the caller so it
     // can forward it to the BMC via serial before the helper starts listening.
