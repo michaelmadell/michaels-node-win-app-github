@@ -4,6 +4,40 @@
 CoreStation HX Agent Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+20.26.5.1_rc5
+-------------
+- Added functional Tray application - Reports hostname, OS version, and LAN Addresses, not APIPA Addresses
+- Fixed missing handlers in old Tray app code
+- Set tray app launch to use the CreateProcessAsUser call so that the service can launch the tray on users session rather than system session //TODO: Add this to the c2a Handler
+- Set tray app icon to main icon for app
+
+
+20.26.5.1_rc4
+-------------
+Focussed on bringing debian build up-to-date
+- Updated changelog
+- added missing handler to linux build
+- Updated CMakeLists
+- Added partial DHCP/Static check
+- Fix debian build so it works again
+- Switch Linux build Serial from ttyUSB0 to ttyS2
+
+
+20.26.5.1_rc3
+-------------
+- Updated HX3000 check to use CPU Name, rather than NIC Presence, as not all HX3000s will have 4x NICs or E610s may be switched for something else
+
+
+20.26.5.1_rc2
+-------------
+- Fixed wrong HWID for E610
+- Made MAC Filtering use 3x pairs rather than 2 to make more vendor specific
+
+
+20.26.5.1_rc1
+-------------
+- First implemenetation of HX3000 Support - Checks For presence of 2 E610s and 2 I226s, if statisfied, uses COM1
+- Added AAEON MAC to MAC Filter
 
 
 20.26.3.1_GA
