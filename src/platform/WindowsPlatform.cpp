@@ -819,12 +819,33 @@ void WindowsPlatform::showMessageDialog(const std::string& title, const std::str
     std::wstring wTitle(title.begin(), title.end());
     std::wstring wMessage(message.begin(), message.end());
 
-    MessageBoxW(
-        NULL,
-        wMessage.c_str(),
-        wTitle.c_str(),
-        MB_OK | MB_ICONINFORMATION
-    );
+    DWORD mySession = 0;
+    ProcessIdToSessionId(GetCurrentProcessId(), &mySession);
+
+    if (mySession == 0) {
+        // Running as a Session 0 service — route the dialog to the active
+        // user session via WTSSendMessage so it appears on their desktop.
+        DWORD sessionId = WTSGetActiveConsoleSessionId();
+        if (sessionId != 0xFFFFFFFF) {
+            DWORD response = 0;
+            WTSSendMessageW(
+                WTS_CURRENT_SERVER_HANDLE,
+                sessionId,
+                const_cast<LPWSTR>(wTitle.c_str()),
+                static_cast<DWORD>(wTitle.size() * sizeof(wchar_t)),
+                const_cast<LPWSTR>(wMessage.c_str()),
+                static_cast<DWORD>(wMessage.size() * sizeof(wchar_t)),
+                MB_OK | MB_ICONINFORMATION,
+                0,
+                &response,
+                FALSE   // non-blocking — don't hold up the serial thread
+            );
+            return;
+        }
+    }
+
+    // Interactive / user-session fallback
+    MessageBoxW(NULL, wMessage.c_str(), wTitle.c_str(), MB_OK | MB_ICONINFORMATION);
 }
 
 void WindowsPlatform::logMessage(const std::string &message)
