@@ -12,6 +12,7 @@ option(BUILD_METRICS "Build with metric support" OFF)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
 option(BUILD_TRAY_APP "Build with system tray application (Windows only)" ON)
 option(BUILD_REGEDIT "Build with registry editing components (Windows only)" OFF)
+option(BUILD_VNC "Build with embedded VNC helper (Windows only)" ON)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
@@ -170,10 +171,55 @@ if(WIN32)
     endif()
 
     if(BUILD_REGEDIT)
-            list(APPEND MODULE_SOURCES
+        list(APPEND MODULE_SOURCES
             src/modules/regedits/Regedit.cpp
         )
     endif()
+
+    if(BUILD_VNC)
+        include(FetchContent)
+
+        # Minimal static LibVNCServer — no encryption, compression, or image codecs.
+        # These must be set before FetchContent_MakeAvailable so they override the
+        # library's own option() calls.
+        set(WITH_OPENSSL OFF CACHE BOOL "" FORCE)
+        set(WITH_GCRYPT  OFF CACHE BOOL "" FORCE)
+        set(WITH_GNUTLS  OFF CACHE BOOL "" FORCE)
+        set(WITH_PNG     OFF CACHE BOOL "" FORCE)
+        set(WITH_JPEG    OFF CACHE BOOL "" FORCE)
+        set(WITH_ZLIB    OFF CACHE BOOL "" FORCE)
+        set(BUILD_SHARED_LIBS           OFF CACHE BOOL "" FORCE)
+        set(LIBVNCSERVER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+        set(LIBVNCSERVER_INSTALL        OFF CACHE BOOL "" FORCE)
+
+        # Force LibVNCServer to use the static CRT (/MT) so it matches our
+        # project. Without this, vncserver.lib is built with /MD and the
+        # linker fails with unresolved __imp_* CRT symbols.
+        if(MSVC)
+            set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+                CACHE INTERNAL "" FORCE)
+        endif()
+
+        FetchContent_Declare(
+            libvncserver
+            URL https://github.com/LibVNC/libvncserver/archive/refs/tags/LibVNCServer-0.9.14.zip
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+        # LibVNCServer 0.9.14 declares cmake_minimum_required < 3.5 which
+        # CMake 4.x removed. This overrides the version floor for that subdirectory.
+        set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+        FetchContent_MakeAvailable(libvncserver)
+
+        list(APPEND MODULE_SOURCES
+            src/modules/vnc/VncHelper.cpp
+            src/modules/vnc/VncSession.cpp
+        )
+        list(APPEND HEADER_FILES
+            src/modules/vnc/VncHelper.h
+            src/modules/vnc/VncSession.h
+        )
+    endif()
+
 elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES
         src/platform/LinuxPlatform.cpp
@@ -250,6 +296,15 @@ endif()
 
 if(BUILD_REGEDIT AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_REGEDIT)
+endif()
+
+if(BUILD_VNC AND WIN32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_VNC)
+    target_link_libraries(${PROJECT_NAME} PRIVATE vncserver)
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        ${libvncserver_SOURCE_DIR}
+        ${libvncserver_BINARY_DIR}
+    )
 endif()
 
 # Compiler Flags

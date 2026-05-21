@@ -28,6 +28,10 @@
 #ifdef ENABLE_TRAY_APP
 #include "platform/WindowsPlatform.h"
 #endif
+#ifdef ENABLE_VNC
+#include "modules/vnc/VncHelper.h"
+#include "modules/vnc/VncSession.h"
+#endif
 #include "version.h"
 
 #include <iostream>
@@ -46,6 +50,9 @@ std::unique_ptr<MetricsCollector> metricsCollector;
 #endif
 #ifdef ENABLE_REGEDIT
 std::unique_ptr<Regedit> regedit;
+#endif
+#ifdef ENABLE_VNC
+std::unique_ptr<VncSession> vncSession;
 #endif
 
 SystemState currentState;
@@ -599,9 +606,7 @@ void serialThread() {
 
 int main(int argc, char* argv[]) {
 #if defined(_WIN32) && defined(ENABLE_TRAY_APP)
-    // Tray-helper mode: the service (Session 0) spawns this exe into the user
-    // session with --tray-only so the tray icon appears on the user's desktop.
-    // Must be checked before any service/AMT logic runs.
+    // Tray-helper mode: spawned by the service into the user session.
     for (int i = 1; i < argc; i++) {
         if (_stricmp(argv[i], "--tray-only") == 0) {
             DWORD parentPid = 0;
@@ -613,6 +618,22 @@ int main(int argc, char* argv[]) {
             }
             platform = createPlatform();
             return static_cast<WindowsPlatform*>(platform.get())->runAsTrayHelper(parentPid);
+        }
+    }
+#endif
+
+#if defined(_WIN32) && defined(ENABLE_VNC)
+    // VNC-helper mode: spawned by the service into the user session.
+    for (int i = 1; i < argc; i++) {
+        if (_stricmp(argv[i], "--vnc-only") == 0) {
+            DWORD parentPid = 0;
+            for (int j = i + 1; j < argc - 1; j++) {
+                if (_stricmp(argv[j], "--parent-pid") == 0) {
+                    parentPid = static_cast<DWORD>(atoi(argv[j + 1]));
+                    break;
+                }
+            }
+            return runVncHelper(parentPid);
         }
     }
 #endif
@@ -682,16 +703,26 @@ int main(int argc, char* argv[]) {
     platform->run(argc, argv, 
         // on_start callback
         [&]() {
-            // If we see this message, we know the service/daemon started correctly
             std::cout << "[DEBUG] on_start callback EXECUTED. Launching serialThread." << std::endl;
             workerThread = std::thread(serialThread);
             hbThread = std::thread(heartbeatThread);
+#ifdef ENABLE_VNC
+            vncSession = std::make_unique<VncSession>(
+                [](const std::string& msg) { platform->logMessage(msg); });
+            vncSession->Start();
+#endif
         },
         // on_stop callback
         [&](const std::string& stopReason) {
             std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread. Reason: " << stopReason << std::endl;
 #ifdef _WIN32
 			OutputDebugStringW(L"on_stop callback EXECUTED. Stopping serial Thread.\n");
+#endif
+#ifdef ENABLE_VNC
+            if (vncSession) {
+                vncSession->Stop();
+                vncSession.reset();
+            }
 #endif
             notifyStopRequested(stopReason);
             g_terminate = true;
@@ -716,28 +747,42 @@ int main(int argc, char* argv[]) {
             }
         },
         // sessionState callback
-        [](const std::string& sessionState) {
-            std::lock_guard<std::mutex> lock(stateMutex);
-            if (currentState.sessionState != sessionState) {
-                currentState.sessionState = sessionState;
-                sendLineToBmc("sessionState, " + sessionState);
+        [&](const std::string& sessionState) {
+            {
+                std::lock_guard<std::mutex> lock(stateMutex);
+                if (currentState.sessionState != sessionState) {
+                    currentState.sessionState = sessionState;
+                    sendLineToBmc("sessionState, " + sessionState);
 
-                // When user logs off, set username to "none"
-                if (sessionState == "6") { // WTS_SESSION_LOGOFF
-                    if (currentState.username != "none") {
-                        currentState.username = "none";
-                        sendLineToBmc("username, none");
+                    if (sessionState == "6") { // WTS_SESSION_LOGOFF
+                        if (currentState.username != "none") {
+                            currentState.username = "none";
+                            sendLineToBmc("username, none");
+                        }
                     }
-                }
-                // When user logs on, update username
-                else if (sessionState == "5") { // WTS_SESSION_LOGON
-                    std::string newUsername = platform->getLoggedInUser();
-                    if (currentState.username != newUsername) {
-                        currentState.username = newUsername;
-                        sendLineToBmc("username, " + currentState.username);
+                    else if (sessionState == "5") { // WTS_SESSION_LOGON
+                        std::string newUsername = platform->getLoggedInUser();
+                        if (currentState.username != newUsername) {
+                            currentState.username = newUsername;
+                            sendLineToBmc("username, " + currentState.username);
+                        }
                     }
                 }
             }
+#ifdef ENABLE_VNC
+            if (vncSession) {
+                // Logon / connect / unlock
+                if (sessionState == "5" || sessionState == "1" ||
+                    sessionState == "3" || sessionState == "8") {
+                    vncSession->OnSessionLogon();
+                }
+                // Logoff / disconnect / terminate
+                else if (sessionState == "6" || sessionState == "2" ||
+                         sessionState == "4" || sessionState == "11") {
+                    vncSession->OnSessionLogoff();
+                }
+            }
+#endif
         }
     );
 
