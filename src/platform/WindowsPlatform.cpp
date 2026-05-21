@@ -309,7 +309,40 @@ bool WindowsPlatform::runningUnderServiceControlManager()
 }
 
 void WindowsPlatform::startSessionMonitor() {
-    session_monitor_ = std::make_unique<SessionMonitor>(this, session_callback);
+    auto wrappedCallback = [this](const std::string& state) {
+        // Forward to the application-level session callback first
+        if (session_callback) session_callback(state);
+
+#ifdef ENABLE_TRAY_APP
+        DWORD mySession = 0;
+        ProcessIdToSessionId(GetCurrentProcessId(), &mySession);
+        if (mySession != 0) return; // Only relevant when running as Session 0 service
+
+        // Logon / console-connect / RDP-connect: respawn the tray helper.
+        // Run on a detached thread so we don't block the session monitor's
+        // message loop, and delay briefly to let the user desktop settle.
+        if (state == "5" || state == "1" || state == "3") {
+            std::thread([this]() {
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                {
+                    std::lock_guard<std::mutex> lock(trayHelperMutex_);
+                    killTrayHelper();
+                }
+                spawnTrayHelper();
+                logMessage("[Tray] Helper respawned after session logon.");
+            }).detach();
+        }
+        // Logoff / disconnect: kill the helper — it will die on its own when
+        // the session ends, but terminating early avoids lingering processes.
+        else if (state == "6" || state == "2" || state == "4") {
+            std::lock_guard<std::mutex> lock(trayHelperMutex_);
+            killTrayHelper();
+            logMessage("[Tray] Helper terminated after session logoff/disconnect.");
+        }
+#endif
+    };
+
+    session_monitor_ = std::make_unique<SessionMonitor>(this, wrappedCallback);
     session_monitor_->Start();
 }
 
@@ -357,6 +390,16 @@ void WindowsPlatform::startTrayApp()
 #endif
 }
 
+void WindowsPlatform::killTrayHelper()
+{
+    // Caller must hold trayHelperMutex_
+    if (hTrayHelperProcess_ != INVALID_HANDLE_VALUE) {
+        TerminateProcess(hTrayHelperProcess_, 0);
+        CloseHandle(hTrayHelperProcess_);
+        hTrayHelperProcess_ = INVALID_HANDLE_VALUE;
+    }
+}
+
 void WindowsPlatform::stopTrayApp()
 {
 #ifdef ENABLE_TRAY_APP
@@ -365,13 +408,11 @@ void WindowsPlatform::stopTrayApp()
         tray_app_.reset();
         logMessage("Tray App Stopped.");
     }
-    if (hTrayHelperProcess_ != INVALID_HANDLE_VALUE) {
-        TerminateProcess(hTrayHelperProcess_, 0);
-        WaitForSingleObject(hTrayHelperProcess_, 3000);
-        CloseHandle(hTrayHelperProcess_);
-        hTrayHelperProcess_ = INVALID_HANDLE_VALUE;
-        logMessage("[Tray] Helper process terminated.");
+    {
+        std::lock_guard<std::mutex> lock(trayHelperMutex_);
+        killTrayHelper();
     }
+    logMessage("[Tray] Helper process terminated.");
 #endif
 }
 
@@ -427,10 +468,13 @@ void WindowsPlatform::spawnTrayHelper()
     }
 
     CloseHandle(pi.hThread);
-    if (hTrayHelperProcess_ != INVALID_HANDLE_VALUE) {
-        CloseHandle(hTrayHelperProcess_);
+    {
+        std::lock_guard<std::mutex> lock(trayHelperMutex_);
+        if (hTrayHelperProcess_ != INVALID_HANDLE_VALUE) {
+            CloseHandle(hTrayHelperProcess_);
+        }
+        hTrayHelperProcess_ = pi.hProcess;
     }
-    hTrayHelperProcess_ = pi.hProcess;
     logMessage("[Tray] Helper spawned in session " + std::to_string(sessionId) +
                ", PID=" + std::to_string(pi.dwProcessId));
 }

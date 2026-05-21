@@ -164,13 +164,19 @@ private:
     // running as a Session 0 service where direct tray creation is invisible).
     void spawnTrayHelper();
 
+    // Terminate and release the tray helper process handle. Must be called
+    // with trayHelperMutex_ held.
+    void killTrayHelper();
+
     // Mode detection
     bool hasSwitch(int argc, char* argv[], const char* sw);
     bool hasSwitchCmd(const wchar_t* sw);
     bool runningUnderServiceControlManager();
 
-    // Handle to the tray helper child process (valid when service is in Session 0)
+    // Handle to the tray helper child process (valid when service is in Session 0).
+    // Always access under trayHelperMutex_.
     HANDLE hTrayHelperProcess_ = INVALID_HANDLE_VALUE;
+    std::mutex trayHelperMutex_;
 };
 
 #endif // _WIN32
