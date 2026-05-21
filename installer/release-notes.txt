@@ -4,6 +4,16 @@
 CoreStation HX Agent Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+20.26.5.1_ADHOC_VNC_rc2
+-----------------------
+- Made service add firewall rule for vnc
+
+
+20.26.5.1_ADHOC_VNC
+-------------------
+- Added libvnc for kvm - not password locked currently
+
+
 20.26.5.1_rc8
 -------------
 - fix missing tray app after reboot

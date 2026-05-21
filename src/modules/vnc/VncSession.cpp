@@ -4,10 +4,78 @@
 #include "VncSession.h"
 #include <userenv.h>
 #include <wtsapi32.h>
+#include <netfw.h>
+#include <oleauto.h>
 #include <chrono>
 
 #pragma comment(lib, "userenv.lib")
 #pragma comment(lib, "wtsapi32.lib")
+#pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "oleaut32.lib")
+
+static void EnsureFirewallRule(const std::function<void(const std::string&)>& log) {
+    const wchar_t* kRuleName = L"CoreStation HX Agent - VNC";
+
+    INetFwPolicy2* pPolicy = nullptr;
+    HRESULT hr = CoCreateInstance(__uuidof(NetFwPolicy2), nullptr,
+                                  CLSCTX_INPROC_SERVER, __uuidof(INetFwPolicy2),
+                                  reinterpret_cast<void**>(&pPolicy));
+    if (FAILED(hr)) {
+        log("[VNC] Firewall: CoCreateInstance failed hr=" + std::to_string(hr));
+        return;
+    }
+
+    INetFwRules* pRules = nullptr;
+    hr = pPolicy->get_Rules(&pRules);
+    pPolicy->Release();
+    if (FAILED(hr) || !pRules) {
+        log("[VNC] Firewall: get_Rules failed hr=" + std::to_string(hr));
+        return;
+    }
+
+    // Check if the rule already exists — avoid duplicates on restart
+    BSTR bstrName = SysAllocString(kRuleName);
+    INetFwRule* pExisting = nullptr;
+    if (SUCCEEDED(pRules->Item(bstrName, &pExisting)) && pExisting) {
+        pExisting->Release();
+        SysFreeString(bstrName);
+        pRules->Release();
+        log("[VNC] Firewall rule already present.");
+        return;
+    }
+    SysFreeString(bstrName);
+
+    // Build the inbound TCP/5900 allow rule
+    INetFwRule* pRule = nullptr;
+    hr = CoCreateInstance(__uuidof(NetFwRule), nullptr,
+                          CLSCTX_INPROC_SERVER, __uuidof(INetFwRule),
+                          reinterpret_cast<void**>(&pRule));
+    if (FAILED(hr)) {
+        pRules->Release();
+        log("[VNC] Firewall: rule CoCreateInstance failed hr=" + std::to_string(hr));
+        return;
+    }
+
+    auto bs = [](const wchar_t* s) { return SysAllocString(s); };
+
+    pRule->put_Name(bs(kRuleName));
+    pRule->put_Description(bs(L"Allow VNC remote management (port 5900) for CoreStation HX Agent"));
+    pRule->put_Protocol(NET_FW_IP_PROTOCOL_TCP);
+    pRule->put_LocalPorts(bs(L"5900"));
+    pRule->put_Direction(NET_FW_RULE_DIR_IN);
+    pRule->put_Action(NET_FW_ACTION_ALLOW);
+    pRule->put_Enabled(VARIANT_TRUE);
+    pRule->put_Profiles(NET_FW_PROFILE2_ALL);
+
+    hr = pRules->Add(pRule);
+    pRule->Release();
+    pRules->Release();
+
+    if (SUCCEEDED(hr))
+        log("[VNC] Firewall rule added: TCP inbound port 5900 allowed.");
+    else
+        log("[VNC] Firewall: Add rule failed hr=" + std::to_string(hr));
+}
 
 VncSession::VncSession(std::function<void(const std::string&)> logger)
     : log_(std::move(logger)) {
@@ -19,6 +87,7 @@ VncSession::~VncSession() {
 
 void VncSession::Start() {
     stop_ = false;
+    EnsureFirewallRule(log_);
     SpawnHelper();
     watchThread_ = std::thread([this]() { WatchThread(); });
 }
