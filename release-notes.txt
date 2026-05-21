@@ -4,6 +4,11 @@
 CoreStation HX Agent Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+20.25.5.1_rc6
+-------------
+- Made tray app exit and launch depending on session state, so that user can sign out then sign in and see the tray app
+
+
 20.26.5.1_rc5
 -------------
 - Added functional Tray application - Reports hostname, OS version, and LAN Addresses, not APIPA Addresses
