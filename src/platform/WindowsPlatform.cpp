@@ -847,23 +847,54 @@ void WindowsPlatform::showMessageDialog(const std::string& title, const std::str
     ProcessIdToSessionId(GetCurrentProcessId(), &mySession);
 
     if (mySession == 0) {
-        // Running as a Session 0 service — route the dialog to the active
-        // user session via WTSSendMessage so it appears on their desktop.
+        // Spawn the exe as a user-session process that calls MessageBoxW directly.
+        // WTSSendMessage creates a system-owned dialog that remote tools like VNC
+        // cannot interact with; a user-session process creates a normal window.
         DWORD sessionId = WTSGetActiveConsoleSessionId();
         if (sessionId != 0xFFFFFFFF) {
-            DWORD response = 0;
-            WTSSendMessageW(
-                WTS_CURRENT_SERVER_HANDLE,
-                sessionId,
-                const_cast<LPWSTR>(wTitle.c_str()),
-                static_cast<DWORD>(wTitle.size() * sizeof(wchar_t)),
-                const_cast<LPWSTR>(wMessage.c_str()),
-                static_cast<DWORD>(wMessage.size() * sizeof(wchar_t)),
-                MB_OK | MB_ICONINFORMATION,
-                0,
-                &response,
-                FALSE   // non-blocking — don't hold up the serial thread
-            );
+            HANDLE hUserToken = NULL;
+            if (WTSQueryUserToken(sessionId, &hUserToken)) {
+                HANDLE hPrimary = NULL;
+                if (DuplicateTokenEx(hUserToken, MAXIMUM_ALLOWED, NULL,
+                                     SecurityImpersonation, TokenPrimary, &hPrimary)) {
+                    // Escape double-quotes in title/message for the command line
+                    auto quoteArg = [](std::wstring s) -> std::wstring {
+                        std::wstring r = L"\"";
+                        for (wchar_t c : s) {
+                            if (c == L'"') r += L"\\\"";
+                            else r += c;
+                        }
+                        return r + L"\"";
+                    };
+
+                    wchar_t exePath[MAX_PATH] = {};
+                    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+                    std::wstring cmdLine = L"\"" + std::wstring(exePath) +
+                                          L"\" --show-message " +
+                                          quoteArg(wTitle) + L" " +
+                                          quoteArg(wMessage);
+
+                    LPVOID pEnv = NULL;
+                    CreateEnvironmentBlock(&pEnv, hPrimary, FALSE);
+
+                    STARTUPINFOW si = {};
+                    si.cb = sizeof(si);
+                    si.lpDesktop = const_cast<LPWSTR>(L"winsta0\\default");
+                    PROCESS_INFORMATION pi = {};
+
+                    CreateProcessAsUserW(hPrimary, NULL,
+                                         const_cast<LPWSTR>(cmdLine.c_str()),
+                                         NULL, NULL, FALSE,
+                                         CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT,
+                                         pEnv, NULL, &si, &pi);
+
+                    if (pEnv) DestroyEnvironmentBlock(pEnv);
+                    if (pi.hThread)  CloseHandle(pi.hThread);
+                    if (pi.hProcess) CloseHandle(pi.hProcess);
+                    CloseHandle(hPrimary);
+                }
+                CloseHandle(hUserToken);
+            }
             return;
         }
     }

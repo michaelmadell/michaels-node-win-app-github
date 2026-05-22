@@ -439,7 +439,7 @@ void checkSystemState() {
 void processIncomingCommand(const std::string& command) {
     const std::string prefix = "c2a, ";
 
-    if (command.size() > prefix.size() && command.substr(0, prefix.size()) == prefix) {
+    if (command.size() >= prefix.size() && command.substr(0, prefix.size()) == prefix) {
         std::string message = command.substr(prefix.size());
         platform->logMessage("Received C2A Command: " + message);
         std::cout << "[RX] Received C2A Command: " << message << std::endl;
@@ -605,6 +605,19 @@ void serialThread() {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    // Message-dialog helper: spawned by the service into the user session so
+    // the dialog is a normal user-mode window that VNC can interact with.
+    for (int i = 1; i < argc - 2; i++) {
+        if (_stricmp(argv[i], "--show-message") == 0) {
+            std::wstring title(argv[i + 1], argv[i + 1] + strlen(argv[i + 1]));
+            std::wstring msg  (argv[i + 2], argv[i + 2] + strlen(argv[i + 2]));
+            MessageBoxW(NULL, msg.c_str(), title.c_str(), MB_OK | MB_ICONINFORMATION);
+            return 0;
+        }
+    }
+#endif
+
 #if defined(_WIN32) && defined(ENABLE_TRAY_APP)
     // Tray-helper mode: spawned by the service into the user session.
     for (int i = 1; i < argc; i++) {

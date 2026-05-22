@@ -14,6 +14,7 @@
 #include <atomic>
 #include <thread>
 #include <chrono>
+#include <vector>
 
 static std::atomic<bool> g_vncStop{ false };
 static rfbScreenInfoPtr g_screen = nullptr;
@@ -120,6 +121,153 @@ static void handlePtr(int buttonMask, int x, int y, rfbClientPtr /*client*/) {
     if (buttonMask & 0x10) { input.mi.dwFlags |= MOUSEEVENTF_WHEEL; input.mi.mouseData = (DWORD)-WHEEL_DELTA; SendInput(1, &input, sizeof(INPUT)); input.mi.dwFlags &= ~MOUSEEVENTF_WHEEL; input.mi.mouseData = 0; }
 
     SendInput(1, &input, sizeof(INPUT));
+}
+
+// ── Cursor shape ─────────────────────────────────────────────────────────────
+//
+// Captures the current Windows cursor and forwards it to connected VNC clients
+// via LibVNCServer's RichCursor encoding. Clients render the cursor locally so
+// it matches the real Windows cursor (arrow, I-beam, hand, resize, etc.).
+
+static HCURSOR s_lastHCursor = NULL;
+
+static void updateCursorShape(rfbScreenInfoPtr screen) {
+    CURSORINFO ci = { sizeof(ci) };
+    if (!GetCursorInfo(&ci) || !ci.hCursor) return;
+    if (ci.hCursor == s_lastHCursor) return; // unchanged
+    s_lastHCursor = ci.hCursor;
+
+    ICONINFO ii = {};
+    if (!GetIconInfo(ci.hCursor, &ii)) return;
+
+    BITMAP bm = {};
+    GetObject(ii.hbmMask, sizeof(bm), &bm);
+    int w = bm.bmWidth;
+    int h = ii.hbmColor ? bm.bmHeight : bm.bmHeight / 2;
+    if (w <= 0 || h <= 0) {
+        if (ii.hbmColor) DeleteObject(ii.hbmColor);
+        DeleteObject(ii.hbmMask);
+        return;
+    }
+
+    HDC hdc = GetDC(NULL);
+    std::vector<uint8_t> rgba(w * h * 4, 0);
+
+    if (ii.hbmColor) {
+        // Colour cursor — get 32bpp colour bitmap and 1bpp alpha mask
+        BITMAPINFO bmi = {};
+        bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth       = w;
+        bmi.bmiHeader.biHeight      = -h;
+        bmi.bmiHeader.biPlanes      = 1;
+        bmi.bmiHeader.biBitCount    = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+        std::vector<uint8_t> colBits(w * h * 4);
+        GetDIBits(hdc, ii.hbmColor, 0, h, colBits.data(), &bmi, DIB_RGB_COLORS);
+
+        BITMAPINFO mbmi = bmi;
+        mbmi.bmiHeader.biBitCount = 1;
+        int mStride = ((w + 31) / 32) * 4;
+        std::vector<uint8_t> maskBits(mStride * h);
+        GetDIBits(hdc, ii.hbmMask, 0, h, maskBits.data(), &mbmi, DIB_RGB_COLORS);
+
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int pi = (y * w + x) * 4;
+                rgba[pi + 0] = colBits[pi + 2]; // R (DIB = BGRA)
+                rgba[pi + 1] = colBits[pi + 1]; // G
+                rgba[pi + 2] = colBits[pi + 0]; // B
+                int mb = y * mStride + x / 8;
+                bool transp = (maskBits[mb] >> (7 - x % 8)) & 1;
+                rgba[pi + 3] = transp ? 0 : 255;
+            }
+        }
+    } else {
+        // Monochrome cursor — mask bitmap is double-height:
+        // top half = AND mask, bottom half = XOR mask
+        BITMAPINFO mbmi = {};
+        mbmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
+        mbmi.bmiHeader.biWidth       = w;
+        mbmi.bmiHeader.biHeight      = -(h * 2);
+        mbmi.bmiHeader.biPlanes      = 1;
+        mbmi.bmiHeader.biBitCount    = 1;
+        mbmi.bmiHeader.biCompression = BI_RGB;
+        int mStride = ((w + 31) / 32) * 4;
+        std::vector<uint8_t> maskBits(mStride * h * 2);
+        GetDIBits(hdc, ii.hbmMask, 0, h * 2, maskBits.data(), &mbmi, DIB_RGB_COLORS);
+
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int bit = 7 - (x % 8);
+                bool andBit = (maskBits[y * mStride + x / 8] >> bit) & 1;
+                bool xorBit = (maskBits[(y + h) * mStride + x / 8] >> bit) & 1;
+                int pi = (y * w + x) * 4;
+                // Windows cursor pixel modes:
+                //   AND=0, XOR=0 → black
+                //   AND=0, XOR=1 → white
+                //   AND=1, XOR=0 → transparent
+                //   AND=1, XOR=1 → screen inversion (XOR) — VNC has no equivalent,
+                //                   render as black so cursors like the I-beam appear
+                if (!andBit) {
+                    uint8_t c = xorBit ? 255 : 0;
+                    rgba[pi+0] = rgba[pi+1] = rgba[pi+2] = c;
+                    rgba[pi+3] = 255;
+                } else if (andBit && xorBit) {
+                    // Inverted region — Windows XOR-inverts the screen here so the
+                    // cursor is visible on any background. VNC has no equivalent, so
+                    // render white: gives the classic white I-beam body with the
+                    // AND=0/XOR=0 black pixels forming a visible dark outline.
+                    rgba[pi+0] = rgba[pi+1] = rgba[pi+2] = 255;
+                    rgba[pi+3] = 255;
+                }
+                // AND=1, XOR=0 → transparent (alpha stays 0)
+            }
+        }
+    }
+
+    ReleaseDC(NULL, hdc);
+    if (ii.hbmColor) DeleteObject(ii.hbmColor);
+    DeleteObject(ii.hbmMask);
+
+    // Build LibVNCServer cursor. Set both richSource (RGBA, for modern clients)
+    // and monochrome source+mask (fallback for older clients).
+    int monoStride = ((w + 7) / 8);
+    rfbCursorPtr cur = (rfbCursorPtr)calloc(1, sizeof(rfbCursor));
+    if (!cur) return;
+
+    cur->cleanup = TRUE; // rfbSetCursor will free the struct when replacing
+    cur->width   = (unsigned short)w;
+    cur->height  = (unsigned short)h;
+    cur->xhot    = (unsigned short)ii.xHotspot;
+    cur->yhot    = (unsigned short)ii.yHotspot;
+
+    // richSource — preferred path
+    cur->richSource = (unsigned char*)malloc(w * h * 4);
+    if (cur->richSource) {
+        memcpy(cur->richSource, rgba.data(), w * h * 4);
+        cur->cleanupRichSource = TRUE;
+    }
+
+    // Monochrome fallback: derive from RGBA alpha
+    cur->source = (unsigned char*)calloc(monoStride * h, 1);
+    cur->mask   = (unsigned char*)calloc(monoStride * h, 1);
+    if (cur->source && cur->mask) {
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                bool opaque = rgba[(y * w + x) * 4 + 3] > 127;
+                bool bright = rgba[(y * w + x) * 4 + 0] > 127;
+                if (opaque) {
+                    int byte = y * monoStride + x / 8, bit = 7 - x % 8;
+                    if (bright) cur->source[byte] |= (1 << bit); // XOR white
+                    cur->mask[byte] |= (1 << bit);                // opaque
+                }
+            }
+        }
+        cur->cleanupSource = TRUE;
+        cur->cleanupMask   = TRUE;
+    }
+
+    rfbSetCursor(screen, cur);
 }
 
 // ── Frame capture ────────────────────────────────────────────────────────────
@@ -305,6 +453,7 @@ int runVncHelper(DWORD parentPid, const std::string& password) {
     while (!g_vncStop.load()) {
         auto now = clock::now();
         if (now >= nextCapture) {
+            updateCursorShape(screen);
             captureFrame(screen);
             nextCapture = now + framePeriod;
         }
