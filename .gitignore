@@ -8,6 +8,8 @@ node_modules/
 dist/
 build/
 build-mingw/
+.claude/
+.vscode/
 .vs/
 
 # Compiled Java class files
