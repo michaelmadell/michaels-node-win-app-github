@@ -8,6 +8,4 @@
 #define VERSION_RC_NO 7
 #define VERSION_ADHOC_NO 7
 
-#define SERIAL_PORT "\\\\.\\COM3"
-
 #define DESCRIPTION		"CoreStation HX Agent"

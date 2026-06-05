@@ -30,6 +30,7 @@
 #include "platform/WindowsPlatform.h"
 #endif
 #include "version.h"
+#include "config.h"
 
 #include <iostream>
 #include <thread>
