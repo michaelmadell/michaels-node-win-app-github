@@ -1,8 +1,18 @@
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
 #include <winreg.h>
+#include <winerror.h>
+#endif
+
 #include <thread>
 #include <chrono>
 #include <string>
-#include <winerror.h>
 #include <iostream>
 
 #include "../../core/Platform.h"
@@ -38,6 +48,8 @@ static std::wstring GetAMTInstanceId() {
     }
     return L"";
     #endif
+
+    return L"";
 }
 
 // Read the current COM port assignment for the AMT serial device from
@@ -75,6 +87,8 @@ AMTPortInfo GetAMTComPort() {
     }
     return {L"", L""};
 #endif
+
+    return {L"", L""};
 }
 
 bool disableAMTComPort() {
@@ -94,6 +108,8 @@ bool disableAMTComPort() {
     }
     return true;
 #endif
+
+    return false;
 }
 
 bool enableAMTComPort() {
@@ -114,6 +130,7 @@ bool enableAMTComPort() {
     return true;
 #endif
 
+    return false;
 }
 
 // Directly implements the PS COM port assignment script:
@@ -235,4 +252,6 @@ bool reassignComPort() {
         + std::string(newInfo.comPort.begin(), newInfo.comPort.end()));
     return true;
 #endif
+
+    return false;
 }

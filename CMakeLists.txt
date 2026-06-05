@@ -139,6 +139,7 @@ set(CORE_SOURCES
 # Module Sources
 set(MODULE_SOURCES
     src/modules/serial/SerialManager.cpp
+    src/modules/amt/AMTPortManager.cpp
 )
 
 # Platform-specific sources
@@ -186,6 +187,7 @@ set(HEADER_FILES
     src/core/SystemState.h
     src/version.h
     src/modules/serial/SerialManager.h
+    src/modules/amt/AMTPortManager.h
 )
 
 if(BUILD_METRICS)
