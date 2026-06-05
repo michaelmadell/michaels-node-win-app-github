@@ -36,11 +36,7 @@ public:
     std::string getLoggedInUser() override;
     std::string getOsVersion() override;
     std::string getOsBuild() override;
-
-    bool openSerialPort(const std::string& portName, int baudrate) override;
-    void closeSerialPort() override;
-    bool writeSerial(const std::string& data) override;
-    bool readSerial(std::string& readData) override;
+    
     void logMessage(const std::string& message) override;
 
     int getCpuUsagePercent() override;

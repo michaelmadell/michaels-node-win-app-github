@@ -22,10 +22,6 @@ class Platform{
     virtual std::string getOsVersion() = 0;
     virtual std::string getOsBuild() = 0;
 
-    virtual bool openSerialPort(const std::string& portName, int baudrate) = 0;
-    virtual void closeSerialPort() = 0;
-    virtual bool writeSerial(const std::string& data) = 0;
-    virtual bool readSerial(std::string &readData) = 0;
     virtual void logMessage(const std::string& message) = 0;
 
     virtual int getCpuUsagePercent() = 0;
