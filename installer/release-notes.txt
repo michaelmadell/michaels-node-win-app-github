@@ -8,6 +8,7 @@ CoreStation HX Agent Release notes
 -------------
 - fix missing tray app after reboot
 - fix double tray app after service restart
+- Made service show as "CoreStation HX Agent" In task manager
 
 
 20.26.5.1_rc7

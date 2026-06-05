@@ -309,6 +309,7 @@ bool WindowsPlatform::runningUnderServiceControlManager()
 }
 
 void WindowsPlatform::startSessionMonitor() {
+#ifdef ENABLE_SESSION_MONITOR
     auto wrappedCallback = [this](const std::string& state) {
         // Forward to the application-level session callback first
         if (session_callback) session_callback(state);
@@ -368,20 +369,25 @@ void WindowsPlatform::startSessionMonitor() {
 
     session_monitor_ = std::make_unique<SessionMonitor>(this, wrappedCallback);
     session_monitor_->Start();
+#endif
 }
 
 void WindowsPlatform::stopSessionMonitor() {
+#ifdef ENABLE_SESSION_MONITOR
     if (session_monitor_) {
         session_monitor_->Stop();
         session_monitor_.reset();
     }
+#endif
 }
 
 
 std::string WindowsPlatform::getCurrentSessionState() {
+#ifdef ENABLE_SESSION_MONITOR
     if (session_monitor_) {
         return session_monitor_->GetCurrentSessionState();
     }
+#endif
     return "0";
 }
 

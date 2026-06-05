@@ -1,9 +1,9 @@
 #pragma once
 
 #ifdef _WIN32
-#include "core/Platform.h"
+#include "../core/Platform.h"
 #include "Windows_Addon.h"
-#include "modules/metrics/MetricCache.h"
+#include "../modules/metrics/MetricCache.h"
 #include <windows.h>
 #include <wtsapi32.h>
 #include <pdh.h>

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <functional>
+#include <WinSock2.h>
 
 class WindowsPlatform;
 
