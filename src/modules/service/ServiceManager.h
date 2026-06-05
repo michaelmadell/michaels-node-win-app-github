@@ -54,48 +54,18 @@ public:
     explicit ServiceManager(WindowsPlatform* platform);
     ~ServiceManager();
 
-    /**
-     * @brief Install the service
-     * @param config Service configuration
-     * @return true if successful, false otherwise
-     */
     bool Install(const ServiceConfig& config = ServiceConfig());
 
-    /**
-     * @brief Uninstall the service
-     * @return true if successful, false otherwise
-     */
     bool Uninstall();
 
-    /**
-     * @brief Start the installed service
-     * @return true if successful, false otherwise
-     */
     bool StartService();
 
-    /**
-     * @brief Stop the running service
-     * @return true if successful, false otherwise
-     */
     bool StopService();
 
-    /**
-     * @brief Query the service status
-     * @param status Output parameter for service status
-     * @return true if successful, false otherwise
-     */
     bool QueryStatus(ServiceStatus& status);
 
-    /**
-     * @brief Check if service is installed
-     * @return true if installed, false otherwise
-     */
     bool IsInstalled();
 
-    /**
-     * @brief Check if service is running
-     * @return true if running, false otherwise
-     */
     bool IsRunning();
 
     /**

@@ -27,37 +27,14 @@ public:
      */
     ~SerialManager();
 
-    /**
-     * @brief Open a serial port
-     * @param portName Name of the port (e.g., "COM3" on Windows, "/dev/ttyUSB0" on Linux)
-     * @param baudrate Baud rate for communication (default: 115200)
-     * @return true if opened successfully, false otherwise
-     */
     bool Open(const std::string& portName, int baudrate = 115200);
 
-    /**
-     * @brief Close the serial port
-     */
     void Close();
 
-    /**
-     * @brief Check if the serial port is currently open
-     * @return true if open, false otherwise
-     */
     bool IsOpen() const;
 
-    /**
-     * @brief Write data to the serial port
-     * @param data Data to write
-     * @return true if written successfully, false otherwise
-     */
     bool Write(const std::string& data);
 
-    /**
-     * @brief Read available data from the serial port
-     * @param data Reference to string to append read data to
-     * @return true if data was read, false otherwise
-     */
     bool Read(std::string& data);
 
     /**
