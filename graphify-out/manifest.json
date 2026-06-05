@@ -1,0 +1,172 @@
+{
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\.claude\\settings.local.json": {
+    "mtime": 1780670380.0762067,
+    "ast_hash": "10ff1606fb1555ec2242f710cf08fa88",
+    "semantic_hash": "10ff1606fb1555ec2242f710cf08fa88"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\build.sh": {
+    "mtime": 1780155712.869375,
+    "ast_hash": "26e0f21feb7bbe8c1cf58ec1ecee5585",
+    "semantic_hash": "26e0f21feb7bbe8c1cf58ec1ecee5585"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\debian\\postinst": {
+    "mtime": 1780155712.870374,
+    "ast_hash": "b8eec601f8b424135f18290d8187de62",
+    "semantic_hash": "b8eec601f8b424135f18290d8187de62"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\debian\\postrm": {
+    "mtime": 1780155712.8713756,
+    "ast_hash": "341e9df727fd0a333afa2c3ece43e607",
+    "semantic_hash": "341e9df727fd0a333afa2c3ece43e607"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\debian\\prerm": {
+    "mtime": 1780155712.8713756,
+    "ast_hash": "83ad868deb105f673a049f7b888444ac",
+    "semantic_hash": "83ad868deb105f673a049f7b888444ac"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\installer\\install.ps1": {
+    "mtime": 1780155712.8723755,
+    "ast_hash": "e7feac03af8017aaf1598fe64c28eaf8",
+    "semantic_hash": "e7feac03af8017aaf1598fe64c28eaf8"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\installer\\remove.ps1": {
+    "mtime": 1780155712.8723755,
+    "ast_hash": "aefb6d1bca5c4171a95b7f631c3222ad",
+    "semantic_hash": "aefb6d1bca5c4171a95b7f631c3222ad"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\core\\Platform.h": {
+    "mtime": 1780155712.874374,
+    "ast_hash": "f1cb39e01ad525e2fdf1f763e8533f68",
+    "semantic_hash": "f1cb39e01ad525e2fdf1f763e8533f68"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\core\\SystemState.h": {
+    "mtime": 1780155712.874374,
+    "ast_hash": "aaf8c45e78142ad731e942596cadc8c5",
+    "semantic_hash": "aaf8c45e78142ad731e942596cadc8c5"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\main.cpp": {
+    "mtime": 1780155712.8753767,
+    "ast_hash": "734c6f9f820a670e4afa775bea804e74",
+    "semantic_hash": "734c6f9f820a670e4afa775bea804e74"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\3kcheck\\3kcheck.cpp": {
+    "mtime": 1780155712.8753767,
+    "ast_hash": "f79bb303a28a1e916cb6f625cfdf3cc1",
+    "semantic_hash": "f79bb303a28a1e916cb6f625cfdf3cc1"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\3kcheck\\3kcheck.h": {
+    "mtime": 1780155712.8763764,
+    "ast_hash": "b2f31463431d417a71f26cd4801aac2b",
+    "semantic_hash": "b2f31463431d417a71f26cd4801aac2b"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\metrics\\MetricCache.h": {
+    "mtime": 1780169884.0204215,
+    "ast_hash": "8dcd29fe4c888144e09fdf6d096ac3f1",
+    "semantic_hash": "8dcd29fe4c888144e09fdf6d096ac3f1"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\metrics\\MetricsCollector.cpp": {
+    "mtime": 1780169672.9520533,
+    "ast_hash": "b229c80b458c2a0803b07e8ea2e7e7a4",
+    "semantic_hash": "b229c80b458c2a0803b07e8ea2e7e7a4"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\metrics\\MetricsCollector.h": {
+    "mtime": 1780169589.7108173,
+    "ast_hash": "94dad4c65b21ecdd1cc73ce6b44ed5a7",
+    "semantic_hash": "94dad4c65b21ecdd1cc73ce6b44ed5a7"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\regedits\\Regedit.cpp": {
+    "mtime": 1780155712.8778844,
+    "ast_hash": "5477b2b152301feba5161190d889ffd2",
+    "semantic_hash": "5477b2b152301feba5161190d889ffd2"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\regedits\\Regedit.h": {
+    "mtime": 1780169616.3750496,
+    "ast_hash": "30802ec1dd6c4d8cc8058a21e3eff851",
+    "semantic_hash": "30802ec1dd6c4d8cc8058a21e3eff851"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\serial\\SerialManager.cpp": {
+    "mtime": 1780155712.8788898,
+    "ast_hash": "a3ffb39d9c0e68223bafc4a28e12dff8",
+    "semantic_hash": "a3ffb39d9c0e68223bafc4a28e12dff8"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\serial\\SerialManager.h": {
+    "mtime": 1780155712.879889,
+    "ast_hash": "b05cf182f92aef49c24f72b15856ebcf",
+    "semantic_hash": "b05cf182f92aef49c24f72b15856ebcf"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\service\\ServiceManager.cpp": {
+    "mtime": 1780155712.879889,
+    "ast_hash": "60d17c37b70c787ec87d5b32e0c4a6e2",
+    "semantic_hash": "60d17c37b70c787ec87d5b32e0c4a6e2"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\service\\ServiceManager.h": {
+    "mtime": 1780155712.880888,
+    "ast_hash": "4150ff6ed4243d9f6458615b01147032",
+    "semantic_hash": "4150ff6ed4243d9f6458615b01147032"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\session\\SessionMonitor.cpp": {
+    "mtime": 1780155712.880888,
+    "ast_hash": "998b20e4e32b28530ee87f69c951ef06",
+    "semantic_hash": "998b20e4e32b28530ee87f69c951ef06"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\session\\SessionMonitor.h": {
+    "mtime": 1780155712.881888,
+    "ast_hash": "afd4747c6b0e5882de77390f98c1346b",
+    "semantic_hash": "afd4747c6b0e5882de77390f98c1346b"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\tray\\TrayApp.cpp": {
+    "mtime": 1780155712.881888,
+    "ast_hash": "8fc97ae45d9668470132d0cccb7eceef",
+    "semantic_hash": "8fc97ae45d9668470132d0cccb7eceef"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\modules\\tray\\TrayApp.h": {
+    "mtime": 1780155712.881888,
+    "ast_hash": "e324ba642e12e79e6783bae3e54a8539",
+    "semantic_hash": "e324ba642e12e79e6783bae3e54a8539"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\platform\\LinuxPlatform.cpp": {
+    "mtime": 1780155712.8828878,
+    "ast_hash": "a63df4de2847bcb0d01d75e4df9ad897",
+    "semantic_hash": "a63df4de2847bcb0d01d75e4df9ad897"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\platform\\WindowsPlatform.cpp": {
+    "mtime": 1780170048.6069643,
+    "ast_hash": "19b31d78579cf997f8039697d2aa3695",
+    "semantic_hash": "19b31d78579cf997f8039697d2aa3695"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\platform\\WindowsPlatform.h": {
+    "mtime": 1780169629.2071028,
+    "ast_hash": "f5c26e16df4465bb12bafe97708fb2c8",
+    "semantic_hash": "f5c26e16df4465bb12bafe97708fb2c8"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\platform\\Windows_Addon.h": {
+    "mtime": 1780155712.883888,
+    "ast_hash": "40236fb7e177c6d9130c3768f0150ae9",
+    "semantic_hash": "40236fb7e177c6d9130c3768f0150ae9"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\version.h": {
+    "mtime": 1780155712.8848896,
+    "ast_hash": "fd8383105853ad54e96c07afc0c10b41",
+    "semantic_hash": "fd8383105853ad54e96c07afc0c10b41"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\CMakeLists.txt": {
+    "mtime": 1780155712.8668668,
+    "ast_hash": "f6c87f9442ee57e7abe8edc00c6db9c5",
+    "semantic_hash": "f6c87f9442ee57e7abe8edc00c6db9c5"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\README.md": {
+    "mtime": 1780155712.867869,
+    "ast_hash": "aa49c9dc57707bc83fe0ce53b7259d33",
+    "semantic_hash": "aa49c9dc57707bc83fe0ce53b7259d33"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\installer\\release-notes.txt": {
+    "mtime": 1780155712.8733768,
+    "ast_hash": "d04bbc138e5e03a28f0aa0ef517e3345",
+    "semantic_hash": "d04bbc138e5e03a28f0aa0ef517e3345"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\release-notes.txt": {
+    "mtime": 1780155712.8733768,
+    "ast_hash": "d04bbc138e5e03a28f0aa0ef517e3345",
+    "semantic_hash": "d04bbc138e5e03a28f0aa0ef517e3345"
+  }
+}
