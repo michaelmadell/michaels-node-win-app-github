@@ -2,7 +2,7 @@
 
 #ifdef _WIN32
 #include "../core/Platform.h"
-#include "Windows_Addon.h"
+#include "WinHandles.h"
 #include "../modules/metrics/MetricCache.h"
 #include <windows.h>
 #include <wtsapi32.h>

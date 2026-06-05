@@ -27,7 +27,7 @@
 #include "modules/regedits/Regedit.h"
 #endif
 #ifdef ENABLE_TRAY_APP
-#include "platform/WindowsPlatform.h"
+#include "platform/WinHandles.h"
 #endif
 #include "version.h"
 #include "config.h"
@@ -40,6 +40,7 @@
 #include <atomic>
 #include <sstream>
 #include <string>
+#include "platform/WindowsPlatform.h"
 
 std::unique_ptr<Platform> platform;
 std::unique_ptr<SerialManager> serialManager;

@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cctype>
-#include "Windows_Addon.h"
+#include "WinHandles.h"
 #include "../version.h"
 #include "../modules/metrics/MetricCache.h"
 
