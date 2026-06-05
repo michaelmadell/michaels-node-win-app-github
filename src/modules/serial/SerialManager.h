@@ -5,7 +5,7 @@
 #include <atomic>
 #include <chrono>
 
-using MessageCallback = std::function<void(const std::string&)>;
+#include "../core/Platform.h"
 
 /**
  * @brief Manages serial port communication across platforms
@@ -20,7 +20,7 @@ public:
      * @brief Construct a new SerialManager object
      * @param onMessage Callback function to handle complete messages received
      */
-    explicit SerialManager(MessageCallback onMessage);
+    explicit SerialManager(StringCallback onMessage);
 
     /**
      * @brief Destroy the SerialManager and clean up resources
@@ -87,7 +87,7 @@ public:
     SerialManager& operator=(const SerialManager&) = delete;
 
 private:
-    MessageCallback onMessage_;
+    StringCallback onMessage_;
     std::string rxBuffer_;
     std::string portName_;
     int baudrate_ = 115200;
