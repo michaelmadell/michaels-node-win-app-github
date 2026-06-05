@@ -215,52 +215,6 @@ void processIncomingCommand(const std::string& command) {
     }
 }
 
-void processIncomingSerialData() {
-    static std::string rxBuffer;
-    std::string newData;
-    platform->readSerial(newData);
-    rxBuffer+=newData;
-    size_t pos=0;
-    while((pos=rxBuffer.find_first_of("\r\n"))!=std::string::npos) {
-        std::string line=rxBuffer.substr(0, pos);
-        if (!line.empty()) {
-            processIncomingCommand(line);
-        }
-        rxBuffer.erase(0,pos+1);
-        if (!rxBuffer.empty()&&(rxBuffer[0]=='\r'||rxBuffer[0]=='\n')) {
-            rxBuffer.erase(0, 1);
-        }
-    }
-}
-
-void readSerialPortWorker() {
-    platform->logMessage("Serial worker thread started.");
-    std::string readData;
-    // ... other variables
-
-    while (!g_terminate.load()) {
-        
-        // This call is now NON-BLOCKING (returns immediately if no data is ready)
-        if (platform->readSerial(readData)) {
-            // --- SUCCESSFUL READ / Data Processing ---
-            // ... your processing logic
-        } 
-        
-        else {
-            // --- FAILED READ / No Data Available ---
-            
-            // CRITICAL: Check exit flag immediately
-            if (g_terminate.load()) {
-                break; 
-            }
-            
-            // CRITICAL: Sleep briefly to prevent 100% CPU spin when no data is available
-            std::this_thread::sleep_for(std::chrono::milliseconds(5)); 
-        }
-    }
-    platform->logMessage("Serial worker thread finished cleanly.");
-}
-
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
