@@ -7,6 +7,7 @@
 node_modules/
 dist/
 build/
+build-mingw/
 .vs/
 
 # Compiled Java class files

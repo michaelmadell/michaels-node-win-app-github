@@ -11,7 +11,7 @@
 #include <cerrno>
 #endif
 
-SerialManager::SerialManager(MessageCallback onMessage)
+SerialManager::SerialManager(StringCallback onMessage)
     : onMessage_(onMessage) {
 }
 

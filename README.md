@@ -5,9 +5,12 @@
 michaels-node-win-app
 │   .gitignore                  - files and folders that GitHub should not commit
 │   app.rc                      - resource definitions for things like Icons
+│   architecture-graph.html     - interactive HTML graph of the codebase structure (open in a browser)
 │   app.res                     - compiled resource file
-│   build.bat                   - Windows Build script
-│   build.sh                    - Linux Build script
+│   build.bat                   - Windows Build script (CMake + MSVC)
+│   build-g++.bat               - Windows Build script (CMake + MSYS2 MinGW G++)
+│   build.sh                    - Linux Build script (cross-compiles Windows .exe via MinGW)
+│   build-linux.sh              - Linux Build script (CMake + native GCC/G++)
 │   CMakeLists.txt              - CMake configuration
 │   CoreStationHXAgent.service  - Service file for installation in Linux
 │   logo.ico                    - Application Icon
@@ -61,6 +64,14 @@ michaels-node-win-app
          ├─ WindowsPlatform.h           - Header for windows specific functions
          └─ WinHandles.h                - RAII wrappers for Windows handles
 ```
+
+## Architecture ##
+- Open `architecture-graph.html` in a browser for an interactive graph of the codebase: every module/class is a clickable node showing what it does in plain English, the file it lives in, and arrows showing what it depends on / what depends on it.
+- No build step or server needed — it's a single self-contained HTML file (inline CSS/SVG/JS, no external dependencies), so it works offline straight from the file system.
+- Quick summary of the shape of the app:
+    - `main.cpp` is the entry point — it picks service/console/tray-helper mode, builds the platform object, and owns the `SerialManager` (talks to the BMC over serial) and `MetricsCollector` (gathers CPU/RAM/GPU/network stats)
+    - `Platform` (in `core/`) is the interface that hides OS differences; `WindowsPlatform` and `LinuxPlatform` are its two implementations
+    - `WindowsPlatform` additionally owns the Windows-only helper modules: `TrayApp` (tray icon/tooltip), `SessionMonitor` (WTS session change notifications), `Regedit` (optional registry access), `MetricCache` (TTL cache for slow lookups) and `WinHandles` (RAII wrappers for Win32 handles/COM)
 
 ## Linux Build ##
 Developed on Ubuntu 24.04.5 LTS due to better compatibility with the Meteor Lake Processor
@@ -166,6 +177,12 @@ Only RC builds write serial output to `C:\ProgramData\ahk\node-win-app.log` via 
 - Run `build.bat` from windows **cmd shell**. This will populate the installer dir that can then be passed to a third party
 - As admin from **PowerShell shell** run `installer/install.ps1` to setup as windows service. This will automatically stop and remove any previous versions before instalation 
 - `remove.ps1` can be used to remove the service
+
+#### Alternative: build with MSYS2 MinGW G++
+- Run `build-g++.bat` instead of `build.bat` to build with the MSYS2 MinGW64/UCRT64 G++ toolchain via CMake (`-G "MinGW Makefiles"`) instead of MSVC
+- Auto-detects the MSYS2 toolchain (checks `PATH`, then `C:\msys64\<mingw64|ucrt64|clang64>\bin`) and CMake (checks `PATH`, then the copy bundled with Visual Studio)
+- Requires `mingw-w64-x86_64-gcc` (or the `ucrt64`/`clang64` equivalent) installed via `pacman` in MSYS2
+- Output goes to `build-mingw\bin\CoreStationHXAgent.exe` (kept separate from the MSVC `build\` dir)
 
 
 ### Build machine setup #
