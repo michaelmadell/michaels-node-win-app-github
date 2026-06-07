@@ -19,8 +19,6 @@
 #include <atomic>
 #include <csignal>
 #include <unistd.h>
-#include <termios.h> // For serial port configuration
-#include <fcntl.h>   // For file control options
 #include <sys/stat.h>
 #include <syslog.h>
 #include <dbus/dbus.h>
@@ -93,22 +91,22 @@ std::string getDhcpStatus(const std::string& interfaceName) {
         std::string addrCmd = "ip -4 -o addr show dev " + interfaceName;
         std::string addrOutput = executeCommand(addrCmd);
 
-        if (addrOuput.find(" dynamic ") != std::string::npos) {
-            return "DHCP";
+        if (addrOutput.find(" dynamic ") != std::string::npos) {
+            return "dhcp";
         }
 
         std::string routeCmd = "ip -4 -o route show dev " + interfaceName;
         std::string routeOutput = executeCommand(routeCmd);
 
         if (routeOutput.find("proto dhcp") != std::string::npos) {
-            return "DHCP";
+            return "dhcp";
         }
     } catch (const std::exception& e) {
         std::cerr << "Error checking interface: " << e.what() << std::endl;
-        return "STATIC";
+        return "static";
     }
 
-    return "STATIC";
+    return "static";
 }
 
 class LinuxPlatform;
@@ -177,17 +175,11 @@ public:
     std::string getLoggedInUser() override;
     std::string getOsVersion() override;
     std::string getOsBuild() override;
-    bool openSerialPort(const std::string& portName, int baudrate) override;
-    void closeSerialPort() override;
-    bool writeSerial(const std::string& data) override;
     void logMessage(const std::string& message) override;
 
     std::string getCurrentSessionState() override;
 
     // --- Performance Metrics (Need Stubs or Linux Implementation) ---
-    // Note: readSerial was missing a declaration too, but is implemented below.
-    bool readSerial(std::string &readData) override; 
-    
     int getCpuUsagePercent() override;
     int getRamUsagePercent() override;
     std::string getFreeDiskSpaceGB(const std::string& drivePath) override;
@@ -214,7 +206,6 @@ public:
     ) override;
 
 private:
-    int serial_fd = -1;
     std::thread m_dbus_thread;
 
     unsigned long long m_prev_total_time = 0;
@@ -266,80 +257,6 @@ int LinuxPlatform::run(
     std::cout << "[DEBUG] Application terminating cleanly." << std::endl;
     closelog();
     return 0;
-}
-
-bool LinuxPlatform::openSerialPort(const std::string& portName, int baudrate) {
-    serial_fd = open(portName.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
-    if (serial_fd < 0) {
-        logMessage("Error opening serial port " + portName);
-        return false;
-    }
-
-    struct termios tty;
-    if (tcgetattr(serial_fd, &tty) != 0) {
-        logMessage("Error getting termios attributes");
-        return false;
-    }
-
-    // Set Baud Rate to 115200
-    cfsetospeed(&tty, B115200);
-    cfsetispeed(&tty, B115200);
-
-    tty.c_cflag &= ~PARENB;         // No Parity
-    tty.c_cflag &= ~CSTOPB;         // 1 stop bit
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;
-    tty.c_cflag &= ~CRTSCTS;        // no hardware flow control
-    tty.c_cflag |= CREAD | CLOCAL;  // Enable receiver, ignore modem control lines
-
-    // Disable software flow control
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-
-    // Set raw input and output
-    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-    tty.c_oflag &= ~OPOST;
-
-    // --- CRITICAL FIX: Set VMIN=0 and VTIME=0 for NON-BLOCKING read ---
-    tty.c_cc[VMIN] = 0; 
-    tty.c_cc[VTIME] = 0; 
-
-    if (tcsetattr(serial_fd, TCSANOW, &tty) != 0) {
-        logMessage("Error setting termios attributes.");
-        return false;
-    }
-
-    return true;
-}
-
-void LinuxPlatform::closeSerialPort() {
-    if (serial_fd >= 0) {
-        close(serial_fd);
-        serial_fd = -1;
-    }
-}
-
-bool LinuxPlatform::writeSerial(const std::string& data) {
-    if (serial_fd < 0) {
-        // Log that the port isn't even open
-        logMessage("[writeSerial] Error: Serial port is not open.");
-        return false;
-    }
-
-    // Log what we are about to write
-    logMessage("[writeSerial] Attempting to write: " + data);
-    
-    ssize_t bytes_written = write(serial_fd, data.c_str(), data.length());
-
-    if (bytes_written < 0) {
-        // An error occurred
-        logMessage("[writeSerial] Error on write(): " + std::string(strerror(errno)));
-        return false;
-    }
-
-    // Log the result
-    logMessage("[writeSerial] write() returned: " + std::to_string(bytes_written) + " bytes written.");
-
-    return bytes_written == (ssize_t)data.length();
 }
 
 std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
@@ -408,7 +325,7 @@ std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
     std::vector<NetworkInterface> result_vector;
     for (auto const& [name, iface] : interfaces_map) {
         const std::string& mac = iface.macAddress;
-        if (mac.compare(0, 8, "00:17:fd") == 0 || // Amulet Hotkey
+        if (mac.compare(0, 8, "00:17:FD") == 0 || // Amulet Hotkey
             mac.compare(0, 8, "00:13:95") == 0 || // Congatec
             mac.compare(0, 8, "00:07:32") == 0) { // AAEON
             result_vector.push_back(iface);
@@ -436,17 +353,6 @@ std::string LinuxPlatform::getOsBuild() {
         return std::string(buffer.release);
     }
     return "Unknown Build";
-}
-
-bool LinuxPlatform::readSerial(std::string &readData) {
-    if (serial_fd < 0) return false;
-    char buffer[256];
-    ssize_t bytes_read = read(serial_fd, buffer, sizeof(buffer) - 1); 
-    if (bytes_read > 0) {
-        readData.append(buffer, bytes_read);
-        return true;
-    }
-    return false;
 }
 
 std::string LinuxPlatform::getSystemUptime() {

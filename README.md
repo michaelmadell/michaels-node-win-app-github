@@ -49,9 +49,6 @@ michaels-node-win-app
      │   ├─ serial
      │   │   ├─ SerialManager.cpp       - Functions for serial operations
      │   │   └─ SerialManager.h         - Header for serial operations
-     │   ├─ service
-     │   │   ├─ ServiceManager.cpp      - Functions for handling Service operations
-     │   │   └─ ServiceManager.h        - Header for service functions
      │   ├─ session
      │   │   ├─ SessionMonitor.cpp      - Functions for handling session states
      │   │   └─ SessionMonitor.h        - Header for session handler
@@ -62,7 +59,7 @@ michaels-node-win-app
          ├─ LinuxPlatform.cpp           - Linux specific functions
          ├─ WindowsPlatform.cpp         - Windows specific functions
          ├─ WindowsPlatform.h           - Header for windows specific functions
-         └─ Windows_Addon.h             - Addon Windows header specs
+         └─ WinHandles.h                - RAII wrappers for Windows handles
 ```
 
 ## Linux Build ##

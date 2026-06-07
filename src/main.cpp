@@ -30,7 +30,6 @@
 #include "platform/WinHandles.h"
 #endif
 #include "version.h"
-#include "config.h"
 
 #include <iostream>
 #include <thread>
@@ -221,7 +220,7 @@ void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
 #ifdef _WIN32
-    std::string portName = SERIAL_PORT;
+    std::string portName;
     CPUInfo cpuInfo = GetCpuInfo();
     std::cout << "[DEBUG] CPUInfo: " << cpuInfo.manufacturer << " " << cpuInfo.model << " " << cpuInfo.clockspeed << std::endl;
     if (IsHX2KCPU(&cpuInfo)) {
@@ -247,7 +246,7 @@ void serialThread() {
     );
 
     if (!serialManager->Open(portName, 115200)) {
-        std::cerr << "[DEBUG] FATAL: platform->openSerialPort() returned false. Thread is exiting." << std::endl;
+        std::cerr << "[DEBUG] FATAL: serialManager->Open() returned false. Thread is exiting." << std::endl;
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);
 #ifdef _WIN32
         OutputDebugStringW(L"[FATAL] Failed to Open Serial Port.\n");

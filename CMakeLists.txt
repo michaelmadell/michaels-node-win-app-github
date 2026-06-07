@@ -195,7 +195,7 @@ if(BUILD_METRICS)
 endif()
 
 if(WIN32)
-    list(APPEND HEADER_FILES src/platform/Windows_Addon.h)
+    list(APPEND HEADER_FILES src/platform/WinHandles.h)
     
     if(BUILD_TRAY_APP)
         list(APPEND HEADER_FILES src/modules/tray/TrayApp.h)
