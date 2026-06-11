@@ -291,6 +291,9 @@ if(WIN32)
         winmm
         pdh
         userenv
+        wbemuuid
+        ole32
+        oleaut32
     )
 elseif(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
