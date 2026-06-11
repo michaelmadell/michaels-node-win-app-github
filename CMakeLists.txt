@@ -11,7 +11,6 @@ project(CoreStationHXAgent
 option(BUILD_METRICS "Build with metric support" OFF)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
 option(BUILD_TRAY_APP "Build with system tray application (Windows only)" ON)
-option(BUILD_REGEDIT "Build with registry editing components (Windows only)" OFF)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
@@ -170,11 +169,6 @@ if(WIN32)
         )
     endif()
 
-    if(BUILD_REGEDIT)
-            list(APPEND MODULE_SOURCES
-            src/modules/regedits/Regedit.cpp
-        )
-    endif()
 elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES
         src/platform/LinuxPlatform.cpp
@@ -205,9 +199,6 @@ if(WIN32)
         list(APPEND HEADER_FILES src/modules/session/SessionMonitor.h)
     endif()
 
-    if(BUILD_REGEDIT)
-        list(APPEND HEADER_FILES src/modules/regedits/Regedit.h)
-        endif()
 endif()
 
 # Create Executable
@@ -248,10 +239,6 @@ endif()
 
 if(BUILD_TRAY_APP AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_TRAY_APP)
-endif()
-
-if(BUILD_REGEDIT AND WIN32)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_REGEDIT)
 endif()
 
 # Compiler Flags
@@ -364,7 +351,6 @@ message(STATUS "Features:")
 message(STATUS "  TrayApp:         ${BUILD_TRAY_APP}")
 message(STATUS "  Metrics:         ${BUILD_METRICS}")
 message(STATUS "  Session Monitor: ${BUILD_SESSION_MONITOR}")
-message(STATUS "  Registry Edit:   ${BUILD_REGEDIT}")
 message(STATUS "  Testing:         ${ENABLE_TESTING}")
 message(STATUS "")
 message(STATUS "Source Files:")

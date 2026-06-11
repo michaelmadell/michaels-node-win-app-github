@@ -22,9 +22,6 @@
 #ifdef ENABLE_METRICS
 #include "modules/metrics/MetricsCollector.h"
 #endif
-#ifdef ENABLE_REGEDIT
-#include "modules/regedits/Regedit.h"
-#endif
 #ifdef ENABLE_TRAY_APP
 #include "platform/WinHandles.h"
 #endif
@@ -45,9 +42,6 @@ std::unique_ptr<Platform> platform;
 std::unique_ptr<SerialManager> serialManager;
 #ifdef ENABLE_METRICS
 std::unique_ptr<MetricsCollector> metricsCollector;
-#endif
-#ifdef ENABLE_REGEDIT
-std::unique_ptr<Regedit> regedit;
 #endif
 
 SystemState currentState;
