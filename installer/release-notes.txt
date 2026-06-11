@@ -5,6 +5,10 @@ CoreStation HX Agent Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 
+20.26.5.1_GA
+------------
+- Implemented support for HX3000 Nodes via a CPU Check - Sends 4x Network details and uses COM1 if HX3K
+
 
 20.26.3.1_GA
 ------------
