@@ -42,6 +42,9 @@ michaels-node-win-app
      │   ├─ Platform.h          - Platform spec
      │   └─ SystemState.h       - System state specs
      ├─ modules
+     │   ├─ 3kcheck
+     │   │   ├─ 3kcheck.cpp     - CPU detection logic for HX2K vs HX3K
+     │   │   └─ 3kcheck.h       - Header for CPU detection
      │   ├─ metrics
      │   │   ├─ MetricCache.h   - header for Caching metrics
      │   │   ├─ MetricsCollector.cpp    - Functions for collecting system metrics
@@ -57,7 +60,7 @@ michaels-node-win-app
      │   │   └─ SessionMonitor.h        - Header for session handler
      │   └─ tray
      │       ├─ TrayApp.cpp             - Tray application functions
-     │       └─ TrayApp.h               = Tray Application header
+     │       └─ TrayApp.h               - Tray Application header
      └─ platform
          ├─ LinuxPlatform.cpp           - Linux specific functions
          ├─ WindowsPlatform.cpp         - Windows specific functions
@@ -78,10 +81,10 @@ Developed on Ubuntu 24.04.5 LTS due to better compatibility with the Meteor Lake
 
 ### User Guide ###
 
-- Ensure the Serial Port that links to the MEC is set to `/dev/ttyS2`
-    - It is very likely that this is the case, can be checked by monitoring serial output and sending data to the port:  
+- Ensure the Serial Port that links to the MEC is set to `/dev/ttyUSB0`
+    - Can be checked by monitoring serial output and sending data to the port:  
     ```bash
-    echo "TESTING" > /dev/ttyS2
+    echo "TESTING" > /dev/ttyUSB0
     ```
 - Clone the repo
 - cd into the directory
@@ -110,7 +113,7 @@ Developed on Ubuntu 24.04.5 LTS due to better compatibility with the Meteor Lake
 
 ### To Install ###
 ```bash
-sudo apt install ./corestationhxagent_2025.9.1-1_amd64.deb
+sudo apt install ./corestationhxagent_20.26.5.1-1_amd64.deb
 ```
 following that, the status of the service can be viewed with
 ```bash
@@ -134,15 +137,14 @@ This project was developed on a Win 11 Pro CoreStation Node
 
 ### User guide
 
-- Ensure the COM port that links to the BMC MEC is configured as **COM3**. This should be the default for the Congatec COM
-- On both Congatec and Advantect units COM3 should have a Device ID of `ACPI\PNP0501\21`, 
-- Be careful **not** to select the `Intel(r) Active Management Technology SOL` (AMT/vPRO) COM port which is normally COM4 (This port is now actively being reassigned by this app to avoid issues where windows will assign it COM3 as well as the standard Communications Port - [Jira Ticket](https://ahkeng.atlassian.net/browse/CSHD-1200))
-- You can change the COM port via **Device Manager > Ports > Right Click > Properties > Port Settings > Advanced > COM Port Number
-- **NOTE** You must restart the machine after changing the COM ports
-- The `./build.bat` script will (not currently) push RC and GA to [ahkengbuild](http://ahkengbuild/versions) 
-- Run `install.ps1` from a Administrator powershell terminal. This script will remove any previous version, install and then run the service 
+- **COM port is selected automatically** at runtime based on CPU model — no manual configuration required:
+  - **HX2K** (Core Ultra 165H, 165U, 285H) → **COM3** (Congatec/AAEON COM port)
+  - **HX3K** (all other CPUs) → **COM1**
+- The `Intel(R) Active Management Technology SOL` (AMT/vPRO) port can conflict on COM3. The app detects this at startup and will reassign it to COM4 automatically ([Jira Ticket](https://ahkeng.atlassian.net/browse/CSHD-1200))
+- The `./build.bat` script will (not currently) push RC and GA to [ahkengbuild](http://ahkengbuild/versions)
+- Run `install.ps1` from an Administrator PowerShell terminal. This script will remove any previous version, install and then run the service
 - The service will appear as `CoreStation Management Service` in the Windows Service Manager
-- You can use the `remove.ps1` powershell script to remove the service
+- Use `remove.ps1` to remove the service
 
 
 
@@ -173,7 +175,7 @@ Only RC builds write serial output to `C:\ProgramData\ahk\node-win-app.log` via 
 
 
 ### To build
-- Update `version.h` with the desired release details **and COM port** and commit to git
+- Update `version.h` with the desired release details and commit to git
 - Run `build.bat` from windows **cmd shell**. This will populate the installer dir that can then be passed to a third party
 - As admin from **PowerShell shell** run `installer/install.ps1` to setup as windows service. This will automatically stop and remove any previous versions before instalation 
 - `remove.ps1` can be used to remove the service
@@ -352,14 +354,11 @@ To enable pre-commit checks I created this file
 
 
 
-### Future development 
+### Future development
 
-The first release is a windows service that can't have a GUI / tray icon etc. If this is required later, we
-will need to create a seperate Tray helper app that starts after a user logs in, shows a tray icon that can 
-be interacted with. Communciation between the two could be via Named Pies, Shared memroy, local sockets and/or
-Windows Messages via services hidden windows handle.
+The tray helper app (`TrayApp.cpp/h`) is implemented and communicates with the service via a named pipe (`\\.\pipe\corestation_tray`). See the **Tray helper** section above for usage details.
 
-The first development version of this (See tag 2025.4.1-adhoc1) was a pure tray app
+The first development version (tag `2025.4.1-adhoc1`) was a pure tray app before it was converted to a Windows service.
 
 
 

@@ -56,6 +56,10 @@ Focussed on bringing debian build up-to-date
 - First implemenetation of HX3000 Support - Checks For presence of 2 E610s and 2 I226s, if statisfied, uses COM1
 - Added AAEON MAC to MAC Filter
 
+20.26.5.1_GA
+------------
+- Implemented support for HX3000 Nodes via a CPU Check - Sends 4x Network details and uses COM1 if HX3K
+
 
 20.26.3.1_GA
 ------------
