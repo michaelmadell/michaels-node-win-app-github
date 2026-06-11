@@ -5,7 +5,6 @@
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0A00
 #include <wbemidl.h>
 #include <comdef.h>
 #include <cstdio>

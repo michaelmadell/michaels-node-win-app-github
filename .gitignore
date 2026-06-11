@@ -117,3 +117,5 @@ mempalace.yaml
 entities.json
 
 installer/release-notes.txt
+
+build-mingw

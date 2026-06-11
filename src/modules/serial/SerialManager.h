@@ -5,7 +5,7 @@
 #include <atomic>
 #include <chrono>
 
-#include "../core/Platform.h"
+#include "../../core/Platform.h"
 
 /**
  * @brief Manages serial port communication across platforms
