@@ -231,7 +231,7 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 void TrayApp::UiThreadProc() {
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
-    WNDCLASSEXW wcex = { 0 };
+    WNDCLASSEXW wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXW);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = TrayApp::WndProc;

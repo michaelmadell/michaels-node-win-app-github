@@ -37,7 +37,7 @@ void SessionMonitor::Stop() {
 void SessionMonitor::ThreadProc() {
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
-    WNDCLASSEXW wcex = { 0 };
+    WNDCLASSEXW wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXW);
     wcex.lpfnWndProc = SessionMonitor::WndProc;
     wcex.hInstance = hInstance;

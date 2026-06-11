@@ -38,8 +38,8 @@
 #include "../modules/session/SessionMonitor.h"
 
 #include <userenv.h>
+#ifdef _MSC_VER
 #pragma comment(lib, "userenv.lib")
-
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "wtsapi32.lib")
@@ -50,6 +50,7 @@
 #pragma comment(lib, "comsuppw.lib")
 #pragma comment(lib, "Psapi.lib")
 #pragma comment(lib, "shell32.lib")
+#endif
 
 #ifndef PDH_FMT_FLOAT
 #define PDH_FMT_FLOAT 0x00000200
@@ -78,20 +79,6 @@ std::string WideToUtf8(const std::wstring &wstr)
 
 typedef LONG(WINAPI *RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
-static std::string Trim(const std::string& input) {
-    if (input.empty()) {
-        return std::string();
-    }
-
-    const char* whitespace = " \t\r\n";
-    size_t start = input.find_first_not_of(whitespace);
-    if (start == std::string::npos) {
-        return std::string();
-    }
-
-    size_t end = input.find_last_not_of(whitespace);
-    return input.substr(start, end - start + 1);
-}
 
 static WindowsPlatform* g_platform_instance = nullptr;
 
@@ -275,7 +262,7 @@ bool WindowsPlatform::runningUnderServiceControlManager()
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnap == INVALID_HANDLE_VALUE) return false;
 
-    PROCESSENTRY32 pe = { 0 };
+    PROCESSENTRY32 pe = {};
     pe.dwSize = sizeof(pe);
     DWORD parentPid = 0;
 
@@ -656,10 +643,10 @@ std::string WindowsPlatform::getOsVersion()
     HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
     if (!hMod) return "Unknown Windows Version";
 
-    RtlGetVersionPtr fn = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
+    RtlGetVersionPtr fn = reinterpret_cast<RtlGetVersionPtr>(reinterpret_cast<void*>(::GetProcAddress(hMod, "RtlGetVersion")));
     if (!fn) return "Unknown Windows Version";
 
-    RTL_OSVERSIONINFOW rovi = {0};
+    RTL_OSVERSIONINFOW rovi = {};
     rovi.dwOSVersionInfoSize = sizeof(rovi);
     if (fn(&rovi) != 0) return "Unknown Windows Version";
 
@@ -705,10 +692,10 @@ std::string WindowsPlatform::getOsBuild()
     HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
     if (!hMod) return "Unknown Build (ntdll.dll)";
 
-    RtlGetVersionPtr fn = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
+    RtlGetVersionPtr fn = reinterpret_cast<RtlGetVersionPtr>(reinterpret_cast<void*>(::GetProcAddress(hMod, "RtlGetVersion")));
     if (!fn) return "Unknown Build (RtlGetVersion)";
 
-    RTL_OSVERSIONINFOW rovi = {0};
+    RTL_OSVERSIONINFOW rovi = {};
     rovi.dwOSVersionInfoSize = sizeof(rovi);
     
     if (fn(&rovi) != 0) return "Unknown Build (RtlGetVersion failed)";
@@ -1071,7 +1058,7 @@ std::string WindowsPlatform::getGpuDriverInfoImpl() {
     if (FAILED(hr)) goto cleanup;
 
     while (pEnumerator) {
-        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
+        hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
 
         if (0 == uReturn) break;
 

@@ -4,14 +4,17 @@
 #endif
 
 #ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <wbemidl.h>
 #include <comdef.h>
-#include <cstdio>
 
+#ifdef _MSC_VER
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "oleaut32.lib")
+#endif
 #endif
 
 #include "core/Platform.h"
@@ -158,15 +161,12 @@ void checkSystemState() {
     auto newHostname = platform->getHostname();
     auto newUsername = platform->getLoggedInUser();
 
-    bool hasChanges = false;
-
     // Check hostname changes
     if (currentState.hostname != newHostname) {
         std::lock_guard<std::mutex> lock(stateMutex);
         currentState.hostname = newHostname;
         sendLineToBmc("hostname, " + newHostname);
         platform->logMessage("Hostname changed to: " + newHostname);
-        hasChanges = true;
     }
 
     // Check username changes
@@ -175,7 +175,6 @@ void checkSystemState() {
         currentState.username = newUsername;
         sendLineToBmc("username, " + newUsername);
         platform->logMessage("Username changed to: " + newUsername);
-        hasChanges = true;
     }
 
     // Check network interface changes
@@ -191,7 +190,6 @@ void checkSystemState() {
                 << iface.dhcp << ", " << iface.name;
             sendLineToBmc(ss.str());
         }
-        hasChanges = true;
     }
 }
 

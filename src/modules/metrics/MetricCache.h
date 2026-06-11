@@ -78,8 +78,8 @@ public:
 
 private:
 	T cachedValue_;
-	std::chrono::steady_clock::time_point lastUpdate_;
 	std::chrono::seconds ttl_;
+	std::chrono::steady_clock::time_point lastUpdate_;
 	bool isValid_;
 	mutable std::mutex mutex_;
 };
