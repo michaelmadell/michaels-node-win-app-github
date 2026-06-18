@@ -1,5 +1,5 @@
 #ifdef __linux__
-#include "Platform.h"
+#include "../core/Platform.h"
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -151,9 +151,13 @@ void dbusThread() {
 
     const char* match_rule = "type='signal',interface='org.freedesktop.login1.Session',member='Unlock'";
     const char* match_rule2 = "type='signal',interface='org.freedesktop.login1.Session',member='Lock'";
+    const char* match_rule3 = "type='signal',interface='org.freedesktop.login1.Manager',member='SessionNew'";
+    const char* match_rule4 = "type='signal',interface='org.freedesktop.login1.Manager',member='SessionRemoved'";
     dbus_bus_add_match(conn, match_rule, &err);
     dbus_bus_add_match(conn, match_rule2, &err);
-    
+    dbus_bus_add_match(conn, match_rule3, &err);
+    dbus_bus_add_match(conn, match_rule4, &err);
+
     syslog(LOG_INFO, "D-Bus thread started and listening for session signals.");
 
     while (true) {
@@ -166,6 +170,10 @@ void dbusThread() {
             if (g_session_callback) g_session_callback("7");
         } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Session", "Unlock")){
             if (g_session_callback) g_session_callback("8");
+        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "SessionNew")) {
+            if (g_session_callback) g_session_callback("5"); // WTS_SESSION_LOGON
+        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "SessionRemoved")) {
+            if (g_session_callback) g_session_callback("6"); // WTS_SESSION_LOGOFF
         }
 
         dbus_message_unref(msg);
@@ -188,6 +196,7 @@ public:
     // --- Core Platform Methods (Already Implemented Down Below) ---
     std::vector<NetworkInterface> getNetworkInterfaces() override;
     std::string getHostname() override;
+    std::string getCurrentSessionState() override;
     std::string getLoggedInUser() override;
     std::string getOsVersion() override;
     std::string getOsBuild() override;
@@ -657,6 +666,18 @@ void LinuxPlatform::logMessage(const std::string& message) {
     syslog(LOG_INFO, "%s", message.c_str());
 }
 
+std::string LinuxPlatform::getCurrentSessionState() {
+    // who/utmp only sees tty/pts logins; GUI seat sessions (gdm/Wayland) are
+    // tracked by logind instead, so query that rather than legacy who.
+    std::string sessionId = executeCommand("loginctl list-sessions --no-legend | awk '{print $1}' | head -n 1");
+    if (sessionId.empty()) {
+        return "6"; // 6 = logoff (mirrors WTS_SESSION_* codes used by main.cpp)
+    }
+
+    std::string state = executeCommand("loginctl show-session " + sessionId + " -p State --value");
+    return (state == "active") ? "5" : "6"; // 5 = logon
+}
+
 std::string LinuxPlatform::getHostname() {
     char hostname[1024];
     hostname[1023] = '\0';
@@ -665,20 +686,15 @@ std::string LinuxPlatform::getHostname() {
 }
 
 std::string LinuxPlatform::getLoggedInUser() {
-    const char* cmd = "who | awk '$2~/^tty|pts/ {print $1}' | sort -u | head -n 1";
-    char buffer[128] = {0};
-    std::string result = "none";
-
-    FILE* pipe = popen(cmd, "r");
-    if (!pipe) return "none";
-
-    if (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        result = std::string(buffer);
-        result.erase(result.find_last_not_of("\n\r") + 1);
+    // getenv("USER") reflects the process owner (root, when run as a service),
+    // not the desktop session user — query logind for the actual seat session.
+    std::string sessionId = executeCommand("loginctl list-sessions --no-legend | awk '{print $1}' | head -n 1");
+    if (sessionId.empty()) {
+        return "none";
     }
 
-    pclose(pipe);
-    return result.empty() ? "none" : result;
+    std::string user = executeCommand("loginctl show-session " + sessionId + " -p Name --value");
+    return user.empty() ? "none" : user;
 }
 
 #endif

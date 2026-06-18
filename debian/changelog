@@ -1,3 +1,19 @@
+corestationhxagent (20.26.5.2~rc1) jammy; urgency=medium
+
+  * Fixed getLoggedInUser() reporting "root" when run as a systemd service (was reading $USER env var instead of the actual logind seat session)
+
+ -- Michael Madell <michael.madell@amulethotkey.com>  Thu, 18 Jun 2026 22:00:00 +0100
+
+corestationhxagent (20.26.5.1) jammy; urgency=medium
+
+  * Fixed CMakeLists.txt elif/elseif typo that dropped linux/main.cpp from the build
+  * Added missing Platform::getCurrentSessionState() override in LinuxPlatform
+  * Switched session-state detection from who/utmp to loginctl (GUI/Wayland seats)
+  * Added live logon/logoff detection via login1 Manager SessionNew/SessionRemoved D-Bus signals
+  * Added libdbus-1-dev/pkg-config to Build-Depends
+
+ -- Michael Madell <michael.madell@amulethotkey.com>  Thu, 18 Jun 2026 21:30:00 +0100
+
 corestationhxagent (2026.5.1) jammy; urgency=medium
 
   * Updated to align with latest windows build
