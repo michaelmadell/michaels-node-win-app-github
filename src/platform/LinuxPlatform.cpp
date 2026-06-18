@@ -89,49 +89,33 @@ unsigned long long getTcpValue(int index) {
 }
 
 std::string getDhcpStatus(const std::string& interfaceName) {
-    // std::string connectionName;
-    // char buffer[256];
+    // 1. NetworkManager (Ubuntu Desktop default). -g (get-values) prints the
+    //    bare value, no "FIELD:" prefix to parse.
+    std::string connectionName = executeCommand(
+        "nmcli -g GENERAL.CONNECTION device show " + interfaceName + " 2>/dev/null");
 
-    // // Step 1: Find the active connection name for the given device interface
-    // std::string cmd1 = "nmcli -t -f GENERAL.CONNECTION dev show " + interfaceName;
-    // FILE* pipe1 = popen(cmd1.c_str(), "r");
-    // if (!pipe1) return "unknown";
-    
-    // if (fgets(buffer, sizeof(buffer), pipe1) != nullptr) {
-    //     connectionName = std::string(buffer);
-    //     // Remove trailing newline
-    //     connectionName.erase(connectionName.find_last_not_of("\n\r") + 1);
-    //     // The output is "GENERAL.CONNECTION:<name>", so we find the colon and take the rest
-    //     size_t colon_pos = connectionName.find(':');
-    //     if (colon_pos != std::string::npos) {
-    //         connectionName = connectionName.substr(colon_pos + 1);
-    //     }
-    // }
-    // pclose(pipe1);
+    if (!connectionName.empty() && connectionName != "--") {
+        std::string method = executeCommand(
+            "nmcli -g ipv4.method connection show \"" + connectionName + "\" 2>/dev/null");
+        if (method == "auto") return "dhcp";
+        if (method == "manual") return "static";
+    }
 
-    // if (connectionName.empty()) {
-    //     return "unknown";
-    // }
+    // 2. systemd-networkd (netplan with the networkd renderer, common on
+    //    servers without NetworkManager installed) — a lease file appearing
+    //    under /run/systemd/netif/leases/<ifindex> means DHCP is in use.
+    std::string ifindex = executeCommand("cat /sys/class/net/" + interfaceName + "/ifindex 2>/dev/null");
+    if (!ifindex.empty()) {
+        std::string lease = executeCommand("test -f /run/systemd/netif/leases/" + ifindex + " && echo dhcp");
+        if (lease == "dhcp") return "dhcp";
+    }
 
-    // // Step 2: Get the ipv4.method for that connection
-    // std::string result = "unknown";
-    // std::string cmd2 = "nmcli -t -f ipv4.method con show \"" + connectionName + "\"";
-    // FILE* pipe2 = popen(cmd2.c_str(), "r");
-    // if (!pipe2) return "unknown";
+    // 3. Classic isc-dhcp-client lease file, for systems using neither.
+    std::string dhclientLease = executeCommand(
+        "ls /var/lib/dhcp/dhclient*" + interfaceName + "*.leases 2>/dev/null");
+    if (!dhclientLease.empty()) return "dhcp";
 
-    // if (fgets(buffer, sizeof(buffer), pipe2) != nullptr) {
-    //     std::string line(buffer);
-    //     if (line.find("auto") != std::string::npos) {
-    //         result = "dhcp";
-    //     } else if (line.find("manual") != std::string::npos) {
-    //         result = "static";
-    //     }
-    // }
-    // pclose(pipe2);
-    
-    // return result;
-
-    return "unknown"; // Placeholder until a reliable method is implemented
+    return "unknown"; // no DHCP lease found via any known client/manager
 }
 
 class LinuxPlatform;
