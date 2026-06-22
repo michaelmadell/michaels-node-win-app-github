@@ -99,3 +99,7 @@ build.sh-example
 
 # debug information files
 *.dwo
+
+
+.vs/
+.vscode/

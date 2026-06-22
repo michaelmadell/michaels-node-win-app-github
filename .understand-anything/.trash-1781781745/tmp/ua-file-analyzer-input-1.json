@@ -1,0 +1,17 @@
+{
+  "projectRoot": "D:/michaels-node-win-app-github",
+  "batchFiles": [
+    {"path": "src/core/Platform.h", "language": "c", "sizeLines": 55, "fileCategory": "code"},
+    {"path": "src/core/SystemState.h", "language": "c", "sizeLines": 46, "fileCategory": "code"},
+    {"path": "src/modules/metrics/MetricCache.h", "language": "c", "sizeLines": 103, "fileCategory": "code"},
+    {"path": "src/modules/metrics/MetricsCollector.cpp", "language": "cpp", "sizeLines": 126, "fileCategory": "code"},
+    {"path": "src/modules/metrics/MetricsCollector.h", "language": "c", "sizeLines": 135, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/core/Platform.h": ["src/core/SystemState.h"],
+    "src/core/SystemState.h": [],
+    "src/modules/metrics/MetricCache.h": [],
+    "src/modules/metrics/MetricsCollector.cpp": ["src/core/Platform.h", "src/modules/metrics/MetricsCollector.h"],
+    "src/modules/metrics/MetricsCollector.h": ["src/core/SystemState.h", "src/modules/metrics/MetricCache.h"]
+  }
+}

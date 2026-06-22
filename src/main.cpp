@@ -1,6 +1,32 @@
-#include "Platform.h"
-#include "SystemState.h"
+#ifdef _WIN32
+#define _WINSOCKAPI_
+#include <windows.h>
+#endif
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0A00
+#include <wbemidl.h>
+#include <comdef.h>
+#include <cstdio>
+
+#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "oleaut32.lib")
+#endif
+
+#include "core/Platform.h"
+#include "core/SystemState.h"
+#include "modules/serial/SerialManager.h"
+#include "modules/3kcheck/3kcheck.h"
+#ifdef ENABLE_METRICS
+#include "modules/metrics/MetricsCollector.h"
+#endif
+#ifdef ENABLE_REGEDIT
+#include "modules/regedits/Regedit.h"
+#endif
 #include "version.h"
+
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -8,127 +34,563 @@
 #include <mutex>
 #include <atomic>
 #include <sstream>
+#include <string>
 
 std::unique_ptr<Platform> platform;
-std::unique_ptr<Platform> createPlatform();
+std::unique_ptr<SerialManager> serialManager;
+#ifdef ENABLE_METRICS
+std::unique_ptr<MetricsCollector> metricsCollector;
+#endif
+#ifdef ENABLE_REGEDIT
+std::unique_ptr<Regedit> regedit;
+#endif
 
 SystemState currentState;
 std::mutex stateMutex;
-
-std::atomic<bool> g_terminate = false;
+std::atomic<bool> g_terminate{false};
+std::atomic<bool> g_stop_request_sent{false};
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
 void sendLineToBmc(const std::string& output_string) {
-    if (!platform) return;
+    if (!serialManager) return;
 
-    // --- ADD THIS LINE ---
     std::cout << "[SENDING] " << output_string << std::endl;
 
     platform->logMessage(output_string);
-    platform->writeSerial(output_string + "\r\n");
+    serialManager->Write(output_string + "\r\n\0"); // TODO: Work out if the NUL byte can be removed without breaking the BMC parser
+}
+
+void notifyStopRequested(const std::string& stopReason) {
+    if (g_stop_request_sent.exchange(true)) {
+        return;
+    }
+
+    if (!serialManager || !serialManager->IsOpen()) {
+        platform->logMessage("Stop requested before serial port was available: " + stopReason);
+        return;
+    }
+
+    sendLineToBmc("appStopRequested, " + stopReason);
 }
 
 void heartbeatThread() {
     platform->logMessage("Heartbeat thread started.");
+
+    const auto heartbeatInterval = std::chrono::seconds(30);
+    auto lastHeartbeat = std::chrono::steady_clock::now();
+
     while (!g_terminate.load()) {
-        std::this_thread::sleep_for(std::chrono::seconds(30));
-        if (g_terminate.load()) {
-            break;
+        auto now = std::chrono::steady_clock::now();
+
+        if (now - lastHeartbeat >= heartbeatInterval) {
+            lastHeartbeat = now;
+
+            if (g_terminate.load()) break;
+#ifdef ENABLE_METRICS
+            if (metricsCollector) {
+                metricsCollector->UpdateCounters();
+            }
+#endif
+            try {
+#ifdef ENABLE_METRICS
+                auto metrics = metricsCollector->CollectAll();
+                {
+                    std::lock_guard<std::mutex> lock(stateMutex);
+
+                    currentState.cpuUsagePercent = metrics.performance.cpuUsage;
+                    currentState.ramUsagePercent = metrics.performance.ramUsage;
+                    currentState.freeDiskSpaceGB = metrics.performance.freeDiskSpace;
+                    currentState.windowsUpdateState = metrics.updates.state;
+                    currentState.diskQueueLength = metrics.performance.diskQueue;
+                    currentState.networkRetransRate = metrics.performance.netRetrans;
+                    currentState.systemUptime = metrics.performance.uptime;
+                    currentState.gpuDriverInfo = metrics.gpu.driverInfo;
+                    currentState.gpuUsagePercent = metrics.gpu.usage;
+                    currentState.highRamProcesses = metrics.processes.highRamProcesses;
+
+                    sendLineToBmc("cpuUsage, " + std::to_string(metrics.performance.cpuUsage) + "%");
+                    sendLineToBmc("ramUsage, " + std::to_string(metrics.performance.ramUsage) + "%");
+                    sendLineToBmc("freeDisk, " + metrics.performance.freeDiskSpace + "GB");
+                    sendLineToBmc("wuState, " + metrics.updates.state);
+                    sendLineToBmc("diskQueue, " + std::to_string(metrics.performance.diskQueue));
+                    sendLineToBmc("netRetrans, " + std::to_string(metrics.performance.netRetrans) + "/s");
+                    sendLineToBmc("uptime, " + metrics.performance.uptime);
+                    sendLineToBmc("gpuInfo, " + metrics.gpu.driverInfo);
+                    sendLineToBmc("gpuUsage, " + std::to_string(metrics.gpu.usage) + "%");
+                    sendLineToBmc("highRamProcs, " + metrics.processes.highRamProcesses);
+
+                    std::stringstream logMsg;
+                    logMsg << "Metrics: CPU=" << metrics.performance.cpuUsage << "%, "
+                        << "RAM = " << metrics.performance.ramUsage << "%, "
+                        << "Disk = " << metrics.performance.freeDiskSpace << "GB, "
+                        << "WU = " << metrics.updates.state << ", "
+                        << "DiskQ=" << metrics.performance.diskQueue << ", "
+                        << "NetR = " << metrics.performance.netRetrans << " / s, "
+                        << "Uptime = " << metrics.performance.uptime << " | "
+                        << "GPU=" << metrics.gpu.usage << "% | "
+                        << metrics.gpu.driverInfo << " | "
+                        << "HighRam={" << metrics.processes.highRamProcesses << "}";
+                    platform->logMessage(logMsg.str());
+                }
+#endif
+
+                sendLineToBmc("HB");
+            } catch (const std::exception& e) {
+                std::cerr << "[ERROR] Exception in heartbeatThread: " << e.what() << std::endl;
+                platform->logMessage("[ERROR] Exception in heartbeatThread: " + std::string(e.what()));
+            }
         }
 
-        sendLineToBmc("HB");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     platform->logMessage("Heartbeat thread finished");
 }
 
-void checkSystemState() {
-    SystemState previousState;
+struct AMTPortInfo {
+    std::wstring comPort;
+    std::wstring instanceId;
+};
+
+// Known AMT SOL serial device HWIDs under HKLM\SYSTEM\CurrentControlSet\Enum\PCI
+static const wchar_t* kAMTDeviceHwids[] = {
+    L"VEN_8086&DEV_7773&SUBSYS_72708086&REV_00",
+    L"VEN_8086&DEV_7E73&SUBSYS_72708086&REV_20",
+    nullptr
+};
+
+// Find the first AMT device full instance ID by enumerating PCI\Enum directly.
+// Works regardless of whether the device is currently enabled or disabled.
+static std::wstring GetAMTInstanceId() {
+    for (int i = 0; kAMTDeviceHwids[i] != nullptr; ++i) {
+        std::wstring devKeyPath = std::wstring(L"SYSTEM\\CurrentControlSet\\Enum\\PCI\\") + kAMTDeviceHwids[i];
+        HKEY hDevKey = nullptr;
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, devKeyPath.c_str(), 0, KEY_READ, &hDevKey) != ERROR_SUCCESS) {
+            continue;
+        }
+        wchar_t instanceName[256];
+        DWORD instanceNameSize = _countof(instanceName);
+        if (RegEnumKeyExW(hDevKey, 0, instanceName, &instanceNameSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS) {
+            RegCloseKey(hDevKey);
+            return std::wstring(L"PCI\\") + kAMTDeviceHwids[i] + L"\\" + instanceName;
+        }
+        RegCloseKey(hDevKey);
+    }
+    return L"";
+}
+
+// Read the current COM port assignment for the AMT serial device from
+// Device Parameters\PortName in the registry — avoids PowerShell round-trips
+// and works correctly after a disable/enable cycle.
+AMTPortInfo GetAMTComPort() {
+#ifdef _WIN32
+    for (int i = 0; kAMTDeviceHwids[i] != nullptr; ++i) {
+        std::wstring devKeyPath = std::wstring(L"SYSTEM\\CurrentControlSet\\Enum\\PCI\\") + kAMTDeviceHwids[i];
+        HKEY hDevKey = nullptr;
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, devKeyPath.c_str(), 0, KEY_READ, &hDevKey) != ERROR_SUCCESS) {
+            continue;
+        }
+        DWORD index = 0;
+        wchar_t instanceName[256];
+        DWORD instanceNameSize = _countof(instanceName);
+        while (RegEnumKeyExW(hDevKey, index, instanceName, &instanceNameSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS) {
+            std::wstring paramPath = devKeyPath + L"\\" + instanceName + L"\\Device Parameters";
+            HKEY hParamKey = nullptr;
+            if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, paramPath.c_str(), 0, KEY_READ, &hParamKey) == ERROR_SUCCESS) {
+                wchar_t portName[64] = {};
+                DWORD portNameSize = sizeof(portName);
+                if (RegQueryValueExW(hParamKey, L"PortName", nullptr, nullptr, (LPBYTE)portName, &portNameSize) == ERROR_SUCCESS) {
+                    RegCloseKey(hParamKey);
+                    RegCloseKey(hDevKey);
+                    std::wstring fullId = std::wstring(L"PCI\\") + kAMTDeviceHwids[i] + L"\\" + instanceName;
+                    return {std::wstring(portName), fullId};
+                }
+                RegCloseKey(hParamKey);
+            }
+            ++index;
+            instanceNameSize = _countof(instanceName);
+        }
+        RegCloseKey(hDevKey);
+    }
+    return {L"", L""};
+#endif
+}
+
+bool disableAMTComPort() {
+#ifdef _WIN32
+    std::wstring instanceId = GetAMTInstanceId();
+    if (instanceId.empty()) {
+        platform->logMessage("disableAMTComPort: AMT device not found in PCI enum.");
+        return false;
+    }
+
+    std::string pshDisableCmd = "powershell -Command \"Disable-PnpDevice -InstanceId '" + std::string(instanceId.begin(), instanceId.end()) + "' -Confirm:0\"";
+    int result = system(pshDisableCmd.c_str());
+    if (result != 0) {
+        std::cerr << "[ERROR] Failed to disable AMT Serial Port. Command: " << pshDisableCmd << std::endl;
+        platform->logMessage("Failed to disable AMT Serial Port.");
+        return false;
+    }
+    return true;
+#endif
+}
+
+bool enableAMTComPort() {
+#ifdef _WIN32
+    std::wstring instanceId = GetAMTInstanceId();
+    if (instanceId.empty()) {
+        platform->logMessage("enableAMTComPort: AMT device not found in PCI enum.");
+        return false;
+    }
+
+    std::string pshEnableCmd = "powershell -Command \"Enable-PnpDevice -InstanceId '" + std::string(instanceId.begin(), instanceId.end()) + "' -Confirm:0\"";
+    int result = system(pshEnableCmd.c_str());
+    if (result != 0) {
+        std::cerr << "[ERROR] Failed to enable AMT Serial Port. Command: " << pshEnableCmd << std::endl;
+        platform->logMessage("Failed to enable AMT Serial Port.");
+        return false;
+    }
+    return true;
+#endif
+
+}
+
+// Directly implements the PS COM port assignment script:
+//   1. Reserves COM4 in the COM Name Arbiter (ComDB byte[0] |= 0x08)
+//   2. Writes PortName=COM4 into Device Parameters for every AMT SOL instance
+//   3. Writes FriendlyName on each instance key
+//   4. Cycles the device (disable → enable) so the driver picks up the new PortName
+bool reassignComPort() {
+#ifdef _WIN32
+    platform->logMessage("reassignComPort: Beginning COM4 assignment.");
+
+    // --- Step 1: COM Name Arbiter — reserve COM4 ---
+    // ComDB is a binary bitmask. COM N occupies bit (N-1) in byte floor((N-1)/8).
+    // COM4 = bit index 3 → byte[0] bit 3 → mask 0x08
     {
+        HKEY hArbiter = nullptr;
+        const wchar_t* arbPath = L"SYSTEM\\CurrentControlSet\\Control\\COM Name Arbiter";
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, arbPath, 0, KEY_READ | KEY_WRITE, &hArbiter) == ERROR_SUCCESS) {
+            BYTE comDb[8] = {};
+            DWORD dbSize = sizeof(comDb);
+            RegQueryValueExW(hArbiter, L"ComDB", nullptr, nullptr, comDb, &dbSize);
+            if (!(comDb[0] & 0x08)) {
+                comDb[0] |= 0x08;
+                RegSetValueExW(hArbiter, L"ComDB", 0, REG_BINARY, comDb, sizeof(comDb));
+                platform->logMessage("COM Name Arbiter: COM4 reserved.");
+            } else {
+                platform->logMessage("COM Name Arbiter: COM4 was already reserved.");
+            }
+            RegCloseKey(hArbiter);
+        } else {
+            platform->logMessage("WARNING: Could not open COM Name Arbiter — continuing anyway.");
+        }
+    }
+
+    // --- Step 2: Write PortName and FriendlyName for all matching device instances ---
+    const wchar_t* targetPort    = L"COM4";
+    const wchar_t* friendlyName  = L"Intel(R) Active Management Technology - SOL (COM4)";
+    bool anyDeviceFound = false;
+
+    for (int i = 0; kAMTDeviceHwids[i] != nullptr; ++i) {
+        std::wstring devKeyPath = std::wstring(L"SYSTEM\\CurrentControlSet\\Enum\\PCI\\") + kAMTDeviceHwids[i];
+        HKEY hDevKey = nullptr;
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, devKeyPath.c_str(), 0, KEY_READ, &hDevKey) != ERROR_SUCCESS) {
+            platform->logMessage("Device not present on this machine, skipping: " + std::string(devKeyPath.begin(), devKeyPath.end()));
+            continue;
+        }
+
+        DWORD index = 0;
+        wchar_t instanceName[256];
+        DWORD instanceNameSize = _countof(instanceName);
+        while (RegEnumKeyExW(hDevKey, index, instanceName, &instanceNameSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS) {
+            anyDeviceFound = true;
+            std::wstring instancePath = devKeyPath + L"\\" + instanceName;
+
+            // Set FriendlyName on the instance key
+            HKEY hInstanceKey = nullptr;
+            if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, instancePath.c_str(), 0, KEY_SET_VALUE, &hInstanceKey) == ERROR_SUCCESS) {
+                RegSetValueExW(hInstanceKey, L"FriendlyName", 0, REG_SZ,
+                    (LPBYTE)friendlyName,
+                    (DWORD)((wcslen(friendlyName) + 1) * sizeof(wchar_t)));
+                RegCloseKey(hInstanceKey);
+            }
+
+            // Create (if absent) or open Device Parameters and set PortName
+            std::wstring paramPath = instancePath + L"\\Device Parameters";
+            HKEY hParamKey = nullptr;
+            DWORD disposition = 0;
+            LONG ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, paramPath.c_str(), 0, nullptr,
+                REG_OPTION_NON_VOLATILE, KEY_SET_VALUE, nullptr, &hParamKey, &disposition);
+            if (ret == ERROR_SUCCESS) {
+                ret = RegSetValueExW(hParamKey, L"PortName", 0, REG_SZ,
+                    (LPBYTE)targetPort,
+                    (DWORD)((wcslen(targetPort) + 1) * sizeof(wchar_t)));
+                if (ret == ERROR_SUCCESS) {
+                    platform->logMessage("Set PortName=COM4 for: " + std::string(instancePath.begin(), instancePath.end()));
+                } else {
+                    platform->logMessage("ERROR: Failed to write PortName for: " + std::string(instancePath.begin(), instancePath.end()));
+                }
+                RegCloseKey(hParamKey);
+            } else {
+                platform->logMessage("ERROR: Failed to open/create Device Parameters for: " + std::string(instancePath.begin(), instancePath.end()));
+            }
+
+            ++index;
+            instanceNameSize = _countof(instanceName);
+        }
+        RegCloseKey(hDevKey);
+    }
+
+    if (!anyDeviceFound) {
+        platform->logMessage("reassignComPort: No AMT device instances found in PCI enum.");
+        return false;
+    }
+
+    // --- Step 3: Cycle the device so the serial driver reloads with the new PortName ---
+    if (!disableAMTComPort()) {
+        platform->logMessage("reassignComPort: Failed to disable device for port cycle.");
+        return false;
+    }
+    if (!enableAMTComPort()) {
+        platform->logMessage("reassignComPort: Failed to re-enable device after port cycle.");
+        return false;
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    // --- Step 4: Verify ---
+    AMTPortInfo newInfo = GetAMTComPort();
+    if (newInfo.comPort.empty()) {
+        platform->logMessage("reassignComPort: Device not found after cycle — cannot verify assignment.");
+        return false;
+    }
+    if (newInfo.comPort == L"COM3") {
+        platform->logMessage("reassignComPort: Device is still on COM3 after reassignment attempt.");
+        return false;
+    }
+    if (newInfo.comPort != L"COM4") {
+        platform->logMessage("reassignComPort: Device is on " + std::string(newInfo.comPort.begin(), newInfo.comPort.end()) + " instead of COM4 after reassignment attempt.");
+        return false;
+    }
+
+    platform->logMessage("reassignComPort: Successfully assigned AMT Serial Port to "
+        + std::string(newInfo.comPort.begin(), newInfo.comPort.end()));
+    return true;
+#endif
+}
+
+
+void checkSystemState() {
+    static SystemState previousState;
+
+    auto newInterfaces = platform->getNetworkInterfaces();
+    auto newHostname = platform->getHostname();
+    auto newUsername = platform->getLoggedInUser();
+
+    bool hasChanges = false;
+
+    // Check hostname changes
+    if (currentState.hostname != newHostname) {
         std::lock_guard<std::mutex> lock(stateMutex);
-        previousState = currentState;
+        currentState.hostname = newHostname;
+        sendLineToBmc("hostname, " + newHostname);
+        platform->logMessage("Hostname changed to: " + newHostname);
+        hasChanges = true;
     }
 
-    currentState.networkInterfaces = platform->getNetworkInterfaces();
-    currentState.hostname = platform->getHostname();
-    currentState.username = platform->getLoggedInUser();
-
-    if (currentState != previousState){
-        // check change logic
-        sendLineToBmc("hostname, " + currentState.hostname);
+    // Check username changes
+    if (currentState.username != newUsername) {
+        std::lock_guard<std::mutex> lock(stateMutex);
+        currentState.username = newUsername;
+        sendLineToBmc("username, " + newUsername);
+        platform->logMessage("Username changed to: " + newUsername);
+        hasChanges = true;
     }
+
+    // Check network interface changes
+    if (currentState.networkInterfaces != newInterfaces) {
+        std::lock_guard<std::mutex> lock(stateMutex);
+        currentState.networkInterfaces = newInterfaces;
+
+        platform->logMessage("Network configuration changed - sending updates");
+        for (const auto& iface : newInterfaces) {
+            std::stringstream ss;
+            ss << "network, " << iface.macAddress << ", " << iface.linkStatus
+                << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
+                << iface.dhcp << ", " << iface.name;
+            sendLineToBmc(ss.str());
+        }
+        hasChanges = true;
+    }
+}
+
+void processIncomingCommand(const std::string& command) {
+    const std::string prefix = "c2a, ";
+
+    if (command.size() > prefix.size() && command.substr(0, prefix.size()) == prefix) {
+        std::string message = command.substr(prefix.size());
+        platform->logMessage("Received C2A Command: " + message);
+        std::cout << "[RX] Received C2A Command: " << message << std::endl;
+        platform->showMessageDialog("Command from BMC", message);
+    }
+    else {
+        platform->logMessage("Received: " + command);
+        std::cout << "[RX] " << command << std::endl;
+    }
+}
+
+void processIncomingSerialData() {
+    static std::string rxBuffer;
+    std::string newData;
+    platform->readSerial(newData);
+    rxBuffer+=newData;
+    size_t pos=0;
+    while((pos=rxBuffer.find_first_of("\r\n"))!=std::string::npos) {
+        std::string line=rxBuffer.substr(0, pos);
+        if (!line.empty()) {
+            processIncomingCommand(line);
+        }
+        rxBuffer.erase(0,pos+1);
+        if (!rxBuffer.empty()&&(rxBuffer[0]=='\r'||rxBuffer[0]=='\n')) {
+            rxBuffer.erase(0, 1);
+        }
+    }
+}
+
+void readSerialPortWorker() {
+    platform->logMessage("Serial worker thread started.");
+    std::string readData;
+    // ... other variables
+
+    while (!g_terminate.load()) {
+        
+        // This call is now NON-BLOCKING (returns immediately if no data is ready)
+        if (platform->readSerial(readData)) {
+            // --- SUCCESSFUL READ / Data Processing ---
+            // ... your processing logic
+        } 
+        
+        else {
+            // --- FAILED READ / No Data Available ---
+            
+            // CRITICAL: Check exit flag immediately
+            if (g_terminate.load()) {
+                break; 
+            }
+            
+            // CRITICAL: Sleep briefly to prevent 100% CPU spin when no data is available
+            std::this_thread::sleep_for(std::chrono::milliseconds(5)); 
+        }
+    }
+    platform->logMessage("Serial worker thread finished cleanly.");
 }
 
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
-    #ifdef _WIN32
-        const std::string portName = SERIAL_PORT;
-    #else
-        const std::string portName = "/dev/ttyS2"; // Make sure this is your correct port
-    #endif
+#ifdef _WIN32
+    std::string portName = SERIAL_PORT;
+    CPUInfo cpuInfo = GetCpuInfo();
+    std::cout << "[DEBUG] CPUInfo: " << cpuInfo.manufacturer << " " << cpuInfo.model << " " << cpuInfo.clockspeed << std::endl;
+    if (IsHX2KCPU(&cpuInfo)) {
+        std::cout << "[DEBUG] Detected HX2000 CPU. Setting port to COM3..." << std::endl;
+        platform->logMessage("Detected HX2000 CPU. Setting port to COM3...");
+        portName = "COM3";
+    } else {
+        std::cout << "[DEBUG] No HX2000 CPU detected. Using COM1..." << std::endl;
+        platform->logMessage("No HX2000 CPU detected. Using COM1...");
+        portName = "COM1";
+    }
+#else
+    const std::string portName = "/dev/ttyUSB0";
+#endif
 
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
     platform->logMessage("Serial Thread Started. Attempting to open port " + portName);
 
-    if (!platform->openSerialPort(portName, 115200)) { 
+    serialManager = std::make_unique<SerialManager>(
+        [](const std::string& command) {
+            processIncomingCommand(command);
+        }
+    );
+
+    if (!serialManager->Open(portName, 115200)) {
         std::cerr << "[DEBUG] FATAL: platform->openSerialPort() returned false. Thread is exiting." << std::endl;
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);
-        return;
+#ifdef _WIN32
+        OutputDebugStringW(L"[FATAL] Failed to Open Serial Port.\n");
+#endif
+        return; //TODO: Re-implement retry logic here properly
     }
 
     std::cout << "[DEBUG] Serial Port opened successfully." << std::endl;
     platform->logMessage("Serial Port opened successfully");
 
+    // Send initial system info
     std::stringstream versionStream;
-    versionStream << VERSION_YEAR << "." << VERSION_MONTH << "." << VERSION_RELEASE;
+    versionStream << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_RELEASE << "." << VERSION_BUILD;
     if (std::string(VERSION_EXTRAVERSION) == "rc") {
         versionStream << "_" << VERSION_EXTRAVERSION << VERSION_RC_NO;
-    } else {
+    }
+    else {
         versionStream << "_" << VERSION_EXTRAVERSION;
     }
 
     std::cout << "[DEBUG] Sending initial messages..." << std::endl;
     sendLineToBmc("appVersion, " + versionStream.str());
-    sendLineToBmc("osVersion, " + platform->getOsVersion());
-    sendLineToBmc("sessionState, 0");
+    sendLineToBmc("winVersion, " + platform->getOsVersion());
+    sendLineToBmc("osBuild, " + platform->getOsBuild());
+
+    std::string initialSessionState = platform->getCurrentSessionState();
+    sendLineToBmc("sessionState, " + initialSessionState);  // Initial state
+
+    // Send initial username
+    {
+        std::lock_guard<std::mutex> lock(stateMutex);
+        currentState.username = platform->getLoggedInUser();
+        sendLineToBmc("username, " + currentState.username);
+
+        // Send initial network state
+        currentState.networkInterfaces = platform->getNetworkInterfaces();
+        for (const auto& iface : currentState.networkInterfaces) {
+            std::stringstream ss;
+            ss << "network, " << iface.macAddress << ", " << iface.linkStatus
+                << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
+                << iface.dhcp << ", " << iface.name;
+            sendLineToBmc(ss.str());
+        }
+    }
+
     std::cout << "[DEBUG] Initial messages sent." << std::endl;
 
-    currentState.username = platform->getLoggedInUser();
-    sendLineToBmc("username, " + currentState.username);
+    // Periodic check timer for network and hostname
+    auto lastNetworkCheck = std::chrono::steady_clock::now();
+    const auto networkCheckInterval = std::chrono::seconds(30);
 
     while (!g_terminate.load()) {
-        std::cout << "[DEBUG] Polling for system state..." << std::endl;
-        std::string newHostname = platform->getHostname();
-        std::string newUsername = platform->getLoggedInUser();
-        std::vector<NetworkInterface> newInterfaces = platform->getNetworkInterfaces();
+        // Process incoming serial data
+        serialManager->ProcessIncomingData();
 
-        {
-            std::lock_guard<std::mutex> lock(stateMutex);
-
-            if (currentState.hostname != newHostname) {
-                currentState.hostname = newHostname;
-                sendLineToBmc("hostname, " + currentState.hostname);
-            }
-            if (currentState.username != newUsername) {
-                currentState.username = newUsername;
-                sendLineToBmc("username, " + currentState.username);
-            }
-            if (currentState.networkInterfaces != newInterfaces) {
-                currentState.networkInterfaces = newInterfaces;
-                for (const auto& iface : newInterfaces) { // Iterate over the new interfaces
-                    std::stringstream ss;
-                    ss << "network, " << iface.macAddress << ", " << iface.linkStatus << ", " << iface.ipv4 << ", " << iface.ipv6 << ", " << iface.dhcp << ", " << iface.name;
-                    sendLineToBmc(ss.str());
-                }
-            }
+        // Try to reconnect if disconnected
+        if (!serialManager->IsOpen()) {
+            serialManager->TryReconnect();
         }
-        std::this_thread::sleep_for(std::chrono::seconds(5)); // Increased for easier debugging
+
+        // Periodic network and hostname check
+        auto now = std::chrono::steady_clock::now();
+        if (now - lastNetworkCheck >= networkCheckInterval) {
+            checkSystemState();
+            lastNetworkCheck = now;
+        }
+
+        // Short sleep for serial responsiveness
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     sendLineToBmc("appExit, shutting down serial thread...");
-    platform->closeSerialPort();
+    serialManager->Close();
     platform->logMessage("Serial thread finished.");
 }
 
@@ -137,6 +599,59 @@ int main(int argc, char* argv[]) {
     std::cout << "[DEBUG] Application starting. Creating platform object." << std::endl;
     
     platform = createPlatform();
+
+    std::cout << "[DEBUG] Checking current COM assignment for AMT Serial Port" << std::endl;
+    #ifdef _WIN32
+
+    AMTPortInfo AMTInfo = GetAMTComPort();
+
+    if (!AMTInfo.comPort.empty()) {
+        std::wcout << L"[DEBUG] AMT Serial Port is currently assigned to: " << AMTInfo.comPort << std::endl;
+        platform->logMessage("AMT Serial Port COM assignment: " + std::string(AMTInfo.comPort.begin(), AMTInfo.comPort.end()));
+    } else {
+        std::cout << "[DEBUG] No AMT Serial Port COM assignment found." << std::endl;
+        platform->logMessage("No AMT Serial Port COM assignment found.");
+    }
+
+    if (AMTInfo.comPort == L"COM3") {
+        std::cout << "[DEBUG] AMT Serial Port is on COM3. Attempting to disable it to free COM3 for our use." << std::endl;
+        platform->logMessage("AMT Serial Port is on COM3. Attempting to disable it.");
+        if (disableAMTComPort()) {
+            std::cout << "[DEBUG] Successfully disabled AMT Serial Port." << std::endl;
+            platform->logMessage("Successfully disabled AMT Serial Port.");
+            if (enableAMTComPort()) {
+                std::cout << "[DEBUG] Successfully re-enabled AMT Serial Port after disabling." << std::endl;
+                platform->logMessage("Successfully re-enabled AMT Serial Port after disabling.");
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                AMTPortInfo amtPortInfo = GetAMTComPort();
+                if (!amtPortInfo.comPort.empty() && amtPortInfo.comPort != L"COM3") {
+                    std::cout << "[DEBUG] Verified AMT Serial Port is not back on COM3 after re-enabling." << std::endl;
+                    platform->logMessage("Verified AMT Serial Port is not back on COM3 after re-enabling.");
+                } else {
+                    std::cerr << "[ERROR] After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment." << std::endl;
+                    platform->logMessage("After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment.");
+                    if (reassignComPort()) {
+                        std::cout << "[DEBUG] Successfully reassigned AMT Serial Port to a different COM port." << std::endl;
+                        platform->logMessage("Successfully reassigned AMT Serial Port to a different COM port.");
+                    } else {
+                        std::cerr << "[ERROR] Failed to reassign AMT Serial Port. COM3 may still be occupied." << std::endl;
+                        platform->logMessage("Failed to reassign AMT Serial Port. COM3 may still be occupied.");
+                        exit(1);
+                    }
+                }
+            }
+        } else {
+            std::cerr << "[ERROR] Failed to disable AMT Serial Port. This may cause issues if COM3 is not available." << std::endl;
+            platform->logMessage("Failed to disable AMT Serial Port. COM3 may not be available.");
+            exit(1);
+        }
+    }
+#endif
+
+#ifdef ENABLE_METRICS
+    metricsCollector = std::make_unique<MetricsCollector>(platform.get());
+#endif
+
     std::thread workerThread;
     std::thread hbThread;
 
@@ -151,14 +666,23 @@ int main(int argc, char* argv[]) {
             hbThread = std::thread(heartbeatThread);
         },
         // on_stop callback
-        [&]() {
-            std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread." << std::endl;
+        [&](const std::string& stopReason) {
+            std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread. Reason: " << stopReason << std::endl;
+#ifdef _WIN32
+			OutputDebugStringW(L"on_stop callback EXECUTED. Stopping serial Thread.\n");
+#endif
+            notifyStopRequested(stopReason);
             g_terminate = true;
+
             if (workerThread.joinable()) {
                 workerThread.join();
             }
             if (hbThread.joinable()) {
                 hbThread.join();
+            }
+
+            if (serialManager) {
+                serialManager->Close();
             }
         },
         // powerState callback
@@ -176,10 +700,19 @@ int main(int argc, char* argv[]) {
                 currentState.sessionState = sessionState;
                 sendLineToBmc("sessionState, " + sessionState);
 
+                // When user logs off, set username to "none"
                 if (sessionState == "6") { // WTS_SESSION_LOGOFF
                     if (currentState.username != "none") {
                         currentState.username = "none";
                         sendLineToBmc("username, none");
+                    }
+                }
+                // When user logs on, update username
+                else if (sessionState == "5") { // WTS_SESSION_LOGON
+                    std::string newUsername = platform->getLoggedInUser();
+                    if (currentState.username != newUsername) {
+                        currentState.username = newUsername;
+                        sendLineToBmc("username, " + currentState.username);
                     }
                 }
             }
@@ -189,3 +722,5 @@ int main(int argc, char* argv[]) {
     std::cout << "[DEBUG] platform->run() has exited. Application terminating." << std::endl;
     return 0;
 }
+
+

@@ -1,0 +1,676 @@
+{
+  "scriptCompleted": true,
+  "entryPointCandidates": [
+    {
+      "id": "file:src/main.cpp",
+      "score": 6,
+      "name": "main.cpp",
+      "summary": "Application entry point for the CoreStationHXAgent; bootstraps the platform abstraction, manages serial communication and heartbeat threads, handles AMT COM port detection/reassignment via the Windows registry, and relays system state to the CoreStation HX CMC over serial."
+    },
+    {
+      "id": "document:README.md",
+      "score": 5,
+      "name": "README.md",
+      "summary": "Primary project documentation describing the repository file layout, Linux build/install instructions (Ubuntu 24.04, debuild/.deb packaging, systemd service), and Windows build/usage instructions (build machine setup, day-to-day use, exe signing, service management, PowerShell execution policy, linting), plus reference tables for session-state and serial-output debug codes."
+    },
+    {
+      "id": "file:src/modules/metrics/MetricsCollector.cpp",
+      "score": 2,
+      "name": "MetricsCollector.cpp",
+      "summary": "Implements MetricsCollector's metric-gathering methods, calling into the Platform interface for CPU/RAM/disk/network/GPU/process/update data and assembling a formatted metrics string for transmission."
+    },
+    {
+      "id": "file:setup-remotes.ps1",
+      "score": 2,
+      "name": "setup-remotes.ps1",
+      "summary": "One-time PowerShell setup script that configures git remotes after cloning, adding a GitHub mirror remote and a combined 'all' remote with push URLs pointing to both Bitbucket and GitHub."
+    },
+    {
+      "id": "config:.understand-anything/.understandignore",
+      "score": 2,
+      "name": ".understandignore",
+      "summary": "Ignore-pattern configuration for the understand-anything analysis tool, excluding build artifacts, dependencies, and generated files from codebase scanning."
+    }
+  ],
+  "fanInRanking": [
+    {
+      "id": "file:src/core/Platform.h",
+      "name": "Platform.h",
+      "fanIn": 6
+    },
+    {
+      "id": "service:CoreStationHXAgent.service",
+      "name": "CoreStationHXAgent.service",
+      "fanIn": 4
+    },
+    {
+      "id": "file:src/core/SystemState.h",
+      "name": "SystemState.h",
+      "fanIn": 3
+    },
+    {
+      "id": "config:CMakeLists.txt",
+      "name": "CMakeLists.txt",
+      "fanIn": 3
+    },
+    {
+      "id": "file:src/modules/serial/SerialManager.h",
+      "name": "SerialManager.h",
+      "fanIn": 2
+    },
+    {
+      "id": "document:release-notes.txt",
+      "name": "release-notes.txt",
+      "fanIn": 2
+    },
+    {
+      "id": "file:src/platform/Windows_Addon.h",
+      "name": "Windows_Addon.h",
+      "fanIn": 2
+    },
+    {
+      "id": "file:src/platform/WindowsPlatform.h",
+      "name": "WindowsPlatform.h",
+      "fanIn": 2
+    },
+    {
+      "id": "file:src/modules/metrics/MetricCache.h",
+      "name": "MetricCache.h",
+      "fanIn": 1
+    },
+    {
+      "id": "file:src/modules/metrics/MetricsCollector.h",
+      "name": "MetricsCollector.h",
+      "fanIn": 1
+    },
+    {
+      "id": "file:src/modules/3kcheck/3kcheck.h",
+      "name": "3kcheck.h",
+      "fanIn": 1
+    },
+    {
+      "id": "file:src/version.h",
+      "name": "version.h",
+      "fanIn": 1
+    },
+    {
+      "id": "file:build.bat",
+      "name": "build.bat",
+      "fanIn": 1
+    },
+    {
+      "id": "file:build.sh",
+      "name": "build.sh",
+      "fanIn": 1
+    },
+    {
+      "id": "file:sign.bat",
+      "name": "sign.bat",
+      "fanIn": 1
+    },
+    {
+      "id": "file:installer/install.ps1",
+      "name": "install.ps1",
+      "fanIn": 1
+    },
+    {
+      "id": "file:installer/remove.ps1",
+      "name": "remove.ps1",
+      "fanIn": 1
+    },
+    {
+      "id": "resource:app.rc",
+      "name": "app.rc",
+      "fanIn": 1
+    },
+    {
+      "id": "config:debian/control",
+      "name": "control",
+      "fanIn": 1
+    },
+    {
+      "id": "file:src/modules/regedits/Regedit.h",
+      "name": "Regedit.h",
+      "fanIn": 1
+    }
+  ],
+  "fanOutRanking": [
+    {
+      "id": "file:src/platform/WindowsPlatform.cpp",
+      "name": "WindowsPlatform.cpp",
+      "fanOut": 34
+    },
+    {
+      "id": "file:src/main.cpp",
+      "name": "main.cpp",
+      "fanOut": 20
+    },
+    {
+      "id": "file:src/modules/service/ServiceManager.cpp",
+      "name": "ServiceManager.cpp",
+      "fanOut": 16
+    },
+    {
+      "id": "file:src/modules/metrics/MetricsCollector.cpp",
+      "name": "MetricsCollector.cpp",
+      "fanOut": 9
+    },
+    {
+      "id": "file:src/modules/tray/TrayApp.cpp",
+      "name": "TrayApp.cpp",
+      "fanOut": 9
+    },
+    {
+      "id": "file:src/modules/serial/SerialManager.cpp",
+      "name": "SerialManager.cpp",
+      "fanOut": 8
+    },
+    {
+      "id": "file:src/modules/session/SessionMonitor.cpp",
+      "name": "SessionMonitor.cpp",
+      "fanOut": 7
+    },
+    {
+      "id": "file:src/platform/Windows_Addon.h",
+      "name": "Windows_Addon.h",
+      "fanOut": 6
+    },
+    {
+      "id": "document:README.md",
+      "name": "README.md",
+      "fanOut": 5
+    },
+    {
+      "id": "file:src/modules/3kcheck/3kcheck.cpp",
+      "name": "3kcheck.cpp",
+      "fanOut": 5
+    },
+    {
+      "id": "file:src/modules/regedits/Regedit.cpp",
+      "name": "Regedit.cpp",
+      "fanOut": 5
+    },
+    {
+      "id": "file:src/platform/WindowsPlatform.h",
+      "name": "WindowsPlatform.h",
+      "fanOut": 4
+    },
+    {
+      "id": "file:src/core/Platform.h",
+      "name": "Platform.h",
+      "fanOut": 3
+    },
+    {
+      "id": "file:src/modules/metrics/MetricsCollector.h",
+      "name": "MetricsCollector.h",
+      "fanOut": 3
+    },
+    {
+      "id": "file:src/core/SystemState.h",
+      "name": "SystemState.h",
+      "fanOut": 2
+    },
+    {
+      "id": "file:src/modules/serial/SerialManager.h",
+      "name": "SerialManager.h",
+      "fanOut": 2
+    },
+    {
+      "id": "file:build.bat",
+      "name": "build.bat",
+      "fanOut": 2
+    },
+    {
+      "id": "document:installer/release-notes.txt",
+      "name": "release-notes.txt",
+      "fanOut": 2
+    },
+    {
+      "id": "file:src/modules/regedits/Regedit.h",
+      "name": "Regedit.h",
+      "fanOut": 2
+    },
+    {
+      "id": "file:src/modules/service/ServiceManager.h",
+      "name": "ServiceManager.h",
+      "fanOut": 2
+    }
+  ],
+  "bfsTraversal": {
+    "startNode": "file:src/main.cpp",
+    "order": [
+      "file:src/main.cpp",
+      "file:src/core/Platform.h",
+      "file:src/core/SystemState.h",
+      "file:src/modules/3kcheck/3kcheck.h",
+      "file:src/modules/serial/SerialManager.h",
+      "file:src/version.h"
+    ],
+    "depthMap": {
+      "file:src/main.cpp": 0,
+      "file:src/core/Platform.h": 1,
+      "file:src/core/SystemState.h": 1,
+      "file:src/modules/3kcheck/3kcheck.h": 1,
+      "file:src/modules/serial/SerialManager.h": 1,
+      "file:src/version.h": 1
+    },
+    "byDepth": {
+      "0": [
+        "file:src/main.cpp"
+      ],
+      "1": [
+        "file:src/core/Platform.h",
+        "file:src/core/SystemState.h",
+        "file:src/modules/3kcheck/3kcheck.h",
+        "file:src/modules/serial/SerialManager.h",
+        "file:src/version.h"
+      ]
+    }
+  },
+  "nonCodeFiles": {
+    "documentation": [
+      {
+        "id": "document:README.md",
+        "name": "README.md",
+        "summary": "Primary project documentation describing the repository file layout, Linux build/install instructions (Ubuntu 24.04, debuild/.deb packaging, systemd service), and Windows build/usage instructions (build machine setup, day-to-day use, exe signing, service management, PowerShell execution policy, linting), plus reference tables for session-state and serial-output debug codes."
+      },
+      {
+        "id": "document:release-notes.txt",
+        "name": "release-notes.txt",
+        "summary": "Chronological changelog of CoreStationHXAgent releases from version 2025.4.2 through 20.26.5.1_GA, documenting feature additions such as session-state reporting, heartbeat messages, Linux build support, EV signing, serial port COM assignment changes, and HX3000 CPU-based node detection."
+      },
+      {
+        "id": "document:installer/release-notes.txt",
+        "name": "release-notes.txt",
+        "summary": "Chronological release notes for CoreStation HX Agent (installer copy), documenting version history from 2025.4.2 through 20.26.5.1_GA including HX3000 CPU-based COM port detection, heartbeat messaging, session reporting robustness, and Linux build support."
+      },
+      {
+        "id": "document:debian/changelog",
+        "name": "changelog",
+        "summary": "Debian package changelog recording version history entries for the corestationhxagent package."
+      },
+      {
+        "id": "document:debian/copyright",
+        "name": "copyright",
+        "summary": "Debian copyright and licensing declaration for the corestationhxagent package and its included files."
+      }
+    ],
+    "infrastructure": [
+      {
+        "type": "resource",
+        "id": "resource:app.rc",
+        "name": "app.rc",
+        "summary": "Windows resource script defining the application icon and VERSIONINFO block (company, file/product version, description) for the CoreStationHXAgent executable, sourced from version.h macros."
+      },
+      {
+        "type": "resource",
+        "id": "resource:app.res",
+        "name": "app.res",
+        "summary": "Compiled Windows resource binary produced from app.rc, embedding the application icon and version metadata into the final executable."
+      },
+      {
+        "type": "service",
+        "id": "service:CoreStationHXAgent.service",
+        "name": "CoreStationHXAgent.service",
+        "summary": "systemd unit file that runs the CoreStationHXAgent binary as a simple service on Linux, restarting on failure and starting at multi-user boot target."
+      },
+      {
+        "type": "service",
+        "id": "service:debian/postinst",
+        "name": "postinst",
+        "summary": "Post-installation script that enables and (re)starts the CoreStationHXAgent systemd service after package install/configure, with verbose console banners for debugging."
+      },
+      {
+        "type": "service",
+        "id": "service:debian/postrm",
+        "name": "postrm",
+        "summary": "Post-removal script that cleans up service state (e.g., disabling/stopping CoreStationHXAgent.service) after the package is removed."
+      },
+      {
+        "type": "service",
+        "id": "service:debian/prerm",
+        "name": "prerm",
+        "summary": "Pre-removal script that stops the CoreStationHXAgent systemd service before the package files are removed."
+      },
+      {
+        "type": "pipeline",
+        "id": "pipeline:debian/rules",
+        "name": "rules",
+        "summary": "Debian build rules makefile driving the package build via debhelper's dh command with CMake support, including an override to customize the auto-clean step."
+      }
+    ],
+    "data": [],
+    "config": [
+      {
+        "id": "config:CMakeLists.txt",
+        "name": "CMakeLists.txt",
+        "summary": "CMake build configuration for CoreStationHXAgent: defines a C++17 executable target with platform-specific sources (Windows tray/session/regedit/metrics modules vs Linux platform code), parses version info from src/version.h, generates git_info.h with branch/hash/build time, sets compiler flags per platform/config, links Windows system libraries (iphlpapi, ws2_32, wtsapi32, etc.) or Linux dbus-1, and configures CPack packaging (WIX on Windows, DEB on Linux) plus optional install rules and test subdirectory."
+      },
+      {
+        "id": "config:.understand-anything/.understandignore",
+        "name": ".understandignore",
+        "summary": "Ignore-pattern configuration for the understand-anything analysis tool, excluding build artifacts, dependencies, and generated files from codebase scanning."
+      },
+      {
+        "id": "config:debian/clean",
+        "name": "clean",
+        "summary": "Debian packaging file listing extra build artifacts to remove during the package clean step."
+      },
+      {
+        "id": "config:debian/compat",
+        "name": "compat",
+        "summary": "Specifies the debhelper compatibility level used when building the Debian package."
+      },
+      {
+        "id": "config:debian/control",
+        "name": "control",
+        "summary": "Debian package control file declaring source/binary package metadata, maintainer, build dependencies (cmake, dh-cmake, debhelper), and runtime dependencies (network-manager, libdbus-1-3) for corestationhxagent."
+      },
+      {
+        "id": "config:debian/dh-cmake.compat",
+        "name": "dh-cmake.compat",
+        "summary": "Compatibility version declaration for the dh-cmake debhelper sequence add-on used in the package build."
+      },
+      {
+        "id": "config:debian/files",
+        "name": "files",
+        "summary": "Debhelper-generated registry of output package files produced during the Debian build process."
+      },
+      {
+        "id": "config:debian/source/format",
+        "name": "format",
+        "summary": "Declares the Debian source package format (typically 3.0 quilt) used when constructing the source package."
+      }
+    ]
+  },
+  "clusters": [],
+  "layers": {
+    "count": 7,
+    "list": [
+      {
+        "id": "layer:entry-point",
+        "name": "Entry Point",
+        "description": "Application bootstrap that wires up the platform abstraction, manages the serial/heartbeat threads, AMT COM port detection, and the agent's version metadata."
+      },
+      {
+        "id": "layer:platform-abstraction",
+        "name": "Platform Abstraction",
+        "description": "The OS-agnostic interface (Platform, SystemState) that defines the contract for networking, serial I/O, and system metrics, decoupling the agent's core logic from concrete OS implementations."
+      },
+      {
+        "id": "layer:platform-implementation",
+        "name": "Platform Implementations",
+        "description": "Concrete Windows and Linux implementations of the Platform interface, including Windows service lifecycle, COM/WMI/PDH metric collection, registry access, and D-Bus/syslog integration on Linux."
+      },
+      {
+        "id": "layer:feature-modules",
+        "name": "Feature Modules",
+        "description": "Self-contained hardware and OS-integration modules consumed primarily from main.cpp: serial communication, metrics collection/caching, Windows service management, session monitoring, tray UI, registry editing, and HX2K/HX3K CPU detection."
+      },
+      {
+        "id": "layer:build-system",
+        "name": "Build System",
+        "description": "CMake build configuration, Windows/Linux build and signing scripts, Windows resource files, and repository setup utilities that compile and version the agent executable."
+      },
+      {
+        "id": "layer:deployment-packaging",
+        "name": "Deployment & Packaging",
+        "description": "Windows service installer/uninstaller scripts, the systemd unit, and the full Debian packaging toolchain (control, rules, postinst/postrm/prerm, compat files) that package and deploy the agent as a host service."
+      },
+      {
+        "id": "layer:documentation",
+        "name": "Documentation",
+        "description": "Project README and release-notes/changelog files describing build, install, and usage instructions plus the chronological history of agent releases."
+      }
+    ]
+  },
+  "nodeSummaryIndex": {
+    "file:src/core/Platform.h": {
+      "name": "Platform.h",
+      "type": "file",
+      "summary": "Defines the abstract Platform interface that exposes all OS-specific operations (networking, serial I/O, system metrics, GPU info, dialogs) required by the agent, allowing platform-specific implementations to be swapped behind a common API."
+    },
+    "file:src/core/SystemState.h": {
+      "name": "SystemState.h",
+      "type": "file",
+      "summary": "Defines the NetworkInterface and SystemState plain-data structures that capture a snapshot of host networking, session, and performance metrics for change detection and reporting."
+    },
+    "file:src/modules/metrics/MetricCache.h": {
+      "name": "MetricCache.h",
+      "type": "file",
+      "summary": "Generic, thread-safe TTL cache template that stores the last computed value of an expensive metric and only recomputes it once the configured time-to-live has elapsed, plus a CacheDurations namespace of per-metric TTL constants."
+    },
+    "file:src/modules/metrics/MetricsCollector.h": {
+      "name": "MetricsCollector.h",
+      "type": "file",
+      "summary": "Declares the MetricsCollector class, which orchestrates periodic collection of performance, GPU, process, and Windows Update metrics from a Platform implementation, with optional per-metric caching."
+    },
+    "file:src/modules/metrics/MetricsCollector.cpp": {
+      "name": "MetricsCollector.cpp",
+      "type": "file",
+      "summary": "Implements MetricsCollector's metric-gathering methods, calling into the Platform interface for CPU/RAM/disk/network/GPU/process/update data and assembling a formatted metrics string for transmission."
+    },
+    "file:src/main.cpp": {
+      "name": "main.cpp",
+      "type": "file",
+      "summary": "Application entry point for the CoreStationHXAgent; bootstraps the platform abstraction, manages serial communication and heartbeat threads, handles AMT COM port detection/reassignment via the Windows registry, and relays system state to the CoreStation HX CMC over serial."
+    },
+    "file:src/modules/3kcheck/3kcheck.h": {
+      "name": "3kcheck.h",
+      "type": "file",
+      "summary": "Windows-only header declaring CPUInfo and helper functions to retrieve CPU details and determine whether the host is an HX2K-class CPU configuration (vs. HX3K), used to select the correct serial COM port."
+    },
+    "file:src/modules/serial/SerialManager.cpp": {
+      "name": "SerialManager.cpp",
+      "type": "file",
+      "summary": "Cross-platform implementation of serial port communication (open/close/read/write/reconnect) supporting both Windows (CreateFileA/HANDLE) and POSIX (termios) backends, with message framing and retry-delay-based reconnection logic."
+    },
+    "file:src/modules/serial/SerialManager.h": {
+      "name": "SerialManager.h",
+      "type": "file",
+      "summary": "Declares the cross-platform SerialManager class, providing an interface for opening, closing, reading, writing, and auto-reconnecting a serial port, with platform-specific handle storage for Windows and POSIX."
+    },
+    "file:src/version.h": {
+      "name": "version.h",
+      "type": "file",
+      "summary": "Defines the agent's version number components (major/minor/release/build/extraversion/RC/adhoc), the default serial port path, and a human-readable application description."
+    },
+    "config:CMakeLists.txt": {
+      "name": "CMakeLists.txt",
+      "type": "config",
+      "summary": "CMake build configuration for CoreStationHXAgent: defines a C++17 executable target with platform-specific sources (Windows tray/session/regedit/metrics modules vs Linux platform code), parses version info from src/version.h, generates git_info.h with branch/hash/build time, sets compiler flags per platform/config, links Windows system libraries (iphlpapi, ws2_32, wtsapi32, etc.) or Linux dbus-1, and configures CPack packaging (WIX on Windows, DEB on Linux) plus optional install rules and test subdirectory."
+    },
+    "document:README.md": {
+      "name": "README.md",
+      "type": "document",
+      "summary": "Primary project documentation describing the repository file layout, Linux build/install instructions (Ubuntu 24.04, debuild/.deb packaging, systemd service), and Windows build/usage instructions (build machine setup, day-to-day use, exe signing, service management, PowerShell execution policy, linting), plus reference tables for session-state and serial-output debug codes."
+    },
+    "file:build.bat": {
+      "name": "build.bat",
+      "type": "file",
+      "summary": "Windows batch script that initializes the MSVC build environment via vswhere/vcvarsall, configures and builds the CoreStationHXAgent CMake project in Release mode, locates the resulting executable, copies it (and release-notes.txt) into the installer directory, and reports build time and file size."
+    },
+    "file:build.sh": {
+      "name": "build.sh",
+      "type": "file",
+      "summary": "Linux/cross-compile shell script that generates git_info.h from current git branch/hash/build time, compiles Windows resources with windres, and cross-compiles a static Windows .exe using the MinGW-w64 toolchain (x86_64-w64-mingw32-g++-posix), linking the required Win32 system libraries."
+    },
+    "document:release-notes.txt": {
+      "name": "release-notes.txt",
+      "type": "document",
+      "summary": "Chronological changelog of CoreStationHXAgent releases from version 2025.4.2 through 20.26.5.1_GA, documenting feature additions such as session-state reporting, heartbeat messages, Linux build support, EV signing, serial port COM assignment changes, and HX3000 CPU-based node detection."
+    },
+    "file:setup-remotes.ps1": {
+      "name": "setup-remotes.ps1",
+      "type": "file",
+      "summary": "One-time PowerShell setup script that configures git remotes after cloning, adding a GitHub mirror remote and a combined 'all' remote with push URLs pointing to both Bitbucket and GitHub."
+    },
+    "file:sign.bat": {
+      "name": "sign.bat",
+      "type": "file",
+      "summary": "Minimal batch script intended to code-sign an executable via the smctl sign command using a configured key-pair alias; per the README this script is not currently used in the build process."
+    },
+    "file:installer/install.ps1": {
+      "name": "install.ps1",
+      "type": "file",
+      "summary": "Administrator-only PowerShell installer that cleanly removes any existing CoreStationService, copies the agent executable to C:\\ProgramData\\ahk, registers it as a Windows service with auto-restart failure recovery, and starts it."
+    },
+    "document:installer/release-notes.txt": {
+      "name": "release-notes.txt",
+      "type": "document",
+      "summary": "Chronological release notes for CoreStation HX Agent (installer copy), documenting version history from 2025.4.2 through 20.26.5.1_GA including HX3000 CPU-based COM port detection, heartbeat messaging, session reporting robustness, and Linux build support."
+    },
+    "file:installer/remove.ps1": {
+      "name": "remove.ps1",
+      "type": "file",
+      "summary": "Administrator-only PowerShell uninstaller that stops and deletes the CoreStationService via sc.exe, verifies removal by polling Get-Service, and moves the leftover executable from C:\\ProgramData\\ahk to the temp directory."
+    },
+    "config:.understand-anything/.understandignore": {
+      "name": ".understandignore",
+      "type": "config",
+      "summary": "Ignore-pattern configuration for the understand-anything analysis tool, excluding build artifacts, dependencies, and generated files from codebase scanning."
+    },
+    "resource:app.rc": {
+      "name": "app.rc",
+      "type": "resource",
+      "summary": "Windows resource script defining the application icon and VERSIONINFO block (company, file/product version, description) for the CoreStationHXAgent executable, sourced from version.h macros."
+    },
+    "resource:app.res": {
+      "name": "app.res",
+      "type": "resource",
+      "summary": "Compiled Windows resource binary produced from app.rc, embedding the application icon and version metadata into the final executable."
+    },
+    "service:CoreStationHXAgent.service": {
+      "name": "CoreStationHXAgent.service",
+      "type": "service",
+      "summary": "systemd unit file that runs the CoreStationHXAgent binary as a simple service on Linux, restarting on failure and starting at multi-user boot target."
+    },
+    "document:debian/changelog": {
+      "name": "changelog",
+      "type": "document",
+      "summary": "Debian package changelog recording version history entries for the corestationhxagent package."
+    },
+    "config:debian/clean": {
+      "name": "clean",
+      "type": "config",
+      "summary": "Debian packaging file listing extra build artifacts to remove during the package clean step."
+    },
+    "config:debian/compat": {
+      "name": "compat",
+      "type": "config",
+      "summary": "Specifies the debhelper compatibility level used when building the Debian package."
+    },
+    "config:debian/control": {
+      "name": "control",
+      "type": "config",
+      "summary": "Debian package control file declaring source/binary package metadata, maintainer, build dependencies (cmake, dh-cmake, debhelper), and runtime dependencies (network-manager, libdbus-1-3) for corestationhxagent."
+    },
+    "document:debian/copyright": {
+      "name": "copyright",
+      "type": "document",
+      "summary": "Debian copyright and licensing declaration for the corestationhxagent package and its included files."
+    },
+    "config:debian/dh-cmake.compat": {
+      "name": "dh-cmake.compat",
+      "type": "config",
+      "summary": "Compatibility version declaration for the dh-cmake debhelper sequence add-on used in the package build."
+    },
+    "config:debian/files": {
+      "name": "files",
+      "type": "config",
+      "summary": "Debhelper-generated registry of output package files produced during the Debian build process."
+    },
+    "service:debian/postinst": {
+      "name": "postinst",
+      "type": "service",
+      "summary": "Post-installation script that enables and (re)starts the CoreStationHXAgent systemd service after package install/configure, with verbose console banners for debugging."
+    },
+    "service:debian/postrm": {
+      "name": "postrm",
+      "type": "service",
+      "summary": "Post-removal script that cleans up service state (e.g., disabling/stopping CoreStationHXAgent.service) after the package is removed."
+    },
+    "service:debian/prerm": {
+      "name": "prerm",
+      "type": "service",
+      "summary": "Pre-removal script that stops the CoreStationHXAgent systemd service before the package files are removed."
+    },
+    "pipeline:debian/rules": {
+      "name": "rules",
+      "type": "pipeline",
+      "summary": "Debian build rules makefile driving the package build via debhelper's dh command with CMake support, including an override to customize the auto-clean step."
+    },
+    "config:debian/source/format": {
+      "name": "format",
+      "type": "config",
+      "summary": "Declares the Debian source package format (typically 3.0 quilt) used when constructing the source package."
+    },
+    "file:src/modules/3kcheck/3kcheck.cpp": {
+      "name": "3kcheck.cpp",
+      "type": "file",
+      "summary": "Windows-only CPU detection module that uses the __cpuid intrinsic to read CPU vendor/brand strings and determine whether the host is an HX2K-class CPU (Core Ultra 165H/165U/285H) versus HX3K, replacing an earlier NIC-based detection approach."
+    },
+    "file:src/modules/regedits/Regedit.cpp": {
+      "name": "Regedit.cpp",
+      "type": "file",
+      "summary": "Implements the Regedit class's Windows Registry operations (Read, Write, Create, Delete), parsing root-key/subkey paths and using Win32 Reg* APIs with logging via the parent WindowsPlatform."
+    },
+    "file:src/modules/regedits/Regedit.h": {
+      "name": "Regedit.h",
+      "type": "file",
+      "summary": "Declares the Regedit class providing a small cross-cutting API (Read/Write/Create/Delete) for Windows Registry access on behalf of the parent WindowsPlatform."
+    },
+    "file:src/modules/service/ServiceManager.cpp": {
+      "name": "ServiceManager.cpp",
+      "type": "file",
+      "summary": "Implements the ServiceManager class, providing full Windows Service Control Manager (SCM) lifecycle handling: install/uninstall, start/stop, status query and reporting, the service main and control-handler callbacks, and Win32 error formatting helpers."
+    },
+    "file:src/modules/service/ServiceManager.h": {
+      "name": "ServiceManager.h",
+      "type": "file",
+      "summary": "Declares the ServiceManager class and its nested ServiceConfig/ServiceStatus structs, exposing the full Windows Service lifecycle API (install, uninstall, start, stop, status query, SCM callbacks) used by the agent to run itself as a Windows service."
+    },
+    "file:src/modules/session/SessionMonitor.cpp": {
+      "name": "SessionMonitor.cpp",
+      "type": "file",
+      "summary": "Implements the SessionMonitor class: creates a hidden window subscribed to WTS session-change notifications (logon/logoff, lock/unlock, console/RDP connect) on a dedicated thread and reports state transitions via callback, plus a helper to query current session state including logged-in user and desktop type."
+    },
+    "file:src/modules/session/SessionMonitor.h": {
+      "name": "SessionMonitor.h",
+      "type": "file",
+      "summary": "Declares the SessionMonitor class, which watches Windows Terminal Services (WTS) session-state changes via a hidden window and reports them through a callback function."
+    },
+    "file:src/modules/tray/TrayApp.cpp": {
+      "name": "TrayApp.cpp",
+      "type": "file",
+      "summary": "Implements the TrayApp class: manages a Windows system tray icon showing hostname/IP/uptime, running a UI thread for the tray window and a named-pipe listener thread that parses incoming key=value updates from the agent process to refresh the displayed tooltip."
+    },
+    "file:src/modules/tray/TrayApp.h": {
+      "name": "TrayApp.h",
+      "type": "file",
+      "summary": "Declares the TrayApp class, which displays a Windows system tray icon with hostname/IP/uptime information updated via UI and named-pipe listener threads."
+    },
+    "file:src/platform/LinuxPlatform.cpp": {
+      "name": "LinuxPlatform.cpp",
+      "type": "file",
+      "summary": "Linux-specific implementation of the Platform interface, providing serial port I/O, network interface enumeration, system metrics (CPU/RAM/disk/GPU), D-Bus session monitoring, and syslog-based logging for the host agent."
+    },
+    "file:src/platform/Windows_Addon.h": {
+      "name": "Windows_Addon.h",
+      "type": "file",
+      "summary": "Small header of Windows-specific RAII helpers: custom deleters for HANDLE and PDH_HQUERY smart pointers, and a COM library initializer/uninitializer wrapper."
+    },
+    "file:src/platform/WindowsPlatform.cpp": {
+      "name": "WindowsPlatform.cpp",
+      "type": "file",
+      "summary": "Windows-specific implementation of the Platform interface and Windows Service entry point: handles SCM service lifecycle, serial port I/O, network/adapter enumeration via IP Helper API, WMI-based GPU driver queries, PDH performance counters, registry-based OS version detection, and high-RAM process discovery."
+    },
+    "file:src/platform/WindowsPlatform.h": {
+      "name": "WindowsPlatform.h",
+      "type": "file",
+      "summary": "Declares the WindowsPlatform class implementing the Platform interface for Windows, including service-management members, PDH counters, COM initializer, metric caches, and Windows-specific helper methods."
+    }
+  },
+  "totalNodes": 49,
+  "totalEdges": 262
+}

@@ -1,0 +1,17 @@
+{
+  "projectRoot": "D:/michaels-node-win-app-github",
+  "batchFiles": [
+    {"path": "src/main.cpp", "language": "cpp", "sizeLines": 723, "fileCategory": "code"},
+    {"path": "src/modules/3kcheck/3kcheck.h", "language": "c", "sizeLines": 13, "fileCategory": "code"},
+    {"path": "src/modules/serial/SerialManager.cpp", "language": "cpp", "sizeLines": 251, "fileCategory": "code"},
+    {"path": "src/modules/serial/SerialManager.h", "language": "c", "sizeLines": 102, "fileCategory": "code"},
+    {"path": "src/version.h", "language": "c", "sizeLines": 13, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/main.cpp": ["src/core/Platform.h", "src/core/SystemState.h", "src/modules/3kcheck/3kcheck.h", "src/modules/serial/SerialManager.h", "src/version.h"],
+    "src/modules/3kcheck/3kcheck.h": [],
+    "src/modules/serial/SerialManager.cpp": ["src/modules/serial/SerialManager.h"],
+    "src/modules/serial/SerialManager.h": [],
+    "src/version.h": []
+  }
+}

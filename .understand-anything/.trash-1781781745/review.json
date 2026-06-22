@@ -1,0 +1,40 @@
+{
+  "issues": [],
+  "warnings": [
+    "Node 'file:setup-remotes.ps1' has no edges (orphan)",
+    "Node 'config:.understand-anything/.understandignore' has no edges (orphan)",
+    "Node 'document:debian/changelog' has no edges (orphan)",
+    "Node 'config:debian/clean' has no edges (orphan)",
+    "Node 'config:debian/compat' has no edges (orphan)",
+    "Node 'document:debian/copyright' has no edges (orphan)",
+    "Node 'config:debian/dh-cmake.compat' has no edges (orphan)",
+    "Node 'config:debian/files' has no edges (orphan)",
+    "Node 'config:debian/source/format' has no edges (orphan)"
+  ],
+  "stats": {
+    "totalNodes": 158,
+    "totalEdges": 262,
+    "totalLayers": 7,
+    "tourSteps": 14,
+    "nodeTypes": {
+      "file": 29,
+      "class": 15,
+      "function": 94,
+      "config": 8,
+      "document": 5,
+      "resource": 2,
+      "service": 4,
+      "pipeline": 1
+    },
+    "edgeTypes": {
+      "contains": 109,
+      "imports": 20,
+      "depends_on": 21,
+      "calls": 86,
+      "related": 5,
+      "exports": 12,
+      "documents": 7,
+      "implements": 2
+    }
+  }
+}

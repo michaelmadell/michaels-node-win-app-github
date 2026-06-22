@@ -1,0 +1,660 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 49,
+  "totalBatches": 6,
+  "exportsByPath": {
+    ".understand-anything/.understandignore": [],
+    "app.rc": [],
+    "app.res": [],
+    "CoreStationHXAgent.service": [],
+    "debian/changelog": [],
+    "debian/clean": [],
+    "debian/compat": [],
+    "debian/control": [],
+    "debian/copyright": [],
+    "debian/dh-cmake.compat": [],
+    "debian/files": [],
+    "debian/postinst": [],
+    "debian/postrm": [],
+    "debian/prerm": [],
+    "debian/rules": [],
+    "debian/source/format": [],
+    "src/core/Platform.h": [
+      "~Platform",
+      "getNetworkInterfaces",
+      "getHostname",
+      "getCurrentSessionState",
+      "getLoggedInUser",
+      "getOsVersion",
+      "getOsBuild",
+      "openSerialPort",
+      "closeSerialPort",
+      "writeSerial",
+      "readSerial",
+      "logMessage",
+      "getCpuUsagePercent",
+      "getRamUsagePercent",
+      "getFreeDiskSpaceGB",
+      "getWindowsUpdateState",
+      "getDiskQueueLength",
+      "getNetworkRetransRate",
+      "getSystemUptime",
+      "updatePdhMetrics",
+      "getGpuDriverInfo",
+      "getGpuUsagePercent",
+      "getHighRamProcesses",
+      "showMessageDialog",
+      "run",
+      "Platform"
+    ],
+    "src/core/SystemState.h": [
+      "operator!=",
+      "operator==",
+      "NetworkInterface",
+      "operator!=",
+      "SystemState"
+    ],
+    "src/main.cpp": [
+      "sendLineToBmc",
+      "notifyStopRequested",
+      "heartbeatThread",
+      "AMTPortInfo",
+      "GetAMTComPort",
+      "disableAMTComPort",
+      "enableAMTComPort",
+      "reassignComPort",
+      "checkSystemState",
+      "processIncomingCommand",
+      "processIncomingSerialData",
+      "readSerialPortWorker",
+      "serialThread",
+      "main"
+    ],
+    "src/modules/3kcheck/3kcheck.cpp": [],
+    "src/modules/3kcheck/3kcheck.h": [],
+    "src/modules/metrics/MetricCache.h": [],
+    "src/modules/metrics/MetricsCollector.cpp": [
+      "MetricsCollector",
+      "~MetricsCollector",
+      "UpdateCounters",
+      "CollectAll",
+      "CollectPerformance",
+      "CollectGpu",
+      "CollectProcesses",
+      "CheckUpdates",
+      "InvalidateCache",
+      "SetCachingEnabled",
+      "GetFormattedMetrics"
+    ],
+    "src/modules/metrics/MetricsCollector.h": [
+      "Platform",
+      "UpdateCounters",
+      "CollectAll",
+      "CollectPerformance",
+      "CollectGpu",
+      "CollectProcesses",
+      "CheckUpdates",
+      "InvalidateCache",
+      "SetCachingEnabled",
+      "GetFormattedMetrics",
+      "MetricsCollector",
+      "MetricsCollector"
+    ],
+    "src/modules/regedits/Regedit.cpp": [],
+    "src/modules/regedits/Regedit.h": [
+      "WindowsPlatform",
+      "Read",
+      "Write",
+      "Create",
+      "Delete",
+      "Regedit"
+    ],
+    "src/modules/serial/SerialManager.cpp": [
+      "SerialManager",
+      "~SerialManager",
+      "Open",
+      "Close",
+      "IsOpen",
+      "Write",
+      "Read",
+      "ProcessIncomingData",
+      "TryReconnect",
+      "SetRetryDelay"
+    ],
+    "src/modules/serial/SerialManager.h": [
+      "Open",
+      "Close",
+      "IsOpen",
+      "Write",
+      "Read",
+      "ProcessIncomingData",
+      "TryReconnect",
+      "SetRetryDelay",
+      "SerialManager",
+      "SerialManager"
+    ],
+    "src/modules/service/ServiceManager.cpp": [],
+    "src/modules/service/ServiceManager.h": [],
+    "src/modules/session/SessionMonitor.cpp": [],
+    "src/modules/session/SessionMonitor.h": [],
+    "src/modules/tray/TrayApp.cpp": [],
+    "src/modules/tray/TrayApp.h": [],
+    "src/platform/LinuxPlatform.cpp": [],
+    "src/platform/Windows_Addon.h": [
+      "operator()",
+      "HandleCloser",
+      "operator()",
+      "PdhQueryCloser",
+      "ComInitializer",
+      "~ComInitializer",
+      "Succeeded",
+      "GetHResult",
+      "ComInitializer",
+      "ComInitializer"
+    ],
+    "src/platform/WindowsPlatform.cpp": [],
+    "src/platform/WindowsPlatform.h": [],
+    "src/version.h": []
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "src/core/Platform.h",
+          "language": "c",
+          "sizeLines": 55,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/core/SystemState.h",
+          "language": "c",
+          "sizeLines": 46,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/metrics/MetricCache.h",
+          "language": "c",
+          "sizeLines": 103,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/metrics/MetricsCollector.cpp",
+          "language": "cpp",
+          "sizeLines": 126,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/metrics/MetricsCollector.h",
+          "language": "c",
+          "sizeLines": 135,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/core/Platform.h": [
+          "src/core/SystemState.h"
+        ],
+        "src/core/SystemState.h": [],
+        "src/modules/metrics/MetricCache.h": [],
+        "src/modules/metrics/MetricsCollector.cpp": [
+          "src/core/Platform.h",
+          "src/modules/metrics/MetricsCollector.h"
+        ],
+        "src/modules/metrics/MetricsCollector.h": [
+          "src/core/SystemState.h",
+          "src/modules/metrics/MetricCache.h"
+        ]
+      },
+      "neighborMap": {
+        "src/core/Platform.h": [
+          {
+            "path": "src/main.cpp",
+            "batchIndex": 2,
+            "symbols": [
+              "sendLineToBmc",
+              "notifyStopRequested",
+              "heartbeatThread",
+              "AMTPortInfo",
+              "GetAMTComPort",
+              "disableAMTComPort",
+              "enableAMTComPort",
+              "reassignComPort",
+              "checkSystemState",
+              "processIncomingCommand",
+              "processIncomingSerialData",
+              "readSerialPortWorker",
+              "serialThread",
+              "main"
+            ]
+          }
+        ],
+        "src/core/SystemState.h": [
+          {
+            "path": "src/main.cpp",
+            "batchIndex": 2,
+            "symbols": [
+              "sendLineToBmc",
+              "notifyStopRequested",
+              "heartbeatThread",
+              "AMTPortInfo",
+              "GetAMTComPort",
+              "disableAMTComPort",
+              "enableAMTComPort",
+              "reassignComPort",
+              "checkSystemState",
+              "processIncomingCommand",
+              "processIncomingSerialData",
+              "readSerialPortWorker",
+              "serialThread",
+              "main"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": "src/main.cpp",
+          "language": "cpp",
+          "sizeLines": 723,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/3kcheck/3kcheck.h",
+          "language": "c",
+          "sizeLines": 13,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/serial/SerialManager.cpp",
+          "language": "cpp",
+          "sizeLines": 251,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/serial/SerialManager.h",
+          "language": "c",
+          "sizeLines": 102,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/version.h",
+          "language": "c",
+          "sizeLines": 13,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/main.cpp": [
+          "src/core/Platform.h",
+          "src/core/SystemState.h",
+          "src/modules/3kcheck/3kcheck.h",
+          "src/modules/serial/SerialManager.h",
+          "src/version.h"
+        ],
+        "src/modules/3kcheck/3kcheck.h": [],
+        "src/modules/serial/SerialManager.cpp": [
+          "src/modules/serial/SerialManager.h"
+        ],
+        "src/modules/serial/SerialManager.h": [],
+        "src/version.h": []
+      },
+      "neighborMap": {
+        "src/main.cpp": [
+          {
+            "path": "src/core/Platform.h",
+            "batchIndex": 1,
+            "symbols": [
+              "~Platform",
+              "getNetworkInterfaces",
+              "getHostname",
+              "getCurrentSessionState",
+              "getLoggedInUser",
+              "getOsVersion",
+              "getOsBuild",
+              "openSerialPort",
+              "closeSerialPort",
+              "writeSerial",
+              "readSerial",
+              "logMessage",
+              "getCpuUsagePercent",
+              "getRamUsagePercent",
+              "getFreeDiskSpaceGB",
+              "getWindowsUpdateState",
+              "getDiskQueueLength",
+              "getNetworkRetransRate",
+              "getSystemUptime",
+              "updatePdhMetrics",
+              "getGpuDriverInfo",
+              "getGpuUsagePercent",
+              "getHighRamProcesses",
+              "showMessageDialog",
+              "run",
+              "Platform"
+            ]
+          },
+          {
+            "path": "src/core/SystemState.h",
+            "batchIndex": 1,
+            "symbols": [
+              "operator!=",
+              "operator==",
+              "NetworkInterface",
+              "operator!=",
+              "SystemState"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 3,
+      "files": [
+        {
+          "path": "CMakeLists.txt",
+          "language": "txt",
+          "sizeLines": 394,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "README.md",
+          "language": "markdown",
+          "sizeLines": 406,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "build.bat",
+          "language": "batch",
+          "sizeLines": 86,
+          "fileCategory": "script"
+        },
+        {
+          "path": "build.sh",
+          "language": "shell",
+          "sizeLines": 60,
+          "fileCategory": "script"
+        },
+        {
+          "path": "release-notes.txt",
+          "language": "txt",
+          "sizeLines": 52,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "setup-remotes.ps1",
+          "language": "powershell",
+          "sizeLines": 6,
+          "fileCategory": "script"
+        },
+        {
+          "path": "sign.bat",
+          "language": "batch",
+          "sizeLines": 2,
+          "fileCategory": "script"
+        }
+      ],
+      "batchImportData": {
+        "CMakeLists.txt": [],
+        "README.md": [],
+        "build.bat": [],
+        "build.sh": [],
+        "release-notes.txt": [],
+        "setup-remotes.ps1": [],
+        "sign.bat": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 4,
+      "files": [
+        {
+          "path": "installer/install.ps1",
+          "language": "powershell",
+          "sizeLines": 109,
+          "fileCategory": "script"
+        },
+        {
+          "path": "installer/release-notes.txt",
+          "language": "txt",
+          "sizeLines": 52,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "installer/remove.ps1",
+          "language": "powershell",
+          "sizeLines": 81,
+          "fileCategory": "script"
+        }
+      ],
+      "batchImportData": {
+        "installer/install.ps1": [],
+        "installer/release-notes.txt": [],
+        "installer/remove.ps1": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 5,
+      "files": [
+        {
+          "path": ".understand-anything/.understandignore",
+          "language": "unknown",
+          "sizeLines": 73,
+          "fileCategory": "code"
+        },
+        {
+          "path": "app.rc",
+          "language": "rc",
+          "sizeLines": 60,
+          "fileCategory": "code"
+        },
+        {
+          "path": "app.res",
+          "language": "res",
+          "sizeLines": 80,
+          "fileCategory": "code"
+        },
+        {
+          "path": "CoreStationHXAgent.service",
+          "language": "service",
+          "sizeLines": 11,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/changelog",
+          "language": "unknown",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/clean",
+          "language": "unknown",
+          "sizeLines": 2,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/compat",
+          "language": "unknown",
+          "sizeLines": 0,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/control",
+          "language": "unknown",
+          "sizeLines": 13,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/copyright",
+          "language": "unknown",
+          "sizeLines": 26,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/dh-cmake.compat",
+          "language": "compat",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/files",
+          "language": "unknown",
+          "sizeLines": 3,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/postinst",
+          "language": "unknown",
+          "sizeLines": 21,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/postrm",
+          "language": "unknown",
+          "sizeLines": 18,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/prerm",
+          "language": "unknown",
+          "sizeLines": 19,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/rules",
+          "language": "unknown",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "debian/source/format",
+          "language": "unknown",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/3kcheck/3kcheck.cpp",
+          "language": "cpp",
+          "sizeLines": 102,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/regedits/Regedit.cpp",
+          "language": "cpp",
+          "sizeLines": 179,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/regedits/Regedit.h",
+          "language": "c",
+          "sizeLines": 18,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/service/ServiceManager.cpp",
+          "language": "cpp",
+          "sizeLines": 435,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/service/ServiceManager.h",
+          "language": "c",
+          "sizeLines": 163,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/session/SessionMonitor.cpp",
+          "language": "cpp",
+          "sizeLines": 294,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/session/SessionMonitor.h",
+          "language": "c",
+          "sizeLines": 86,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/tray/TrayApp.cpp",
+          "language": "cpp",
+          "sizeLines": 350,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/modules/tray/TrayApp.h",
+          "language": "c",
+          "sizeLines": 109,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        ".understand-anything/.understandignore": [],
+        "app.rc": [],
+        "app.res": [],
+        "CoreStationHXAgent.service": [],
+        "debian/changelog": [],
+        "debian/clean": [],
+        "debian/compat": [],
+        "debian/control": [],
+        "debian/copyright": [],
+        "debian/dh-cmake.compat": [],
+        "debian/files": [],
+        "debian/postinst": [],
+        "debian/postrm": [],
+        "debian/prerm": [],
+        "debian/rules": [],
+        "debian/source/format": [],
+        "src/modules/3kcheck/3kcheck.cpp": [],
+        "src/modules/regedits/Regedit.cpp": [],
+        "src/modules/regedits/Regedit.h": [],
+        "src/modules/service/ServiceManager.cpp": [],
+        "src/modules/service/ServiceManager.h": [],
+        "src/modules/session/SessionMonitor.cpp": [],
+        "src/modules/session/SessionMonitor.h": [],
+        "src/modules/tray/TrayApp.cpp": [],
+        "src/modules/tray/TrayApp.h": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 6,
+      "files": [
+        {
+          "path": "src/platform/LinuxPlatform.cpp",
+          "language": "cpp",
+          "sizeLines": 684,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/platform/Windows_Addon.h",
+          "language": "c",
+          "sizeLines": 52,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/platform/WindowsPlatform.cpp",
+          "language": "cpp",
+          "sizeLines": 1190,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/platform/WindowsPlatform.h",
+          "language": "c",
+          "sizeLines": 163,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/platform/LinuxPlatform.cpp": [],
+        "src/platform/Windows_Addon.h": [],
+        "src/platform/WindowsPlatform.cpp": [],
+        "src/platform/WindowsPlatform.h": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}

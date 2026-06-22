@@ -1,0 +1,390 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/core/Platform.h",
+      "type": "file",
+      "name": "Platform.h",
+      "filePath": "src/core/Platform.h",
+      "summary": "Defines the abstract Platform interface that exposes all OS-specific operations (networking, serial I/O, system metrics, GPU info, dialogs) required by the agent, allowing platform-specific implementations to be swapped behind a common API.",
+      "tags": ["interface", "abstraction-layer", "platform-specific", "entry-point"],
+      "complexity": "moderate",
+      "languageNotes": "Pure virtual interface (abstract base class) pattern used to decouple platform-specific (Windows/Linux) implementations from the rest of the agent."
+    },
+    {
+      "id": "class:src/core/Platform.h:Platform",
+      "type": "class",
+      "name": "Platform",
+      "filePath": "src/core/Platform.h",
+      "lineRange": [14, 52],
+      "summary": "Abstract interface declaring all platform-dependent operations the agent needs: network/session/OS info, serial port control, logging, performance and GPU metrics, and UI dialogs.",
+      "tags": ["interface", "abstraction-layer", "platform-specific"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/core/SystemState.h",
+      "type": "file",
+      "name": "SystemState.h",
+      "filePath": "src/core/SystemState.h",
+      "summary": "Defines the NetworkInterface and SystemState plain-data structures that capture a snapshot of host networking, session, and performance metrics for change detection and reporting.",
+      "tags": ["data-model", "value-object", "system-metrics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/core/SystemState.h:NetworkInterface",
+      "type": "class",
+      "name": "NetworkInterface",
+      "filePath": "src/core/SystemState.h",
+      "lineRange": [7, 24],
+      "summary": "Value object representing a single network interface's name, IPv4/IPv6 addresses, DHCP flag, link status, and MAC address, with equality operators for change detection.",
+      "tags": ["data-model", "value-object", "networking"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/core/SystemState.h:SystemState",
+      "type": "class",
+      "name": "SystemState",
+      "filePath": "src/core/SystemState.h",
+      "lineRange": [26, 47],
+      "summary": "Aggregate snapshot of host state including network interfaces, hostname, power/session info, and performance metrics (CPU, RAM, disk, network, uptime, GPU), used to detect and report system changes.",
+      "tags": ["data-model", "value-object", "system-metrics"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/modules/metrics/MetricCache.h",
+      "type": "file",
+      "name": "MetricCache.h",
+      "filePath": "src/modules/metrics/MetricCache.h",
+      "summary": "Generic, thread-safe TTL cache template that stores the last computed value of an expensive metric and only recomputes it once the configured time-to-live has elapsed, plus a CacheDurations namespace of per-metric TTL constants.",
+      "tags": ["utility", "caching", "template", "thread-safety"],
+      "complexity": "moderate",
+      "languageNotes": "Templated class (MetricCache<T>) using std::mutex/lock_guard for thread safety and std::chrono::steady_clock for TTL tracking; tree-sitter did not classify the template as a class definition."
+    },
+    {
+      "id": "class:src/modules/metrics/MetricCache.h:MetricCache",
+      "type": "class",
+      "name": "MetricCache<T>",
+      "filePath": "src/modules/metrics/MetricCache.h",
+      "lineRange": [13, 85],
+      "summary": "Thread-safe generic cache that lazily recomputes a value via a supplied function once its TTL expires, used to throttle expensive metric collection (e.g., GPU info, disk space).",
+      "tags": ["caching", "template", "thread-safety", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/modules/metrics/MetricsCollector.h",
+      "type": "file",
+      "name": "MetricsCollector.h",
+      "filePath": "src/modules/metrics/MetricsCollector.h",
+      "summary": "Declares the MetricsCollector class, which orchestrates periodic collection of performance, GPU, process, and Windows Update metrics from a Platform implementation, with optional per-metric caching.",
+      "tags": ["data-model", "service", "system-metrics", "caching"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/modules/metrics/MetricsCollector.h:MetricsCollector",
+      "type": "class",
+      "name": "MetricsCollector",
+      "filePath": "src/modules/metrics/MetricsCollector.h",
+      "lineRange": [19, 136],
+      "summary": "Coordinates collection of system performance, GPU, process, and update metrics via a Platform reference, supporting cache invalidation and toggling, and formatting results for output.",
+      "tags": ["service", "system-metrics", "caching"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/modules/metrics/MetricsCollector.cpp",
+      "type": "file",
+      "name": "MetricsCollector.cpp",
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "summary": "Implements MetricsCollector's metric-gathering methods, calling into the Platform interface for CPU/RAM/disk/network/GPU/process/update data and assembling a formatted metrics string for transmission.",
+      "tags": ["service", "system-metrics", "implementation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/metrics/MetricsCollector.cpp:MetricsCollector",
+      "type": "function",
+      "name": "MetricsCollector",
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "lineRange": [6, 8],
+      "summary": "Constructor that stores a reference/pointer to the Platform implementation used for all subsequent metric retrieval.",
+      "tags": ["constructor"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+      "type": "function",
+      "name": "CollectAll",
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "lineRange": [19, 28],
+      "summary": "Runs all metric collection routines (performance, GPU, processes, updates) in sequence to refresh the collector's full metric set.",
+      "tags": ["orchestration", "system-metrics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/metrics/MetricsCollector.cpp:CollectPerformance",
+      "type": "function",
+      "name": "CollectPerformance",
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "lineRange": [30, 51],
+      "summary": "Gathers CPU, RAM, disk queue length, network retransmission rate, system uptime, and free disk space from the Platform interface.",
+      "tags": ["system-metrics", "performance"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/metrics/MetricsCollector.cpp:CollectGpu",
+      "type": "function",
+      "name": "CollectGpu",
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "lineRange": [53, 64],
+      "summary": "Retrieves GPU driver information and GPU usage percentage from the Platform interface.",
+      "tags": ["system-metrics", "gpu"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/metrics/MetricsCollector.cpp:CollectProcesses",
+      "type": "function",
+      "name": "CollectProcesses",
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "lineRange": [66, 76],
+      "summary": "Retrieves the list of high-RAM-usage processes from the Platform interface.",
+      "tags": ["system-metrics", "processes"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/metrics/MetricsCollector.cpp:CheckUpdates",
+      "type": "function",
+      "name": "CheckUpdates",
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "lineRange": [78, 88],
+      "summary": "Queries the Windows Update state via the Platform interface and stores it for reporting.",
+      "tags": ["system-metrics", "windows-update"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/metrics/MetricsCollector.cpp:GetFormattedMetrics",
+      "type": "function",
+      "name": "GetFormattedMetrics",
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "lineRange": [99, 127],
+      "summary": "Triggers a full metric collection pass and formats all gathered values into a single delimited string suitable for transmission to the BMC.",
+      "tags": ["formatting", "serialization", "system-metrics"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/core/Platform.h",
+      "target": "class:src/core/Platform.h:Platform",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/core/Platform.h",
+      "target": "file:src/core/SystemState.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:src/core/Platform.h:Platform",
+      "target": "class:src/core/SystemState.h:NetworkInterface",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/core/SystemState.h",
+      "target": "class:src/core/SystemState.h:NetworkInterface",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/core/SystemState.h",
+      "target": "class:src/core/SystemState.h:SystemState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/core/SystemState.h:SystemState",
+      "target": "class:src/core/SystemState.h:NetworkInterface",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/modules/metrics/MetricCache.h",
+      "target": "class:src/modules/metrics/MetricCache.h:MetricCache",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.h",
+      "target": "class:src/modules/metrics/MetricsCollector.h:MetricsCollector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.h",
+      "target": "file:src/core/SystemState.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.h",
+      "target": "file:src/modules/metrics/MetricCache.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:src/modules/metrics/MetricsCollector.h:MetricsCollector",
+      "target": "class:src/core/Platform.h:Platform",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:src/modules/metrics/MetricsCollector.h:MetricsCollector",
+      "target": "class:src/modules/metrics/MetricCache.h:MetricCache",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:MetricsCollector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectPerformance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectGpu",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectProcesses",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CheckUpdates",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:GetFormattedMetrics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "file:src/core/Platform.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modules/metrics/MetricsCollector.cpp",
+      "target": "file:src/modules/metrics/MetricsCollector.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectPerformance",
+      "target": "class:src/core/Platform.h:Platform",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectGpu",
+      "target": "class:src/core/Platform.h:Platform",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectProcesses",
+      "target": "class:src/core/Platform.h:Platform",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:CheckUpdates",
+      "target": "class:src/core/Platform.h:Platform",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:GetFormattedMetrics",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectPerformance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectGpu",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectProcesses",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+      "target": "function:src/modules/metrics/MetricsCollector.cpp:CheckUpdates",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/core/Platform.h",
+      "target": "function:src/main.cpp:main",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

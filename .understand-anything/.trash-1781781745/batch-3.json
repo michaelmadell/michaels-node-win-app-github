@@ -1,0 +1,128 @@
+{
+  "nodes": [
+    {
+      "id": "config:CMakeLists.txt",
+      "type": "config",
+      "name": "CMakeLists.txt",
+      "filePath": "CMakeLists.txt",
+      "summary": "CMake build configuration for CoreStationHXAgent: defines a C++17 executable target with platform-specific sources (Windows tray/session/regedit/metrics modules vs Linux platform code), parses version info from src/version.h, generates git_info.h with branch/hash/build time, sets compiler flags per platform/config, links Windows system libraries (iphlpapi, ws2_32, wtsapi32, etc.) or Linux dbus-1, and configures CPack packaging (WIX on Windows, DEB on Linux) plus optional install rules and test subdirectory.",
+      "tags": ["configuration", "build-system", "cmake", "cross-platform"],
+      "complexity": "complex",
+      "languageNotes": "Uses CMake option() flags (BUILD_METRICS=OFF, BUILD_SESSION_MONITOR=ON, BUILD_TRAY_APP=OFF, BUILD_REGEDIT=ON, ENABLE_TESTING=OFF) to conditionally include source files, headers, and preprocessor definitions, and generates a git_info.h header at configure time via execute_process/file(WRITE)."
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Primary project documentation describing the repository file layout, Linux build/install instructions (Ubuntu 24.04, debuild/.deb packaging, systemd service), and Windows build/usage instructions (build machine setup, day-to-day use, exe signing, service management, PowerShell execution policy, linting), plus reference tables for session-state and serial-output debug codes.",
+      "tags": ["documentation", "entry-point", "build-system", "overview"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:build.bat",
+      "type": "file",
+      "name": "build.bat",
+      "filePath": "build.bat",
+      "summary": "Windows batch script that initializes the MSVC build environment via vswhere/vcvarsall, configures and builds the CoreStationHXAgent CMake project in Release mode, locates the resulting executable, copies it (and release-notes.txt) into the installer directory, and reports build time and file size.",
+      "tags": ["build-system", "windows", "automation", "ci-cd"],
+      "complexity": "moderate",
+      "languageNotes": "Uses delayed expansion and vswhere.exe to dynamically locate the Visual Studio installation before invoking vcvarsall.bat and cmake."
+    },
+    {
+      "id": "file:build.sh",
+      "type": "file",
+      "name": "build.sh",
+      "filePath": "build.sh",
+      "summary": "Linux/cross-compile shell script that generates git_info.h from current git branch/hash/build time, compiles Windows resources with windres, and cross-compiles a static Windows .exe using the MinGW-w64 toolchain (x86_64-w64-mingw32-g++-posix), linking the required Win32 system libraries.",
+      "tags": ["build-system", "cross-compilation", "automation", "mingw"],
+      "complexity": "moderate",
+      "languageNotes": "Cross-compiles a Windows PE executable from a Linux host using mingw-w64, distinct from the native Linux CMake build path described in the README."
+    },
+    {
+      "id": "document:release-notes.txt",
+      "type": "document",
+      "name": "release-notes.txt",
+      "filePath": "release-notes.txt",
+      "summary": "Chronological changelog of CoreStationHXAgent releases from version 2025.4.2 through 20.26.5.1_GA, documenting feature additions such as session-state reporting, heartbeat messages, Linux build support, EV signing, serial port COM assignment changes, and HX3000 CPU-based node detection.",
+      "tags": ["documentation", "changelog", "release-notes"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:setup-remotes.ps1",
+      "type": "file",
+      "name": "setup-remotes.ps1",
+      "filePath": "setup-remotes.ps1",
+      "summary": "One-time PowerShell setup script that configures git remotes after cloning, adding a GitHub mirror remote and a combined 'all' remote with push URLs pointing to both Bitbucket and GitHub.",
+      "tags": ["automation", "git", "setup", "powershell"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:sign.bat",
+      "type": "file",
+      "name": "sign.bat",
+      "filePath": "sign.bat",
+      "summary": "Minimal batch script intended to code-sign an executable via the smctl sign command using a configured key-pair alias; per the README this script is not currently used in the build process.",
+      "tags": ["signing", "windows", "automation", "unused"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:README.md",
+      "target": "config:CMakeLists.txt",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:build.bat",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:build.sh",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "document:release-notes.txt",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:sign.bat",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:build.bat",
+      "target": "config:CMakeLists.txt",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:build.bat",
+      "target": "document:release-notes.txt",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:build.sh",
+      "target": "config:CMakeLists.txt",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

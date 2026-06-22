@@ -1,5 +1,5 @@
-corestationhxagent (2025.9.1) jammy; urgency=medium
+corestationhxagent (2026.5.1) jammy; urgency=medium
 
-  * Initial Linux Release.
+  * Updated to align with latest windows build
 
- -- Michael Madell <michael.madell@amulethotkey.com>  Wed, 24 Sep 2025 14:20:00 +0100
+ -- Michael Madell <michael.madell@amulethotkey.com>  Thu, 11 Jun 2026 13:02:00 +0100

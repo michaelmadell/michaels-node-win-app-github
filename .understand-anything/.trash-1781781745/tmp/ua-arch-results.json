@@ -1,0 +1,298 @@
+{
+  "scriptCompleted": true,
+  "directoryGroups": {
+    "src": [
+      "file:src/core/Platform.h",
+      "file:src/core/SystemState.h",
+      "file:src/modules/metrics/MetricCache.h",
+      "file:src/modules/metrics/MetricsCollector.h",
+      "file:src/modules/metrics/MetricsCollector.cpp",
+      "file:src/main.cpp",
+      "file:src/modules/3kcheck/3kcheck.h",
+      "file:src/modules/serial/SerialManager.cpp",
+      "file:src/modules/serial/SerialManager.h",
+      "file:src/version.h",
+      "file:src/modules/3kcheck/3kcheck.cpp",
+      "file:src/modules/regedits/Regedit.cpp",
+      "file:src/modules/regedits/Regedit.h",
+      "file:src/modules/service/ServiceManager.cpp",
+      "file:src/modules/service/ServiceManager.h",
+      "file:src/modules/session/SessionMonitor.cpp",
+      "file:src/modules/session/SessionMonitor.h",
+      "file:src/modules/tray/TrayApp.cpp",
+      "file:src/modules/tray/TrayApp.h",
+      "file:src/platform/LinuxPlatform.cpp",
+      "file:src/platform/Windows_Addon.h",
+      "file:src/platform/WindowsPlatform.cpp",
+      "file:src/platform/WindowsPlatform.h"
+    ],
+    "__root__": [
+      "config:CMakeLists.txt",
+      "document:README.md",
+      "file:build.bat",
+      "file:build.sh",
+      "document:release-notes.txt",
+      "file:setup-remotes.ps1",
+      "file:sign.bat",
+      "resource:app.rc",
+      "resource:app.res",
+      "service:CoreStationHXAgent.service"
+    ],
+    "installer": [
+      "file:installer/install.ps1",
+      "document:installer/release-notes.txt",
+      "file:installer/remove.ps1"
+    ],
+    ".understand-anything": [
+      "config:.understand-anything/.understandignore"
+    ],
+    "debian": [
+      "document:debian/changelog",
+      "config:debian/clean",
+      "config:debian/compat",
+      "config:debian/control",
+      "document:debian/copyright",
+      "config:debian/dh-cmake.compat",
+      "config:debian/files",
+      "service:debian/postinst",
+      "service:debian/postrm",
+      "service:debian/prerm",
+      "pipeline:debian/rules",
+      "config:debian/source/format"
+    ]
+  },
+  "nodeTypeGroups": {
+    "file": [
+      "file:src/core/Platform.h",
+      "file:src/core/SystemState.h",
+      "file:src/modules/metrics/MetricCache.h",
+      "file:src/modules/metrics/MetricsCollector.h",
+      "file:src/modules/metrics/MetricsCollector.cpp",
+      "file:src/main.cpp",
+      "file:src/modules/3kcheck/3kcheck.h",
+      "file:src/modules/serial/SerialManager.cpp",
+      "file:src/modules/serial/SerialManager.h",
+      "file:src/version.h",
+      "file:build.bat",
+      "file:build.sh",
+      "file:setup-remotes.ps1",
+      "file:sign.bat",
+      "file:installer/install.ps1",
+      "file:installer/remove.ps1",
+      "file:src/modules/3kcheck/3kcheck.cpp",
+      "file:src/modules/regedits/Regedit.cpp",
+      "file:src/modules/regedits/Regedit.h",
+      "file:src/modules/service/ServiceManager.cpp",
+      "file:src/modules/service/ServiceManager.h",
+      "file:src/modules/session/SessionMonitor.cpp",
+      "file:src/modules/session/SessionMonitor.h",
+      "file:src/modules/tray/TrayApp.cpp",
+      "file:src/modules/tray/TrayApp.h",
+      "file:src/platform/LinuxPlatform.cpp",
+      "file:src/platform/Windows_Addon.h",
+      "file:src/platform/WindowsPlatform.cpp",
+      "file:src/platform/WindowsPlatform.h"
+    ],
+    "config": [
+      "config:CMakeLists.txt",
+      "config:.understand-anything/.understandignore",
+      "config:debian/clean",
+      "config:debian/compat",
+      "config:debian/control",
+      "config:debian/dh-cmake.compat",
+      "config:debian/files",
+      "config:debian/source/format"
+    ],
+    "document": [
+      "document:README.md",
+      "document:release-notes.txt",
+      "document:installer/release-notes.txt",
+      "document:debian/changelog",
+      "document:debian/copyright"
+    ],
+    "resource": [
+      "resource:app.rc",
+      "resource:app.res"
+    ],
+    "service": [
+      "service:CoreStationHXAgent.service",
+      "service:debian/postinst",
+      "service:debian/postrm",
+      "service:debian/prerm"
+    ],
+    "pipeline": [
+      "pipeline:debian/rules"
+    ]
+  },
+  "crossCategoryEdges": [
+    {
+      "fromType": "document",
+      "toType": "config",
+      "edgeType": "documents",
+      "count": 1
+    },
+    {
+      "fromType": "document",
+      "toType": "file",
+      "edgeType": "documents",
+      "count": 5
+    },
+    {
+      "fromType": "file",
+      "toType": "config",
+      "edgeType": "depends_on",
+      "count": 1
+    },
+    {
+      "fromType": "file",
+      "toType": "document",
+      "edgeType": "depends_on",
+      "count": 1
+    },
+    {
+      "fromType": "file",
+      "toType": "config",
+      "edgeType": "related",
+      "count": 1
+    },
+    {
+      "fromType": "pipeline",
+      "toType": "config",
+      "edgeType": "depends_on",
+      "count": 1
+    },
+    {
+      "fromType": "config",
+      "toType": "service",
+      "edgeType": "related",
+      "count": 1
+    }
+  ],
+  "interGroupImports": [],
+  "intraGroupDensity": {
+    "src": {
+      "internalEdges": 20,
+      "totalEdges": 20,
+      "density": 1
+    },
+    "__root__": {
+      "internalEdges": 0,
+      "totalEdges": 0,
+      "density": 0
+    },
+    "installer": {
+      "internalEdges": 0,
+      "totalEdges": 0,
+      "density": 0
+    },
+    ".understand-anything": {
+      "internalEdges": 0,
+      "totalEdges": 0,
+      "density": 0
+    },
+    "debian": {
+      "internalEdges": 0,
+      "totalEdges": 0,
+      "density": 0
+    }
+  },
+  "patternMatches": {
+    "installer": "infrastructure",
+    "debian": "infrastructure"
+  },
+  "deploymentTopology": {
+    "hasDockerfile": false,
+    "hasCompose": false,
+    "hasK8s": false,
+    "hasTerraform": false,
+    "hasCI": false,
+    "infraFiles": [
+      "installer/install.ps1",
+      "installer/release-notes.txt",
+      "installer/remove.ps1",
+      "CoreStationHXAgent.service",
+      "debian/changelog",
+      "debian/clean",
+      "debian/compat",
+      "debian/control",
+      "debian/copyright",
+      "debian/dh-cmake.compat",
+      "debian/files",
+      "debian/postinst",
+      "debian/postrm",
+      "debian/prerm",
+      "debian/rules",
+      "debian/source/format"
+    ]
+  },
+  "dataPipeline": {
+    "schemaFiles": [],
+    "migrationFiles": [],
+    "dataModelFiles": [
+      "src/core/SystemState.h",
+      "src/modules/metrics/MetricsCollector.h",
+      "src/modules/serial/SerialManager.h",
+      "src/modules/service/ServiceManager.h"
+    ],
+    "apiHandlerFiles": []
+  },
+  "docCoverage": {
+    "groupsWithDocs": 2,
+    "totalGroups": 5,
+    "coverageRatio": 0.4,
+    "undocumentedGroups": [
+      "src",
+      "__root__",
+      ".understand-anything"
+    ]
+  },
+  "dependencyDirection": [],
+  "fileStats": {
+    "totalFileNodes": 49,
+    "filesPerGroup": {
+      "src": 23,
+      "__root__": 10,
+      "installer": 3,
+      ".understand-anything": 1,
+      "debian": 12
+    },
+    "nodeTypeCounts": {
+      "file": 29,
+      "config": 8,
+      "document": 5,
+      "resource": 2,
+      "service": 4,
+      "pipeline": 1
+    }
+  },
+  "fileFanIn": {
+    "file:src/core/SystemState.h": 3,
+    "file:src/modules/metrics/MetricCache.h": 1,
+    "file:src/core/Platform.h": 4,
+    "file:src/modules/metrics/MetricsCollector.h": 1,
+    "file:src/modules/3kcheck/3kcheck.h": 1,
+    "file:src/modules/serial/SerialManager.h": 2,
+    "file:src/version.h": 1,
+    "file:src/modules/regedits/Regedit.h": 1,
+    "file:src/modules/service/ServiceManager.h": 1,
+    "file:src/modules/session/SessionMonitor.h": 1,
+    "file:src/modules/tray/TrayApp.h": 1,
+    "file:src/platform/Windows_Addon.h": 2,
+    "file:src/platform/WindowsPlatform.h": 1
+  },
+  "fileFanOut": {
+    "file:src/core/Platform.h": 1,
+    "file:src/modules/metrics/MetricsCollector.h": 2,
+    "file:src/modules/metrics/MetricsCollector.cpp": 2,
+    "file:src/main.cpp": 5,
+    "file:src/modules/serial/SerialManager.cpp": 1,
+    "file:src/modules/regedits/Regedit.cpp": 1,
+    "file:src/modules/service/ServiceManager.cpp": 1,
+    "file:src/modules/session/SessionMonitor.cpp": 1,
+    "file:src/modules/tray/TrayApp.cpp": 1,
+    "file:src/platform/LinuxPlatform.cpp": 1,
+    "file:src/platform/WindowsPlatform.h": 2,
+    "file:src/platform/WindowsPlatform.cpp": 2
+  },
+  "commonPrefix": ""
+}

@@ -1,0 +1,1277 @@
+{
+  "nodes": [
+    {
+      "id": "config:.understand-anything/.understandignore",
+      "type": "config",
+      "name": ".understandignore",
+      "filePath": ".understand-anything/.understandignore",
+      "summary": "Ignore-pattern configuration for the understand-anything analysis tool, excluding build artifacts, dependencies, and generated files from codebase scanning.",
+      "tags": ["configuration", "tooling", "ignore-rules"],
+      "complexity": "simple"
+    },
+    {
+      "id": "resource:app.rc",
+      "type": "resource",
+      "name": "app.rc",
+      "filePath": "app.rc",
+      "summary": "Windows resource script defining the application icon and VERSIONINFO block (company, file/product version, description) for the CoreStationHXAgent executable, sourced from version.h macros.",
+      "tags": ["windows-resource", "versioning", "build-system", "configuration"],
+      "complexity": "simple",
+      "languageNotes": "Uses preprocessor stringification macros to convert numeric version components into the FileVersion/ProductVersion string fields shown in the Windows Properties dialog."
+    },
+    {
+      "id": "resource:app.res",
+      "type": "resource",
+      "name": "app.res",
+      "filePath": "app.res",
+      "summary": "Compiled Windows resource binary produced from app.rc, embedding the application icon and version metadata into the final executable.",
+      "tags": ["windows-resource", "build-artifact", "versioning"],
+      "complexity": "simple"
+    },
+    {
+      "id": "service:CoreStationHXAgent.service",
+      "type": "service",
+      "name": "CoreStationHXAgent.service",
+      "filePath": "CoreStationHXAgent.service",
+      "summary": "systemd unit file that runs the CoreStationHXAgent binary as a simple service on Linux, restarting on failure and starting at multi-user boot target.",
+      "tags": ["systemd", "service-unit", "deployment", "linux"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:debian/changelog",
+      "type": "document",
+      "name": "changelog",
+      "filePath": "debian/changelog",
+      "summary": "Debian package changelog recording version history entries for the corestationhxagent package.",
+      "tags": ["documentation", "debian-packaging", "changelog"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:debian/clean",
+      "type": "config",
+      "name": "clean",
+      "filePath": "debian/clean",
+      "summary": "Debian packaging file listing extra build artifacts to remove during the package clean step.",
+      "tags": ["configuration", "debian-packaging", "build-system"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:debian/compat",
+      "type": "config",
+      "name": "compat",
+      "filePath": "debian/compat",
+      "summary": "Specifies the debhelper compatibility level used when building the Debian package.",
+      "tags": ["configuration", "debian-packaging"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:debian/control",
+      "type": "config",
+      "name": "control",
+      "filePath": "debian/control",
+      "summary": "Debian package control file declaring source/binary package metadata, maintainer, build dependencies (cmake, dh-cmake, debhelper), and runtime dependencies (network-manager, libdbus-1-3) for corestationhxagent.",
+      "tags": ["configuration", "debian-packaging", "dependencies", "build-system"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:debian/copyright",
+      "type": "document",
+      "name": "copyright",
+      "filePath": "debian/copyright",
+      "summary": "Debian copyright and licensing declaration for the corestationhxagent package and its included files.",
+      "tags": ["documentation", "debian-packaging", "licensing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:debian/dh-cmake.compat",
+      "type": "config",
+      "name": "dh-cmake.compat",
+      "filePath": "debian/dh-cmake.compat",
+      "summary": "Compatibility version declaration for the dh-cmake debhelper sequence add-on used in the package build.",
+      "tags": ["configuration", "debian-packaging", "build-system"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:debian/files",
+      "type": "config",
+      "name": "files",
+      "filePath": "debian/files",
+      "summary": "Debhelper-generated registry of output package files produced during the Debian build process.",
+      "tags": ["configuration", "debian-packaging", "build-artifact"],
+      "complexity": "simple"
+    },
+    {
+      "id": "service:debian/postinst",
+      "type": "service",
+      "name": "postinst",
+      "filePath": "debian/postinst",
+      "summary": "Post-installation script that enables and (re)starts the CoreStationHXAgent systemd service after package install/configure, with verbose console banners for debugging.",
+      "tags": ["debian-packaging", "systemd", "deployment", "shell-script"],
+      "complexity": "simple"
+    },
+    {
+      "id": "service:debian/postrm",
+      "type": "service",
+      "name": "postrm",
+      "filePath": "debian/postrm",
+      "summary": "Post-removal script that cleans up service state (e.g., disabling/stopping CoreStationHXAgent.service) after the package is removed.",
+      "tags": ["debian-packaging", "systemd", "deployment", "shell-script"],
+      "complexity": "simple"
+    },
+    {
+      "id": "service:debian/prerm",
+      "type": "service",
+      "name": "prerm",
+      "filePath": "debian/prerm",
+      "summary": "Pre-removal script that stops the CoreStationHXAgent systemd service before the package files are removed.",
+      "tags": ["debian-packaging", "systemd", "deployment", "shell-script"],
+      "complexity": "simple"
+    },
+    {
+      "id": "pipeline:debian/rules",
+      "type": "pipeline",
+      "name": "rules",
+      "filePath": "debian/rules",
+      "summary": "Debian build rules makefile driving the package build via debhelper's dh command with CMake support, including an override to customize the auto-clean step.",
+      "tags": ["debian-packaging", "build-system", "ci-cd"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:debian/source/format",
+      "type": "config",
+      "name": "format",
+      "filePath": "debian/source/format",
+      "summary": "Declares the Debian source package format (typically 3.0 quilt) used when constructing the source package.",
+      "tags": ["configuration", "debian-packaging"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/modules/3kcheck/3kcheck.cpp",
+      "type": "file",
+      "name": "3kcheck.cpp",
+      "filePath": "src/modules/3kcheck/3kcheck.cpp",
+      "summary": "Windows-only CPU detection module that uses the __cpuid intrinsic to read CPU vendor/brand strings and determine whether the host is an HX2K-class CPU (Core Ultra 165H/165U/285H) versus HX3K, replacing an earlier NIC-based detection approach.",
+      "tags": ["hardware-detection", "cpu-info", "windows", "utility"],
+      "complexity": "moderate",
+      "languageNotes": "Uses the __cpuid intrinsic directly and manual memcpy assembly of CPUID leaves to build vendor and brand strings without relying on OS APIs."
+    },
+    {
+      "id": "function:src/modules/3kcheck/3kcheck.cpp:trim",
+      "type": "function",
+      "name": "trim",
+      "filePath": "src/modules/3kcheck/3kcheck.cpp",
+      "lineRange": [14, 28],
+      "summary": "Internal helper that strips leading and trailing whitespace from a string, used to clean up raw CPUID-derived strings.",
+      "tags": ["utility", "string-processing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+      "type": "function",
+      "name": "GetCpuInfo",
+      "filePath": "src/modules/3kcheck/3kcheck.cpp",
+      "lineRange": [38, 74],
+      "summary": "Reads CPU vendor and brand strings via the __cpuid intrinsic and parses out manufacturer, model, and clock speed into a CPUInfo struct.",
+      "tags": ["hardware-detection", "cpu-info", "windows"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/3kcheck/3kcheck.cpp:IsHX2KCPU",
+      "type": "function",
+      "name": "IsHX2KCPU",
+      "filePath": "src/modules/3kcheck/3kcheck.cpp",
+      "lineRange": [76, 100],
+      "summary": "Determines whether the current (or supplied) CPU info matches one of the known HX2K CPU models, used to branch COM port selection logic (COM3 vs COM1) elsewhere in the agent.",
+      "tags": ["hardware-detection", "cpu-info", "decision-logic"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/modules/regedits/Regedit.cpp",
+      "type": "file",
+      "name": "Regedit.cpp",
+      "filePath": "src/modules/regedits/Regedit.cpp",
+      "summary": "Implements the Regedit class's Windows Registry operations (Read, Write, Create, Delete), parsing root-key/subkey paths and using Win32 Reg* APIs with logging via the parent WindowsPlatform.",
+      "tags": ["windows-registry", "configuration", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/regedits/Regedit.cpp:Read",
+      "type": "function",
+      "name": "Read",
+      "filePath": "src/modules/regedits/Regedit.cpp",
+      "lineRange": [13, 38],
+      "summary": "Reads a string value from a specified registry key path using RegOpenKeyExA/RegQueryValueExA, logging failures via the platform logger.",
+      "tags": ["windows-registry", "io"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/regedits/Regedit.cpp:Write",
+      "type": "function",
+      "name": "Write",
+      "filePath": "src/modules/regedits/Regedit.cpp",
+      "lineRange": [41, 146],
+      "summary": "Writes a string value to a registry key, creating the full chain of intermediate subkeys with RegCreateKeyExA before setting the value with RegSetValueExA.",
+      "tags": ["windows-registry", "io"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/regedits/Regedit.cpp:Create",
+      "type": "function",
+      "name": "Create",
+      "filePath": "src/modules/regedits/Regedit.cpp",
+      "lineRange": [149, 153],
+      "summary": "Convenience wrapper that delegates to Write to create a registry key/value.",
+      "tags": ["windows-registry", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/regedits/Regedit.cpp:Delete",
+      "type": "function",
+      "name": "Delete",
+      "filePath": "src/modules/regedits/Regedit.cpp",
+      "lineRange": [156, 176],
+      "summary": "Deletes a registry value under a specified key path using RegOpenKeyExA and RegDeleteValueA, with logging of the operation outcome.",
+      "tags": ["windows-registry", "io"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/modules/regedits/Regedit.h",
+      "type": "file",
+      "name": "Regedit.h",
+      "filePath": "src/modules/regedits/Regedit.h",
+      "summary": "Declares the Regedit class providing a small cross-cutting API (Read/Write/Create/Delete) for Windows Registry access on behalf of the parent WindowsPlatform.",
+      "tags": ["windows-registry", "type-definition", "configuration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/modules/regedits/Regedit.h:Regedit",
+      "type": "class",
+      "name": "Regedit",
+      "filePath": "src/modules/regedits/Regedit.h",
+      "lineRange": [8, 19],
+      "summary": "Encapsulates Windows Registry read/write/create/delete operations, holding a back-reference to the owning WindowsPlatform for logging.",
+      "tags": ["windows-registry", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/modules/service/ServiceManager.cpp",
+      "type": "file",
+      "name": "ServiceManager.cpp",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "summary": "Implements the ServiceManager class, providing full Windows Service Control Manager (SCM) lifecycle handling: install/uninstall, start/stop, status query and reporting, the service main and control-handler callbacks, and Win32 error formatting helpers.",
+      "tags": ["windows-service", "service", "lifecycle-management"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:Install",
+      "type": "function",
+      "name": "Install",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [30, 93],
+      "summary": "Registers the executable as a Windows service with the SCM using CreateServiceW, applying the supplied ServiceConfig (start type, account, description) via ChangeServiceConfig2W.",
+      "tags": ["windows-service", "installation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:Uninstall",
+      "type": "function",
+      "name": "Uninstall",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [99, 134],
+      "summary": "Stops a running service if necessary and removes it from the SCM via DeleteService.",
+      "tags": ["windows-service", "uninstallation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:StartService",
+      "type": "function",
+      "name": "StartService",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [139, 195],
+      "summary": "Starts an installed service via the SCM and polls QueryServiceStatus until it transitions to running or times out.",
+      "tags": ["windows-service", "lifecycle-management"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:StopService",
+      "type": "function",
+      "name": "StopService",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [199, 245],
+      "summary": "Sends a stop control to the service via ControlService and polls until it reports SERVICE_STOPPED or times out.",
+      "tags": ["windows-service", "lifecycle-management"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+      "type": "function",
+      "name": "QueryStatus",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [249, 279],
+      "summary": "Opens the service handle and retrieves its current SERVICE_STATUS via QueryServiceStatus, populating the caller's ServiceStatus struct.",
+      "tags": ["windows-service", "status-reporting"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:IsInstalled",
+      "type": "function",
+      "name": "IsInstalled",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [282, 298],
+      "summary": "Checks whether the service is registered with the SCM by attempting to open its handle.",
+      "tags": ["windows-service", "status-reporting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:IsRunning",
+      "type": "function",
+      "name": "IsRunning",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [302, 306],
+      "summary": "Determines whether the service is currently in the running state by delegating to QueryStatus.",
+      "tags": ["windows-service", "status-reporting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:ReportStatus",
+      "type": "function",
+      "name": "ReportStatus",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [320, 337],
+      "summary": "Updates and reports the service's SERVICE_STATUS to the SCM via SetServiceStatus, used throughout the start/stop lifecycle.",
+      "tags": ["windows-service", "status-reporting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:RegisterServiceHandler",
+      "type": "function",
+      "name": "RegisterServiceHandler",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [339, 341],
+      "summary": "Registers the service control handler callback with the SCM via RegisterServiceCtrlHandlerW.",
+      "tags": ["windows-service", "event-handler"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:ServiceMainProc",
+      "type": "function",
+      "name": "ServiceMainProc",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [350, 369],
+      "summary": "Service entry point invoked by the SCM; reports startup status, invokes the onStart callback, and blocks on the stop event until shutdown is requested.",
+      "tags": ["windows-service", "entry-point", "event-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:ServiceCtrlProc",
+      "type": "function",
+      "name": "ServiceCtrlProc",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [372, 380],
+      "summary": "Control handler invoked by the SCM for service control requests (e.g., stop); reports stopping status, invokes the onStop callback, and signals the stop event.",
+      "tags": ["windows-service", "event-handler"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+      "type": "function",
+      "name": "OpenServiceManager",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [388, 395],
+      "summary": "Helper that opens a handle to the Service Control Manager via OpenSCManagerW, logging on failure.",
+      "tags": ["windows-service", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+      "type": "function",
+      "name": "OpenServiceHandle",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [398, 406],
+      "summary": "Helper that opens a handle to the named service via OpenServiceW with the requested access rights.",
+      "tags": ["windows-service", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:LogError",
+      "type": "function",
+      "name": "LogError",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [409, 413],
+      "summary": "Logs an error message combined with the formatted last Win32 error string for the given operation name.",
+      "tags": ["logging", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/service/ServiceManager.cpp:GetLastErrorString",
+      "type": "function",
+      "name": "GetLastErrorString",
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "lineRange": [416, 434],
+      "summary": "Formats the current GetLastError() code into a human-readable string using FormatMessageA.",
+      "tags": ["utility", "error-handling"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/modules/service/ServiceManager.h",
+      "type": "file",
+      "name": "ServiceManager.h",
+      "filePath": "src/modules/service/ServiceManager.h",
+      "summary": "Declares the ServiceManager class and its nested ServiceConfig/ServiceStatus structs, exposing the full Windows Service lifecycle API (install, uninstall, start, stop, status query, SCM callbacks) used by the agent to run itself as a Windows service.",
+      "tags": ["windows-service", "type-definition", "data-model"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/modules/service/ServiceManager.h:ServiceManager",
+      "type": "class",
+      "name": "ServiceManager",
+      "filePath": "src/modules/service/ServiceManager.h",
+      "lineRange": [22, 162],
+      "summary": "Manages the complete lifecycle of the Windows service representation of the agent, including registration with the SCM, start/stop control, status reporting, and the SCM-invoked main/control-handler callbacks.",
+      "tags": ["windows-service", "lifecycle-management", "data-model"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/modules/session/SessionMonitor.cpp",
+      "type": "file",
+      "name": "SessionMonitor.cpp",
+      "filePath": "src/modules/session/SessionMonitor.cpp",
+      "summary": "Implements the SessionMonitor class: creates a hidden window subscribed to WTS session-change notifications (logon/logoff, lock/unlock, console/RDP connect) on a dedicated thread and reports state transitions via callback, plus a helper to query current session state including logged-in user and desktop type.",
+      "tags": ["windows-session", "event-handler", "monitoring"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/session/SessionMonitor.cpp:Start",
+      "type": "function",
+      "name": "Start",
+      "filePath": "src/modules/session/SessionMonitor.cpp",
+      "lineRange": [15, 20],
+      "summary": "Launches the background thread that runs the hidden window message loop and WTS notification handling.",
+      "tags": ["threading", "lifecycle-management"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/session/SessionMonitor.cpp:Stop",
+      "type": "function",
+      "name": "Stop",
+      "filePath": "src/modules/session/SessionMonitor.cpp",
+      "lineRange": [23, 34],
+      "summary": "Posts a quit message to the monitor's hidden window and joins the background thread to stop monitoring cleanly.",
+      "tags": ["threading", "lifecycle-management"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/session/SessionMonitor.cpp:ThreadProc",
+      "type": "function",
+      "name": "ThreadProc",
+      "filePath": "src/modules/session/SessionMonitor.cpp",
+      "lineRange": [37, 88],
+      "summary": "Background thread entry point that creates a hidden window, registers for WTS session notifications, and runs the Win32 message loop until shutdown.",
+      "tags": ["threading", "windows-session", "entry-point"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/session/SessionMonitor.cpp:WndProc",
+      "type": "function",
+      "name": "SessionMonitor::WndProc",
+      "filePath": "src/modules/session/SessionMonitor.cpp",
+      "lineRange": [92, 119],
+      "summary": "Static window procedure that receives WM_WTSSESSION_CHANGE messages and forwards session-change events to the owning SessionMonitor instance.",
+      "tags": ["event-handler", "windows-session"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/session/SessionMonitor.cpp:HandleSessionChange",
+      "type": "function",
+      "name": "HandleSessionChange",
+      "filePath": "src/modules/session/SessionMonitor.cpp",
+      "lineRange": [180, 195],
+      "summary": "Translates a WTS session-change notification into a human-readable description and invokes the registered callback with the resulting state string.",
+      "tags": ["event-handler", "windows-session"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+      "type": "function",
+      "name": "GetCurrentSessionState",
+      "filePath": "src/modules/session/SessionMonitor.cpp",
+      "lineRange": [198, 291],
+      "summary": "Determines the current session's state (locked, active, disconnected, etc.) by inspecting the active console session, the input desktop, and the logged-in user via WTS APIs.",
+      "tags": ["windows-session", "monitoring"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/modules/session/SessionMonitor.h",
+      "type": "file",
+      "name": "SessionMonitor.h",
+      "filePath": "src/modules/session/SessionMonitor.h",
+      "summary": "Declares the SessionMonitor class, which watches Windows Terminal Services (WTS) session-state changes via a hidden window and reports them through a callback function.",
+      "tags": ["windows-session", "type-definition", "monitoring"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+      "type": "class",
+      "name": "SessionMonitor",
+      "filePath": "src/modules/session/SessionMonitor.h",
+      "lineRange": [28, 85],
+      "summary": "Monitors console/RDP connect/disconnect and lock/unlock session events using a hidden message-only window and WTS notifications, invoking a callback on state changes.",
+      "tags": ["windows-session", "monitoring", "data-model"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/modules/tray/TrayApp.cpp",
+      "type": "file",
+      "name": "TrayApp.cpp",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "summary": "Implements the TrayApp class: manages a Windows system tray icon showing hostname/IP/uptime, running a UI thread for the tray window and a named-pipe listener thread that parses incoming key=value updates from the agent process to refresh the displayed tooltip.",
+      "tags": ["windows-tray", "ipc", "ui", "threading"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/tray/TrayApp.cpp:Trim",
+      "type": "function",
+      "name": "Trim",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "lineRange": [14, 27],
+      "summary": "Local helper that trims leading and trailing whitespace from a string, used when parsing named-pipe input lines.",
+      "tags": ["utility", "string-processing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/tray/TrayApp.cpp:Start",
+      "type": "function",
+      "name": "Start",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "lineRange": [43, 58],
+      "summary": "Starts the UI thread (creating the tray window) and, once ready, starts the named-pipe listener thread.",
+      "tags": ["threading", "lifecycle-management"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/tray/TrayApp.cpp:Stop",
+      "type": "function",
+      "name": "Stop",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "lineRange": [60, 78],
+      "summary": "Signals the stop event and posts a quit message to halt both the UI and pipe threads, then joins them.",
+      "tags": ["threading", "lifecycle-management"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/tray/TrayApp.cpp:UpdateData",
+      "type": "function",
+      "name": "UpdateData",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "lineRange": [89, 97],
+      "summary": "Updates the stored hostname/IP/uptime strings under a mutex and posts a custom message to trigger a tooltip refresh on the UI thread.",
+      "tags": ["ui", "threading"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+      "type": "function",
+      "name": "ApplyTooltip",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "lineRange": [105, 115],
+      "summary": "Builds the tooltip text from the current hostname/IP/uptime and applies it to the tray icon via Shell_NotifyIconW.",
+      "tags": ["ui", "windows-tray"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/modules/tray/TrayApp.cpp:WndProc",
+      "type": "function",
+      "name": "TrayApp::WndProc",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "lineRange": [119, 142],
+      "summary": "Static window procedure for the hidden tray window, handling the custom tooltip-update message, tray icon messages, and window destruction.",
+      "tags": ["event-handler", "windows-tray", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/modules/tray/TrayApp.cpp:UiThreadProc",
+      "type": "function",
+      "name": "UiThreadProc",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "lineRange": [145, 221],
+      "summary": "UI thread entry point that registers the window class, creates the hidden tray window, sets the initial tray icon, and runs the Win32 message loop.",
+      "tags": ["threading", "ui", "entry-point", "windows-tray"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+      "type": "function",
+      "name": "PipeThreadProc",
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "lineRange": [224, 349],
+      "summary": "Named-pipe listener thread that creates the CoreStation HX agent's IPC pipe, accepts connections, reads key=value formatted lines (hostname/ip/uptime), and calls UpdateData to refresh the tray tooltip in real time.",
+      "tags": ["ipc", "threading", "entry-point"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/modules/tray/TrayApp.h",
+      "type": "file",
+      "name": "TrayApp.h",
+      "filePath": "src/modules/tray/TrayApp.h",
+      "summary": "Declares the TrayApp class, which displays a Windows system tray icon with hostname/IP/uptime information updated via UI and named-pipe listener threads.",
+      "tags": ["windows-tray", "type-definition", "ui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/modules/tray/TrayApp.h:TrayApp",
+      "type": "class",
+      "name": "TrayApp",
+      "filePath": "src/modules/tray/TrayApp.h",
+      "lineRange": [25, 108],
+      "summary": "Manages a Windows system tray icon and its tooltip text, driven by a UI thread and a named-pipe listener thread that receives live host status updates.",
+      "tags": ["windows-tray", "ui", "data-model"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/modules/3kcheck/3kcheck.cpp",
+      "target": "function:src/modules/3kcheck/3kcheck.cpp:trim",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/3kcheck/3kcheck.cpp",
+      "target": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/3kcheck/3kcheck.cpp",
+      "target": "function:src/modules/3kcheck/3kcheck.cpp:IsHX2KCPU",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/3kcheck/3kcheck.cpp",
+      "target": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/modules/3kcheck/3kcheck.cpp",
+      "target": "function:src/modules/3kcheck/3kcheck.cpp:IsHX2KCPU",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+      "target": "function:src/modules/3kcheck/3kcheck.cpp:trim",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/3kcheck/3kcheck.cpp:IsHX2KCPU",
+      "target": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/modules/regedits/Regedit.cpp",
+      "target": "file:src/modules/regedits/Regedit.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modules/regedits/Regedit.cpp",
+      "target": "function:src/modules/regedits/Regedit.cpp:Read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/regedits/Regedit.cpp",
+      "target": "function:src/modules/regedits/Regedit.cpp:Write",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/regedits/Regedit.cpp",
+      "target": "function:src/modules/regedits/Regedit.cpp:Create",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/regedits/Regedit.cpp",
+      "target": "function:src/modules/regedits/Regedit.cpp:Delete",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src/modules/regedits/Regedit.cpp:Create",
+      "target": "function:src/modules/regedits/Regedit.cpp:Write",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/modules/regedits/Regedit.h",
+      "target": "class:src/modules/regedits/Regedit.h:Regedit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/regedits/Regedit.h",
+      "target": "class:src/modules/regedits/Regedit.h:Regedit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/modules/regedits/Regedit.h:Regedit",
+      "target": "function:src/modules/regedits/Regedit.cpp:Read",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:src/modules/regedits/Regedit.h:Regedit",
+      "target": "function:src/modules/regedits/Regedit.cpp:Write",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "file:src/modules/service/ServiceManager.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:Install",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:Uninstall",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:StartService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:StopService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:IsInstalled",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:IsRunning",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:ReportStatus",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:RegisterServiceHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:ServiceMainProc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:ServiceCtrlProc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:LogError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.cpp",
+      "target": "function:src/modules/service/ServiceManager.cpp:GetLastErrorString",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:Uninstall",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:Uninstall",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:StartService",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:StartService",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:StopService",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:StopService",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:IsInstalled",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:IsInstalled",
+      "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:IsRunning",
+      "target": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:ServiceMainProc",
+      "target": "function:src/modules/service/ServiceManager.cpp:ReportStatus",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:ServiceCtrlProc",
+      "target": "function:src/modules/service/ServiceManager.cpp:ReportStatus",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:Install",
+      "target": "function:src/modules/service/ServiceManager.cpp:LogError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/service/ServiceManager.cpp:LogError",
+      "target": "function:src/modules/service/ServiceManager.cpp:GetLastErrorString",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.h",
+      "target": "class:src/modules/service/ServiceManager.h:ServiceManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/service/ServiceManager.h",
+      "target": "class:src/modules/service/ServiceManager.h:ServiceManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/modules/service/ServiceManager.h:ServiceManager",
+      "target": "function:src/modules/service/ServiceManager.cpp:Install",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:src/modules/service/ServiceManager.h:ServiceManager",
+      "target": "function:src/modules/service/ServiceManager.cpp:ServiceMainProc",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.cpp",
+      "target": "file:src/modules/session/SessionMonitor.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.cpp",
+      "target": "function:src/modules/session/SessionMonitor.cpp:Start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.cpp",
+      "target": "function:src/modules/session/SessionMonitor.cpp:Stop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.cpp",
+      "target": "function:src/modules/session/SessionMonitor.cpp:ThreadProc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.cpp",
+      "target": "function:src/modules/session/SessionMonitor.cpp:WndProc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.cpp",
+      "target": "function:src/modules/session/SessionMonitor.cpp:HandleSessionChange",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.cpp",
+      "target": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src/modules/session/SessionMonitor.cpp:Start",
+      "target": "function:src/modules/session/SessionMonitor.cpp:ThreadProc",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/session/SessionMonitor.cpp:WndProc",
+      "target": "function:src/modules/session/SessionMonitor.cpp:HandleSessionChange",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+      "target": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.h",
+      "target": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/session/SessionMonitor.h",
+      "target": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+      "target": "function:src/modules/session/SessionMonitor.cpp:Start",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+      "target": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "file:src/modules/tray/TrayApp.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "function:src/modules/tray/TrayApp.cpp:Trim",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "function:src/modules/tray/TrayApp.cpp:Start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "function:src/modules/tray/TrayApp.cpp:Stop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "function:src/modules/tray/TrayApp.cpp:UpdateData",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "function:src/modules/tray/TrayApp.cpp:WndProc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "function:src/modules/tray/TrayApp.cpp:UiThreadProc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.cpp",
+      "target": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src/modules/tray/TrayApp.cpp:Start",
+      "target": "function:src/modules/tray/TrayApp.cpp:UiThreadProc",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/tray/TrayApp.cpp:Start",
+      "target": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/tray/TrayApp.cpp:UpdateData",
+      "target": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/tray/TrayApp.cpp:WndProc",
+      "target": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/tray/TrayApp.cpp:UiThreadProc",
+      "target": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+      "target": "function:src/modules/tray/TrayApp.cpp:Trim",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+      "target": "function:src/modules/tray/TrayApp.cpp:UpdateData",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.h",
+      "target": "class:src/modules/tray/TrayApp.h:TrayApp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/modules/tray/TrayApp.h",
+      "target": "class:src/modules/tray/TrayApp.h:TrayApp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/modules/tray/TrayApp.h:TrayApp",
+      "target": "function:src/modules/tray/TrayApp.cpp:Start",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:src/modules/tray/TrayApp.h:TrayApp",
+      "target": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "service:debian/postinst",
+      "target": "service:CoreStationHXAgent.service",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "service:debian/prerm",
+      "target": "service:CoreStationHXAgent.service",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "service:debian/postrm",
+      "target": "service:CoreStationHXAgent.service",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "pipeline:debian/rules",
+      "target": "config:debian/control",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:debian/control",
+      "target": "service:CoreStationHXAgent.service",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "resource:app.res",
+      "target": "resource:app.rc",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

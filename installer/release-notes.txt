@@ -1,9 +1,23 @@
-# 2025-9-1
+# 20.26.3.1_GA
 # CoreStation HX Agent Release notes
 
 CoreStation HX Agent Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+20.26.5.1_GA
+------------
+- Implemented support for HX3000 Nodes via a CPU Check - Sends 4x Network details and uses COM1 if HX3K
+
+
+20.26.3.1_GA
+------------
+- Made Session state reporting more robust
+- Added Hearbeat
+- Adds a check for the AMT Serial Port, which will reassign it to COM4 if it is conflicting on COM3
+- To aid with the above, the application will not exit if the Serial Port cannot be opened, it will just retry opening the port every 5 Seconds
+- Reports full windows version ("Windows 11 Pro 25H2") rather than the 6.1s "Microsoft Windows 11 Pro", this just makes it a little more clear as Windows is always Microsoft, but Windows isnt just Pro
+
 
 2025.9.1
 --------

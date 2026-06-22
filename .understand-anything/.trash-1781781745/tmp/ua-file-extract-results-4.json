@@ -1,0 +1,31 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "installer/install.ps1",
+      "language": "powershell",
+      "fileCategory": "script",
+      "totalLines": 110,
+      "nonEmptyLines": 94,
+      "metrics": {}
+    },
+    {
+      "path": "installer/release-notes.txt",
+      "language": "txt",
+      "fileCategory": "docs",
+      "totalLines": 53,
+      "nonEmptyLines": 39,
+      "metrics": {}
+    },
+    {
+      "path": "installer/remove.ps1",
+      "language": "powershell",
+      "fileCategory": "script",
+      "totalLines": 82,
+      "nonEmptyLines": 70,
+      "metrics": {}
+    }
+  ]
+}

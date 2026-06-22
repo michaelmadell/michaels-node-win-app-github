@@ -1,0 +1,1977 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/main.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 723,
+      "nonEmptyLines": 627,
+      "functions": [
+        {
+          "name": "sendLineToBmc",
+          "startLine": 56,
+          "endLine": 64,
+          "params": [
+            "output_string"
+          ]
+        },
+        {
+          "name": "notifyStopRequested",
+          "startLine": 66,
+          "endLine": 77,
+          "params": [
+            "stopReason"
+          ]
+        },
+        {
+          "name": "heartbeatThread",
+          "startLine": 79,
+          "endLine": 150,
+          "params": []
+        },
+        {
+          "name": "GetAMTInstanceId",
+          "startLine": 166,
+          "endLine": 182,
+          "params": []
+        },
+        {
+          "name": "GetAMTComPort",
+          "startLine": 187,
+          "endLine": 219,
+          "params": []
+        },
+        {
+          "name": "disableAMTComPort",
+          "startLine": 221,
+          "endLine": 238,
+          "params": []
+        },
+        {
+          "name": "enableAMTComPort",
+          "startLine": 240,
+          "endLine": 258,
+          "params": []
+        },
+        {
+          "name": "reassignComPort",
+          "startLine": 265,
+          "endLine": 379,
+          "params": []
+        },
+        {
+          "name": "checkSystemState",
+          "startLine": 382,
+          "endLine": 424,
+          "params": []
+        },
+        {
+          "name": "processIncomingCommand",
+          "startLine": 426,
+          "endLine": 439,
+          "params": [
+            "command"
+          ]
+        },
+        {
+          "name": "processIncomingSerialData",
+          "startLine": 441,
+          "endLine": 457,
+          "params": []
+        },
+        {
+          "name": "readSerialPortWorker",
+          "startLine": 459,
+          "endLine": 485,
+          "params": []
+        },
+        {
+          "name": "serialThread",
+          "startLine": 487,
+          "endLine": 592,
+          "params": []
+        },
+        {
+          "name": "main",
+          "startLine": 594,
+          "endLine": 721,
+          "params": [
+            "argc",
+            "argv"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AMTPortInfo",
+          "startLine": 152,
+          "endLine": 155,
+          "methods": [],
+          "properties": [
+            "comPort",
+            "instanceId"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "sendLineToBmc",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "notifyStopRequested",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "heartbeatThread",
+          "line": 79,
+          "isDefault": false
+        },
+        {
+          "name": "AMTPortInfo",
+          "line": 152,
+          "isDefault": false
+        },
+        {
+          "name": "GetAMTComPort",
+          "line": 187,
+          "isDefault": false
+        },
+        {
+          "name": "disableAMTComPort",
+          "line": 221,
+          "isDefault": false
+        },
+        {
+          "name": "enableAMTComPort",
+          "line": 240,
+          "isDefault": false
+        },
+        {
+          "name": "reassignComPort",
+          "line": 265,
+          "isDefault": false
+        },
+        {
+          "name": "checkSystemState",
+          "line": 382,
+          "isDefault": false
+        },
+        {
+          "name": "processIncomingCommand",
+          "line": 426,
+          "isDefault": false
+        },
+        {
+          "name": "processIncomingSerialData",
+          "line": 441,
+          "isDefault": false
+        },
+        {
+          "name": "readSerialPortWorker",
+          "line": 459,
+          "isDefault": false
+        },
+        {
+          "name": "serialThread",
+          "line": 487,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 594,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "sendLineToBmc",
+          "callee": "logMessage",
+          "lineNumber": 62
+        },
+        {
+          "caller": "sendLineToBmc",
+          "callee": "Write",
+          "lineNumber": 63
+        },
+        {
+          "caller": "notifyStopRequested",
+          "callee": "exchange",
+          "lineNumber": 67
+        },
+        {
+          "caller": "notifyStopRequested",
+          "callee": "IsOpen",
+          "lineNumber": 71
+        },
+        {
+          "caller": "notifyStopRequested",
+          "callee": "logMessage",
+          "lineNumber": 72
+        },
+        {
+          "caller": "notifyStopRequested",
+          "callee": "sendLineToBmc",
+          "lineNumber": 76
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "logMessage",
+          "lineNumber": 80
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::chrono::seconds",
+          "lineNumber": 82
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::chrono::steady_clock::now",
+          "lineNumber": 83
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "load",
+          "lineNumber": 85
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::chrono::steady_clock::now",
+          "lineNumber": 86
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "load",
+          "lineNumber": 91
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "UpdateCounters",
+          "lineNumber": 94
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "CollectAll",
+          "lineNumber": 99
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 114
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::to_string",
+          "lineNumber": 114
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 115
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::to_string",
+          "lineNumber": 115
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 116
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 117
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 118
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::to_string",
+          "lineNumber": 118
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 119
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::to_string",
+          "lineNumber": 119
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 120
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 121
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 122
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::to_string",
+          "lineNumber": 122
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 123
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "logMessage",
+          "lineNumber": 136
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "str",
+          "lineNumber": 136
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 140
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "what",
+          "lineNumber": 142
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "logMessage",
+          "lineNumber": 143
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::string",
+          "lineNumber": 143
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "what",
+          "lineNumber": 143
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::this_thread::sleep_for",
+          "lineNumber": 147
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "std::chrono::milliseconds",
+          "lineNumber": 147
+        },
+        {
+          "caller": "heartbeatThread",
+          "callee": "logMessage",
+          "lineNumber": 149
+        },
+        {
+          "caller": "GetAMTInstanceId",
+          "callee": "std::wstring",
+          "lineNumber": 168
+        },
+        {
+          "caller": "GetAMTInstanceId",
+          "callee": "RegOpenKeyExW",
+          "lineNumber": 170
+        },
+        {
+          "caller": "GetAMTInstanceId",
+          "callee": "c_str",
+          "lineNumber": 170
+        },
+        {
+          "caller": "GetAMTInstanceId",
+          "callee": "_countof",
+          "lineNumber": 174
+        },
+        {
+          "caller": "GetAMTInstanceId",
+          "callee": "RegEnumKeyExW",
+          "lineNumber": 175
+        },
+        {
+          "caller": "GetAMTInstanceId",
+          "callee": "RegCloseKey",
+          "lineNumber": 176
+        },
+        {
+          "caller": "GetAMTInstanceId",
+          "callee": "std::wstring",
+          "lineNumber": 177
+        },
+        {
+          "caller": "GetAMTInstanceId",
+          "callee": "RegCloseKey",
+          "lineNumber": 179
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "std::wstring",
+          "lineNumber": 190
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "RegOpenKeyExW",
+          "lineNumber": 192
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "c_str",
+          "lineNumber": 192
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "_countof",
+          "lineNumber": 197
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "RegEnumKeyExW",
+          "lineNumber": 198
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "RegOpenKeyExW",
+          "lineNumber": 201
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "c_str",
+          "lineNumber": 201
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "RegQueryValueExW",
+          "lineNumber": 204
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "RegCloseKey",
+          "lineNumber": 205
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "RegCloseKey",
+          "lineNumber": 206
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "std::wstring",
+          "lineNumber": 207
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "std::wstring",
+          "lineNumber": 208
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "RegCloseKey",
+          "lineNumber": 210
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "_countof",
+          "lineNumber": 213
+        },
+        {
+          "caller": "GetAMTComPort",
+          "callee": "RegCloseKey",
+          "lineNumber": 215
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "GetAMTInstanceId",
+          "lineNumber": 223
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "empty",
+          "lineNumber": 224
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "logMessage",
+          "lineNumber": 225
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "std::string",
+          "lineNumber": 229
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "begin",
+          "lineNumber": 229
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "end",
+          "lineNumber": 229
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "system",
+          "lineNumber": 230
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "c_str",
+          "lineNumber": 230
+        },
+        {
+          "caller": "disableAMTComPort",
+          "callee": "logMessage",
+          "lineNumber": 233
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "GetAMTInstanceId",
+          "lineNumber": 242
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "empty",
+          "lineNumber": 243
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "logMessage",
+          "lineNumber": 244
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "std::string",
+          "lineNumber": 248
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "begin",
+          "lineNumber": 248
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "end",
+          "lineNumber": 248
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "system",
+          "lineNumber": 249
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "c_str",
+          "lineNumber": 249
+        },
+        {
+          "caller": "enableAMTComPort",
+          "callee": "logMessage",
+          "lineNumber": 252
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 267
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegOpenKeyExW",
+          "lineNumber": 275
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegQueryValueExW",
+          "lineNumber": 278
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegSetValueExW",
+          "lineNumber": 281
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 282
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 284
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegCloseKey",
+          "lineNumber": 286
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 288
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "std::wstring",
+          "lineNumber": 298
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegOpenKeyExW",
+          "lineNumber": 300
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "c_str",
+          "lineNumber": 300
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 301
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "std::string",
+          "lineNumber": 301
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "begin",
+          "lineNumber": 301
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "end",
+          "lineNumber": 301
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "_countof",
+          "lineNumber": 307
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegEnumKeyExW",
+          "lineNumber": 308
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegOpenKeyExW",
+          "lineNumber": 314
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "c_str",
+          "lineNumber": 314
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegSetValueExW",
+          "lineNumber": 315
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "(DWORD)",
+          "lineNumber": 317
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "wcslen",
+          "lineNumber": 317
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegCloseKey",
+          "lineNumber": 318
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegCreateKeyExW",
+          "lineNumber": 325
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "c_str",
+          "lineNumber": 325
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegSetValueExW",
+          "lineNumber": 328
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "(DWORD)",
+          "lineNumber": 330
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "wcslen",
+          "lineNumber": 330
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 332
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "std::string",
+          "lineNumber": 332
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "begin",
+          "lineNumber": 332
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "end",
+          "lineNumber": 332
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 334
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "std::string",
+          "lineNumber": 334
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "begin",
+          "lineNumber": 334
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "end",
+          "lineNumber": 334
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegCloseKey",
+          "lineNumber": 336
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 338
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "std::string",
+          "lineNumber": 338
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "begin",
+          "lineNumber": 338
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "end",
+          "lineNumber": 338
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "_countof",
+          "lineNumber": 342
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "RegCloseKey",
+          "lineNumber": 344
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 348
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "disableAMTComPort",
+          "lineNumber": 353
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 354
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "enableAMTComPort",
+          "lineNumber": 357
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 358
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "std::this_thread::sleep_for",
+          "lineNumber": 362
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "std::chrono::seconds",
+          "lineNumber": 362
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "GetAMTComPort",
+          "lineNumber": 365
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "empty",
+          "lineNumber": 366
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 367
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 371
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "logMessage",
+          "lineNumber": 375
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "std::string",
+          "lineNumber": 376
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "begin",
+          "lineNumber": 376
+        },
+        {
+          "caller": "reassignComPort",
+          "callee": "end",
+          "lineNumber": 376
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "getNetworkInterfaces",
+          "lineNumber": 385
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "getHostname",
+          "lineNumber": 386
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "getLoggedInUser",
+          "lineNumber": 387
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "sendLineToBmc",
+          "lineNumber": 395
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "logMessage",
+          "lineNumber": 396
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "sendLineToBmc",
+          "lineNumber": 404
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "logMessage",
+          "lineNumber": 405
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "logMessage",
+          "lineNumber": 414
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "sendLineToBmc",
+          "lineNumber": 420
+        },
+        {
+          "caller": "checkSystemState",
+          "callee": "str",
+          "lineNumber": 420
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "size",
+          "lineNumber": 429
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "size",
+          "lineNumber": 429
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "substr",
+          "lineNumber": 429
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "size",
+          "lineNumber": 429
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "substr",
+          "lineNumber": 430
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "size",
+          "lineNumber": 430
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "logMessage",
+          "lineNumber": 431
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "showMessageDialog",
+          "lineNumber": 433
+        },
+        {
+          "caller": "processIncomingCommand",
+          "callee": "logMessage",
+          "lineNumber": 436
+        },
+        {
+          "caller": "processIncomingSerialData",
+          "callee": "readSerial",
+          "lineNumber": 444
+        },
+        {
+          "caller": "processIncomingSerialData",
+          "callee": "find_first_of",
+          "lineNumber": 447
+        },
+        {
+          "caller": "processIncomingSerialData",
+          "callee": "substr",
+          "lineNumber": 448
+        },
+        {
+          "caller": "processIncomingSerialData",
+          "callee": "empty",
+          "lineNumber": 449
+        },
+        {
+          "caller": "processIncomingSerialData",
+          "callee": "processIncomingCommand",
+          "lineNumber": 450
+        },
+        {
+          "caller": "processIncomingSerialData",
+          "callee": "erase",
+          "lineNumber": 452
+        },
+        {
+          "caller": "processIncomingSerialData",
+          "callee": "empty",
+          "lineNumber": 453
+        },
+        {
+          "caller": "processIncomingSerialData",
+          "callee": "erase",
+          "lineNumber": 454
+        },
+        {
+          "caller": "readSerialPortWorker",
+          "callee": "logMessage",
+          "lineNumber": 460
+        },
+        {
+          "caller": "readSerialPortWorker",
+          "callee": "load",
+          "lineNumber": 464
+        },
+        {
+          "caller": "readSerialPortWorker",
+          "callee": "readSerial",
+          "lineNumber": 467
+        },
+        {
+          "caller": "readSerialPortWorker",
+          "callee": "load",
+          "lineNumber": 476
+        },
+        {
+          "caller": "readSerialPortWorker",
+          "callee": "std::this_thread::sleep_for",
+          "lineNumber": 481
+        },
+        {
+          "caller": "readSerialPortWorker",
+          "callee": "std::chrono::milliseconds",
+          "lineNumber": 481
+        },
+        {
+          "caller": "readSerialPortWorker",
+          "callee": "logMessage",
+          "lineNumber": 484
+        },
+        {
+          "caller": "serialThread",
+          "callee": "GetCpuInfo",
+          "lineNumber": 492
+        },
+        {
+          "caller": "serialThread",
+          "callee": "IsHX2KCPU",
+          "lineNumber": 494
+        },
+        {
+          "caller": "serialThread",
+          "callee": "logMessage",
+          "lineNumber": 496
+        },
+        {
+          "caller": "serialThread",
+          "callee": "logMessage",
+          "lineNumber": 500
+        },
+        {
+          "caller": "serialThread",
+          "callee": "logMessage",
+          "lineNumber": 508
+        },
+        {
+          "caller": "serialThread",
+          "callee": "std::make_unique<SerialManager>",
+          "lineNumber": 510
+        },
+        {
+          "caller": "serialThread",
+          "callee": "processIncomingCommand",
+          "lineNumber": 512
+        },
+        {
+          "caller": "serialThread",
+          "callee": "Open",
+          "lineNumber": 516
+        },
+        {
+          "caller": "serialThread",
+          "callee": "logMessage",
+          "lineNumber": 518
+        },
+        {
+          "caller": "serialThread",
+          "callee": "OutputDebugStringW",
+          "lineNumber": 520
+        },
+        {
+          "caller": "serialThread",
+          "callee": "logMessage",
+          "lineNumber": 526
+        },
+        {
+          "caller": "serialThread",
+          "callee": "std::string",
+          "lineNumber": 531
+        },
+        {
+          "caller": "serialThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 539
+        },
+        {
+          "caller": "serialThread",
+          "callee": "str",
+          "lineNumber": 539
+        },
+        {
+          "caller": "serialThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 540
+        },
+        {
+          "caller": "serialThread",
+          "callee": "getOsVersion",
+          "lineNumber": 540
+        },
+        {
+          "caller": "serialThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 541
+        },
+        {
+          "caller": "serialThread",
+          "callee": "getOsBuild",
+          "lineNumber": 541
+        },
+        {
+          "caller": "serialThread",
+          "callee": "getCurrentSessionState",
+          "lineNumber": 543
+        },
+        {
+          "caller": "serialThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 544
+        },
+        {
+          "caller": "serialThread",
+          "callee": "getLoggedInUser",
+          "lineNumber": 549
+        },
+        {
+          "caller": "serialThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 550
+        },
+        {
+          "caller": "serialThread",
+          "callee": "getNetworkInterfaces",
+          "lineNumber": 553
+        },
+        {
+          "caller": "serialThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 559
+        },
+        {
+          "caller": "serialThread",
+          "callee": "str",
+          "lineNumber": 559
+        },
+        {
+          "caller": "serialThread",
+          "callee": "std::chrono::steady_clock::now",
+          "lineNumber": 566
+        },
+        {
+          "caller": "serialThread",
+          "callee": "std::chrono::seconds",
+          "lineNumber": 567
+        },
+        {
+          "caller": "serialThread",
+          "callee": "load",
+          "lineNumber": 569
+        },
+        {
+          "caller": "serialThread",
+          "callee": "ProcessIncomingData",
+          "lineNumber": 571
+        },
+        {
+          "caller": "serialThread",
+          "callee": "IsOpen",
+          "lineNumber": 574
+        },
+        {
+          "caller": "serialThread",
+          "callee": "TryReconnect",
+          "lineNumber": 575
+        },
+        {
+          "caller": "serialThread",
+          "callee": "std::chrono::steady_clock::now",
+          "lineNumber": 579
+        },
+        {
+          "caller": "serialThread",
+          "callee": "checkSystemState",
+          "lineNumber": 581
+        },
+        {
+          "caller": "serialThread",
+          "callee": "std::this_thread::sleep_for",
+          "lineNumber": 586
+        },
+        {
+          "caller": "serialThread",
+          "callee": "std::chrono::milliseconds",
+          "lineNumber": 586
+        },
+        {
+          "caller": "serialThread",
+          "callee": "sendLineToBmc",
+          "lineNumber": 589
+        },
+        {
+          "caller": "serialThread",
+          "callee": "Close",
+          "lineNumber": 590
+        },
+        {
+          "caller": "serialThread",
+          "callee": "logMessage",
+          "lineNumber": 591
+        },
+        {
+          "caller": "main",
+          "callee": "createPlatform",
+          "lineNumber": 598
+        },
+        {
+          "caller": "main",
+          "callee": "GetAMTComPort",
+          "lineNumber": 603
+        },
+        {
+          "caller": "main",
+          "callee": "empty",
+          "lineNumber": 605
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 607
+        },
+        {
+          "caller": "main",
+          "callee": "std::string",
+          "lineNumber": 607
+        },
+        {
+          "caller": "main",
+          "callee": "begin",
+          "lineNumber": 607
+        },
+        {
+          "caller": "main",
+          "callee": "end",
+          "lineNumber": 607
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 610
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 615
+        },
+        {
+          "caller": "main",
+          "callee": "disableAMTComPort",
+          "lineNumber": 616
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 618
+        },
+        {
+          "caller": "main",
+          "callee": "enableAMTComPort",
+          "lineNumber": 619
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 621
+        },
+        {
+          "caller": "main",
+          "callee": "std::this_thread::sleep_for",
+          "lineNumber": 622
+        },
+        {
+          "caller": "main",
+          "callee": "std::chrono::seconds",
+          "lineNumber": 622
+        },
+        {
+          "caller": "main",
+          "callee": "GetAMTComPort",
+          "lineNumber": 623
+        },
+        {
+          "caller": "main",
+          "callee": "empty",
+          "lineNumber": 624
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 626
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 629
+        },
+        {
+          "caller": "main",
+          "callee": "reassignComPort",
+          "lineNumber": 630
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 632
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 635
+        },
+        {
+          "caller": "main",
+          "callee": "exit",
+          "lineNumber": 636
+        },
+        {
+          "caller": "main",
+          "callee": "logMessage",
+          "lineNumber": 642
+        },
+        {
+          "caller": "main",
+          "callee": "exit",
+          "lineNumber": 643
+        },
+        {
+          "caller": "main",
+          "callee": "std::make_unique<MetricsCollector>",
+          "lineNumber": 649
+        },
+        {
+          "caller": "main",
+          "callee": "get",
+          "lineNumber": 649
+        },
+        {
+          "caller": "main",
+          "callee": "run",
+          "lineNumber": 657
+        },
+        {
+          "caller": "main",
+          "callee": "std::thread",
+          "lineNumber": 662
+        },
+        {
+          "caller": "main",
+          "callee": "std::thread",
+          "lineNumber": 663
+        },
+        {
+          "caller": "main",
+          "callee": "OutputDebugStringW",
+          "lineNumber": 669
+        },
+        {
+          "caller": "main",
+          "callee": "notifyStopRequested",
+          "lineNumber": 671
+        },
+        {
+          "caller": "main",
+          "callee": "joinable",
+          "lineNumber": 674
+        },
+        {
+          "caller": "main",
+          "callee": "join",
+          "lineNumber": 675
+        },
+        {
+          "caller": "main",
+          "callee": "joinable",
+          "lineNumber": 677
+        },
+        {
+          "caller": "main",
+          "callee": "join",
+          "lineNumber": 678
+        },
+        {
+          "caller": "main",
+          "callee": "Close",
+          "lineNumber": 682
+        },
+        {
+          "caller": "main",
+          "callee": "sendLineToBmc",
+          "lineNumber": 690
+        },
+        {
+          "caller": "main",
+          "callee": "sendLineToBmc",
+          "lineNumber": 698
+        },
+        {
+          "caller": "main",
+          "callee": "sendLineToBmc",
+          "lineNumber": 704
+        },
+        {
+          "caller": "main",
+          "callee": "getLoggedInUser",
+          "lineNumber": 709
+        },
+        {
+          "caller": "main",
+          "callee": "sendLineToBmc",
+          "lineNumber": 712
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 14,
+        "functionCount": 14,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/modules/3kcheck/3kcheck.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 10,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/serial/SerialManager.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 252,
+      "nonEmptyLines": 211,
+      "functions": [
+        {
+          "name": "SerialManager",
+          "startLine": 14,
+          "endLine": 16,
+          "params": [
+            "onMessage"
+          ]
+        },
+        {
+          "name": "~SerialManager",
+          "startLine": 18,
+          "endLine": 20,
+          "params": []
+        },
+        {
+          "name": "Open",
+          "startLine": 22,
+          "endLine": 122,
+          "params": [
+            "portName",
+            "baudrate"
+          ]
+        },
+        {
+          "name": "Close",
+          "startLine": 124,
+          "endLine": 142,
+          "params": []
+        },
+        {
+          "name": "IsOpen",
+          "startLine": 144,
+          "endLine": 146,
+          "params": []
+        },
+        {
+          "name": "Write",
+          "startLine": 148,
+          "endLine": 176,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "Read",
+          "startLine": 178,
+          "endLine": 209,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "ProcessIncomingData",
+          "startLine": 211,
+          "endLine": 227,
+          "params": []
+        },
+        {
+          "name": "TryReconnect",
+          "startLine": 229,
+          "endLine": 248,
+          "params": []
+        },
+        {
+          "name": "SetRetryDelay",
+          "startLine": 250,
+          "endLine": 252,
+          "params": [
+            "delayMs"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "SerialManager",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "~SerialManager",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "Open",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "Close",
+          "line": 124,
+          "isDefault": false
+        },
+        {
+          "name": "IsOpen",
+          "line": 144,
+          "isDefault": false
+        },
+        {
+          "name": "Write",
+          "line": 148,
+          "isDefault": false
+        },
+        {
+          "name": "Read",
+          "line": 178,
+          "isDefault": false
+        },
+        {
+          "name": "ProcessIncomingData",
+          "line": 211,
+          "isDefault": false
+        },
+        {
+          "name": "TryReconnect",
+          "line": 229,
+          "isDefault": false
+        },
+        {
+          "name": "SetRetryDelay",
+          "line": 250,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "~SerialManager",
+          "callee": "Close",
+          "lineNumber": 19
+        },
+        {
+          "caller": "Open",
+          "callee": "Close",
+          "lineNumber": 24
+        },
+        {
+          "caller": "Open",
+          "callee": "CreateFileA",
+          "lineNumber": 31
+        },
+        {
+          "caller": "Open",
+          "callee": "c_str",
+          "lineNumber": 32
+        },
+        {
+          "caller": "Open",
+          "callee": "GetLastError",
+          "lineNumber": 42
+        },
+        {
+          "caller": "Open",
+          "callee": "GetCommState",
+          "lineNumber": 50
+        },
+        {
+          "caller": "Open",
+          "callee": "CloseHandle",
+          "lineNumber": 51
+        },
+        {
+          "caller": "Open",
+          "callee": "SetCommState",
+          "lineNumber": 60
+        },
+        {
+          "caller": "Open",
+          "callee": "CloseHandle",
+          "lineNumber": 61
+        },
+        {
+          "caller": "Open",
+          "callee": "SetCommTimeouts",
+          "lineNumber": 72
+        },
+        {
+          "caller": "Open",
+          "callee": "CloseHandle",
+          "lineNumber": 73
+        },
+        {
+          "caller": "Open",
+          "callee": "open",
+          "lineNumber": 82
+        },
+        {
+          "caller": "Open",
+          "callee": "c_str",
+          "lineNumber": 82
+        },
+        {
+          "caller": "Open",
+          "callee": "tcgetattr",
+          "lineNumber": 89
+        },
+        {
+          "caller": "Open",
+          "callee": "close",
+          "lineNumber": 91
+        },
+        {
+          "caller": "Open",
+          "callee": "cfsetospeed",
+          "lineNumber": 95
+        },
+        {
+          "caller": "Open",
+          "callee": "cfsetispeed",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Open",
+          "callee": "tcsetattr",
+          "lineNumber": 112
+        },
+        {
+          "caller": "Open",
+          "callee": "close",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Close",
+          "callee": "CloseHandle",
+          "lineNumber": 131
+        },
+        {
+          "caller": "Close",
+          "callee": "close",
+          "lineNumber": 136
+        },
+        {
+          "caller": "Write",
+          "callee": "WriteFile",
+          "lineNumber": 155
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 155
+        },
+        {
+          "caller": "Write",
+          "callee": "length",
+          "lineNumber": 155
+        },
+        {
+          "caller": "Write",
+          "callee": "GetLastError",
+          "lineNumber": 156
+        },
+        {
+          "caller": "Write",
+          "callee": "Close",
+          "lineNumber": 158
+        },
+        {
+          "caller": "Write",
+          "callee": "length",
+          "lineNumber": 162
+        },
+        {
+          "caller": "Write",
+          "callee": "length",
+          "lineNumber": 163
+        },
+        {
+          "caller": "Write",
+          "callee": "write",
+          "lineNumber": 169
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 169
+        },
+        {
+          "caller": "Write",
+          "callee": "length",
+          "lineNumber": 169
+        },
+        {
+          "caller": "Write",
+          "callee": "strerror",
+          "lineNumber": 171
+        },
+        {
+          "caller": "Write",
+          "callee": "length",
+          "lineNumber": 174
+        },
+        {
+          "caller": "Read",
+          "callee": "ReadFile",
+          "lineNumber": 187
+        },
+        {
+          "caller": "Read",
+          "callee": "append",
+          "lineNumber": 189
+        },
+        {
+          "caller": "Read",
+          "callee": "GetLastError",
+          "lineNumber": 194
+        },
+        {
+          "caller": "Read",
+          "callee": "read",
+          "lineNumber": 202
+        },
+        {
+          "caller": "Read",
+          "callee": "append",
+          "lineNumber": 204
+        },
+        {
+          "caller": "ProcessIncomingData",
+          "callee": "Read",
+          "lineNumber": 213
+        },
+        {
+          "caller": "ProcessIncomingData",
+          "callee": "find_first_of",
+          "lineNumber": 217
+        },
+        {
+          "caller": "ProcessIncomingData",
+          "callee": "substr",
+          "lineNumber": 218
+        },
+        {
+          "caller": "ProcessIncomingData",
+          "callee": "empty",
+          "lineNumber": 219
+        },
+        {
+          "caller": "ProcessIncomingData",
+          "callee": "onMessage_",
+          "lineNumber": 220
+        },
+        {
+          "caller": "ProcessIncomingData",
+          "callee": "erase",
+          "lineNumber": 222
+        },
+        {
+          "caller": "ProcessIncomingData",
+          "callee": "empty",
+          "lineNumber": 223
+        },
+        {
+          "caller": "ProcessIncomingData",
+          "callee": "erase",
+          "lineNumber": 224
+        },
+        {
+          "caller": "TryReconnect",
+          "callee": "std::chrono::steady_clock::now",
+          "lineNumber": 234
+        },
+        {
+          "caller": "TryReconnect",
+          "callee": "count",
+          "lineNumber": 235
+        },
+        {
+          "caller": "TryReconnect",
+          "callee": "std::chrono::duration_cast<std::chrono::milliseconds>",
+          "lineNumber": 235
+        },
+        {
+          "caller": "TryReconnect",
+          "callee": "Open",
+          "lineNumber": 241
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 10,
+        "functionCount": 10,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/serial/SerialManager.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 103,
+      "nonEmptyLines": 88,
+      "functions": [
+        {
+          "name": "SerialManager",
+          "startLine": 86,
+          "endLine": 86,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "SerialManager",
+          "startLine": 17,
+          "endLine": 103,
+          "methods": [
+            "Open",
+            "Close",
+            "IsOpen",
+            "Write",
+            "Read",
+            "ProcessIncomingData",
+            "TryReconnect",
+            "SetRetryDelay",
+            "SerialManager"
+          ],
+          "properties": [
+            "onMessage_",
+            "rxBuffer_",
+            "portName_",
+            "baudrate_",
+            "isOpen_",
+            "lastAttempt_",
+            "retryDelayMs_"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Open",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "Close",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "IsOpen",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "Write",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "Read",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "ProcessIncomingData",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "TryReconnect",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "SetRetryDelay",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "SerialManager",
+          "line": 86,
+          "isDefault": false
+        },
+        {
+          "name": "SerialManager",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 10,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/version.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 10,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}
