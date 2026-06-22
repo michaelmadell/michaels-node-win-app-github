@@ -1,0 +1,73 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are suggestions — uncomment to activate.
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+#
+
+# --- From .gitignore (uncomment to exclude) ---
+
+# .vs/
+# *.class
+# *.py[cod]
+# *.jar
+# TEST*.xml
+# .DS_Store
+# Thumbs.db
+# *.app
+# *.exe
+# *.war
+# *.tiff
+# *.avi
+# *.flv
+# *.mov
+# *.wmv
+# main.obj
+# git_info.h
+# outputs/release-notes.txt
+# build.sh-example
+# *.ipch
+# *.d
+# *.slo
+# *.lo
+# *.o
+# *.obj
+# *.gch
+# *.pch
+# *.ilk
+# *.pdb
+# *.so
+# *.dylib
+# *.dll
+# *.mod
+# *.smod
+# *.lai
+# *.la
+# *.a
+# *.lib
+# *.exe
+# *.out
+# *.app
+# *.dwo
+# .vs/
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# JS / TS
+# *.test.*
+# *.spec.*
+# *.snap
+# C# / .NET
+# **/*Tests.cs
+# **/*Test.cs
+# **/*Fixture.cs
+# **/*.Tests.csproj
+# Java / Kotlin
+# **/src/test/**
+# **/*Test.java
+# **/*IT.java
+# **/*Spec.kt
+# Go
+# **/*_test.go

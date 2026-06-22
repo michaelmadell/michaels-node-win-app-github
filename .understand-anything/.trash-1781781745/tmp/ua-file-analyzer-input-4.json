@@ -1,0 +1,13 @@
+{
+  "projectRoot": "D:/michaels-node-win-app-github",
+  "batchFiles": [
+    {"path": "installer/install.ps1", "language": "powershell", "sizeLines": 109, "fileCategory": "script"},
+    {"path": "installer/release-notes.txt", "language": "txt", "sizeLines": 52, "fileCategory": "docs"},
+    {"path": "installer/remove.ps1", "language": "powershell", "sizeLines": 81, "fileCategory": "script"}
+  ],
+  "batchImportData": {
+    "installer/install.ps1": [],
+    "installer/release-notes.txt": [],
+    "installer/remove.ps1": []
+  }
+}

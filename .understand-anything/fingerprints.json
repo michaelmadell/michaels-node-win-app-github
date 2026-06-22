@@ -1,0 +1,1463 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "ff68707cf1baeed3f61031701321b6823fd8fb49",
+  "generatedAt": "2026-06-18T11:22:03.061Z",
+  "files": {
+    ".understand-anything/.understandignore": {
+      "filePath": ".understand-anything/.understandignore",
+      "contentHash": "3d56ef4be8882c52f43b3d24d7563d43fb321d83aaaf4b1fe6b7e0b991644a10",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 74,
+      "hasStructuralAnalysis": false
+    },
+    "app.rc": {
+      "filePath": "app.rc",
+      "contentHash": "188a15cf3f2dc2469c50475d9783f3b456a9936d7fb212f273d73e56edab61d0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 61,
+      "hasStructuralAnalysis": false
+    },
+    "app.res": {
+      "filePath": "app.res",
+      "contentHash": "0f2d32760ff2b3ac8ee630b108f889e512b481f70ca9b3e575a21370e2758c36",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 81,
+      "hasStructuralAnalysis": false
+    },
+    "build.bat": {
+      "filePath": "build.bat",
+      "contentHash": "7b5455c78e55a0f8cf5bf78ae76c9474219b74f7ae0cd179d88d0ad7aa4c443b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": false
+    },
+    "build.sh": {
+      "filePath": "build.sh",
+      "contentHash": "319cd36b306a8db06a603ba93272cebff95315a720e407b226675668d64615e9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 61,
+      "hasStructuralAnalysis": true
+    },
+    "CMakeLists.txt": {
+      "filePath": "CMakeLists.txt",
+      "contentHash": "a4f5827a1f095940e7897ec7f5d52cdfd335a9fee6a5c6383c05b5018dc4b6dc",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 395,
+      "hasStructuralAnalysis": false
+    },
+    "CoreStationHXAgent.service": {
+      "filePath": "CoreStationHXAgent.service",
+      "contentHash": "3df10f3c079f0ba0b9c2e28d23365d2fde0a578602c49c1cade678037a29a61e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 12,
+      "hasStructuralAnalysis": false
+    },
+    "debian/changelog": {
+      "filePath": "debian/changelog",
+      "contentHash": "6020a4ac46975ab14b8ec5175420d4bef0df55c477b25078a9f3a90232234c84",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": false
+    },
+    "debian/clean": {
+      "filePath": "debian/clean",
+      "contentHash": "dadcb06d0069fafe71dd1adfc6ce10cc3d571f0430fcd68730e6d46fed4e06a2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 3,
+      "hasStructuralAnalysis": false
+    },
+    "debian/compat": {
+      "filePath": "debian/compat",
+      "contentHash": "4fc82b26aecb47d2868c4efbe3581732a3e7cbcc6c2efb32062c08170a05eeb8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": false
+    },
+    "debian/control": {
+      "filePath": "debian/control",
+      "contentHash": "b42749c2522740396ff7cebdc4781058af2ae7e666f9d46bdb1098ac7ad1fd48",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 14,
+      "hasStructuralAnalysis": false
+    },
+    "debian/copyright": {
+      "filePath": "debian/copyright",
+      "contentHash": "fcbfadb3c124a996afda91776a8c82bd8675533a4ef6aee69541267df4a682f8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 27,
+      "hasStructuralAnalysis": false
+    },
+    "debian/dh-cmake.compat": {
+      "filePath": "debian/dh-cmake.compat",
+      "contentHash": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": false
+    },
+    "debian/files": {
+      "filePath": "debian/files",
+      "contentHash": "1cf954036895e171de9d3a670fc7053b17ae1b0b6f720f256691340f3b9e32b6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": false
+    },
+    "debian/postinst": {
+      "filePath": "debian/postinst",
+      "contentHash": "041889f0c0feb6e076e84ddcd8c7d94c188110903ee6f1d1e39a9a375d4325d5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": false
+    },
+    "debian/postrm": {
+      "filePath": "debian/postrm",
+      "contentHash": "97ce73874ea5fe39970444dcdee52517b567b52099cc15a5dc7c23b93dcaed22",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 19,
+      "hasStructuralAnalysis": false
+    },
+    "debian/prerm": {
+      "filePath": "debian/prerm",
+      "contentHash": "2a37c6c5dc91861f803642a864204d0fe4785d9dbf5fa948f7316a0b5051a0fb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 20,
+      "hasStructuralAnalysis": false
+    },
+    "debian/rules": {
+      "filePath": "debian/rules",
+      "contentHash": "1e1162d261ecb3b94066a65422147c48baa5eab29feb1dee9f4ee733cf78b12a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": false
+    },
+    "debian/source/format": {
+      "filePath": "debian/source/format",
+      "contentHash": "f88568efb192f79693c33238c1e701b91dbf45077a5337dcba48b3adf928d0d2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": false
+    },
+    "installer/install.ps1": {
+      "filePath": "installer/install.ps1",
+      "contentHash": "96fc1efb7fed4f639589036b064c2c5a6e7bd94644cac4f4eac2c5fc91d450c8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": false
+    },
+    "installer/release-notes.txt": {
+      "filePath": "installer/release-notes.txt",
+      "contentHash": "ed7217767caa8068f66577d471a1b8fcadd16764362add9c81623e5888f47c5d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 53,
+      "hasStructuralAnalysis": false
+    },
+    "installer/remove.ps1": {
+      "filePath": "installer/remove.ps1",
+      "contentHash": "f53bc1e16894749e806b1f00e3a0d29a57b5a81f89c5f17f45cf9b3eb7bf778e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 82,
+      "hasStructuralAnalysis": false
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "0661a9cbb3202d35703426dd7616a11a1f1e4ae261473bdb00e052be6108017e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 407,
+      "hasStructuralAnalysis": true
+    },
+    "release-notes.txt": {
+      "filePath": "release-notes.txt",
+      "contentHash": "ed7217767caa8068f66577d471a1b8fcadd16764362add9c81623e5888f47c5d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 53,
+      "hasStructuralAnalysis": false
+    },
+    "setup-remotes.ps1": {
+      "filePath": "setup-remotes.ps1",
+      "contentHash": "147d59a1ed09ad730beef9252e006c436db6a6a9029697962afdf85450ecb7cd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": false
+    },
+    "sign.bat": {
+      "filePath": "sign.bat",
+      "contentHash": "90cc5d800cc2611e09b9a21df90bcc057778f365b8e18de2fb0dd0180551a946",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 3,
+      "hasStructuralAnalysis": false
+    },
+    "src/core/Platform.h": {
+      "filePath": "src/core/Platform.h",
+      "contentHash": "b39548e4be3a9a0a11f1ef2fc9f7b1b5dfbd92c39a7c46f751c610756813bbe8",
+      "functions": [
+        {
+          "name": "~Platform",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "Platform",
+          "methods": [
+            "~Platform",
+            "getNetworkInterfaces",
+            "getHostname",
+            "getCurrentSessionState",
+            "getLoggedInUser",
+            "getOsVersion",
+            "getOsBuild",
+            "openSerialPort",
+            "closeSerialPort",
+            "writeSerial",
+            "readSerial",
+            "logMessage",
+            "getCpuUsagePercent",
+            "getRamUsagePercent",
+            "getFreeDiskSpaceGB",
+            "getWindowsUpdateState",
+            "getDiskQueueLength",
+            "getNetworkRetransRate",
+            "getSystemUptime",
+            "updatePdhMetrics",
+            "getGpuDriverInfo",
+            "getGpuUsagePercent",
+            "getHighRamProcesses",
+            "showMessageDialog",
+            "run"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 39
+        }
+      ],
+      "imports": [
+        {
+          "source": "SystemState.h",
+          "specifiers": [
+            "SystemState.h"
+          ]
+        },
+        {
+          "source": "string",
+          "specifiers": [
+            "string"
+          ]
+        },
+        {
+          "source": "vector",
+          "specifiers": [
+            "vector"
+          ]
+        },
+        {
+          "source": "functional",
+          "specifiers": [
+            "functional"
+          ]
+        },
+        {
+          "source": "memory",
+          "specifiers": [
+            "memory"
+          ]
+        }
+      ],
+      "exports": [
+        "~Platform",
+        "getNetworkInterfaces",
+        "getHostname",
+        "getCurrentSessionState",
+        "getLoggedInUser",
+        "getOsVersion",
+        "getOsBuild",
+        "openSerialPort",
+        "closeSerialPort",
+        "writeSerial",
+        "readSerial",
+        "logMessage",
+        "getCpuUsagePercent",
+        "getRamUsagePercent",
+        "getFreeDiskSpaceGB",
+        "getWindowsUpdateState",
+        "getDiskQueueLength",
+        "getNetworkRetransRate",
+        "getSystemUptime",
+        "updatePdhMetrics",
+        "getGpuDriverInfo",
+        "getGpuUsagePercent",
+        "getHighRamProcesses",
+        "showMessageDialog",
+        "run",
+        "Platform"
+      ],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "src/core/SystemState.h": {
+      "filePath": "src/core/SystemState.h",
+      "contentHash": "42fae0f1ef37ba601fa8af4dfd16afdb2c33d80d87f62fe0e9f861e15052f4fb",
+      "functions": [
+        {
+          "name": "operator!=",
+          "params": [
+            "other"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "operator==",
+          "params": [
+            "other"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "operator!=",
+          "params": [
+            "other"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [
+        {
+          "name": "NetworkInterface",
+          "methods": [
+            "operator!=",
+            "operator=="
+          ],
+          "properties": [
+            "name",
+            "ipv4",
+            "ipv6",
+            "dhcp",
+            "linkStatus",
+            "macAddress"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "SystemState",
+          "methods": [
+            "operator!="
+          ],
+          "properties": [
+            "networkInterfaces",
+            "hostname",
+            "powerState",
+            "sessionState",
+            "username",
+            "cpuUsagePercent",
+            "ramUsagePercent",
+            "freeDiskSpaceGB",
+            "windowsUpdateState",
+            "diskQueueLength",
+            "networkRetransRate",
+            "systemUptime",
+            "gpuDriverInfo",
+            "gpuUsagePercent",
+            "highRamProcesses"
+          ],
+          "exported": true,
+          "lineCount": 22
+        }
+      ],
+      "imports": [
+        {
+          "source": "string",
+          "specifiers": [
+            "string"
+          ]
+        },
+        {
+          "source": "tuple",
+          "specifiers": [
+            "tuple"
+          ]
+        },
+        {
+          "source": "vector",
+          "specifiers": [
+            "vector"
+          ]
+        }
+      ],
+      "exports": [
+        "operator!=",
+        "operator==",
+        "NetworkInterface",
+        "operator!=",
+        "SystemState"
+      ],
+      "totalLines": 47,
+      "hasStructuralAnalysis": true
+    },
+    "src/main.cpp": {
+      "filePath": "src/main.cpp",
+      "contentHash": "e5dcf23c14e9233b50473d365b0ddd899df8a10821c61ce5fb9058eea3e4771d",
+      "functions": [
+        {
+          "name": "sendLineToBmc",
+          "params": [
+            "output_string"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "notifyStopRequested",
+          "params": [
+            "stopReason"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "heartbeatThread",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 72
+        },
+        {
+          "name": "GetAMTInstanceId",
+          "params": [],
+          "returnType": "std::wstring",
+          "exported": false,
+          "lineCount": 17
+        },
+        {
+          "name": "GetAMTComPort",
+          "params": [],
+          "returnType": "AMTPortInfo",
+          "exported": true,
+          "lineCount": 33
+        },
+        {
+          "name": "disableAMTComPort",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "enableAMTComPort",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "reassignComPort",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 115
+        },
+        {
+          "name": "checkSystemState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 43
+        },
+        {
+          "name": "processIncomingCommand",
+          "params": [
+            "command"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "processIncomingSerialData",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "readSerialPortWorker",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "serialThread",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 106
+        },
+        {
+          "name": "main",
+          "params": [
+            "argc",
+            "argv"
+          ],
+          "returnType": "int",
+          "exported": true,
+          "lineCount": 128
+        }
+      ],
+      "classes": [
+        {
+          "name": "AMTPortInfo",
+          "methods": [],
+          "properties": [
+            "comPort",
+            "instanceId"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "imports": [
+        {
+          "source": "core/Platform.h",
+          "specifiers": [
+            "core/Platform.h"
+          ]
+        },
+        {
+          "source": "core/SystemState.h",
+          "specifiers": [
+            "core/SystemState.h"
+          ]
+        },
+        {
+          "source": "modules/serial/SerialManager.h",
+          "specifiers": [
+            "modules/serial/SerialManager.h"
+          ]
+        },
+        {
+          "source": "modules/3kcheck/3kcheck.h",
+          "specifiers": [
+            "modules/3kcheck/3kcheck.h"
+          ]
+        },
+        {
+          "source": "version.h",
+          "specifiers": [
+            "version.h"
+          ]
+        },
+        {
+          "source": "iostream",
+          "specifiers": [
+            "iostream"
+          ]
+        },
+        {
+          "source": "thread",
+          "specifiers": [
+            "thread"
+          ]
+        },
+        {
+          "source": "chrono",
+          "specifiers": [
+            "chrono"
+          ]
+        },
+        {
+          "source": "memory",
+          "specifiers": [
+            "memory"
+          ]
+        },
+        {
+          "source": "mutex",
+          "specifiers": [
+            "mutex"
+          ]
+        },
+        {
+          "source": "atomic",
+          "specifiers": [
+            "atomic"
+          ]
+        },
+        {
+          "source": "sstream",
+          "specifiers": [
+            "sstream"
+          ]
+        },
+        {
+          "source": "string",
+          "specifiers": [
+            "string"
+          ]
+        }
+      ],
+      "exports": [
+        "sendLineToBmc",
+        "notifyStopRequested",
+        "heartbeatThread",
+        "AMTPortInfo",
+        "GetAMTComPort",
+        "disableAMTComPort",
+        "enableAMTComPort",
+        "reassignComPort",
+        "checkSystemState",
+        "processIncomingCommand",
+        "processIncomingSerialData",
+        "readSerialPortWorker",
+        "serialThread",
+        "main"
+      ],
+      "totalLines": 724,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/3kcheck/3kcheck.cpp": {
+      "filePath": "src/modules/3kcheck/3kcheck.cpp",
+      "contentHash": "1ed0ce2f8e909ea09aeabe8da748607abedf6736458421bbcf739dae4b422b73",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 103,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/3kcheck/3kcheck.h": {
+      "filePath": "src/modules/3kcheck/3kcheck.h",
+      "contentHash": "a1bbc708e3936fc18096352ed94d58faa2a10d1373f5580cabd141c476ccb227",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/metrics/MetricCache.h": {
+      "filePath": "src/modules/metrics/MetricCache.h",
+      "contentHash": "70013e5b7779925d40b4181b08a0ca32316f8fb0c96c2900bee9469d8dfb6603",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "string",
+          "specifiers": [
+            "string"
+          ]
+        },
+        {
+          "source": "chrono",
+          "specifiers": [
+            "chrono"
+          ]
+        },
+        {
+          "source": "mutex",
+          "specifiers": [
+            "mutex"
+          ]
+        },
+        {
+          "source": "functional",
+          "specifiers": [
+            "functional"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 104,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/metrics/MetricsCollector.cpp": {
+      "filePath": "src/modules/metrics/MetricsCollector.cpp",
+      "contentHash": "11d538cad5a1aeeb31d7c091f76b27c479e9d78716311409f486596e62a9fe00",
+      "functions": [
+        {
+          "name": "MetricsCollector",
+          "params": [
+            "platform"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "~MetricsCollector",
+          "params": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "UpdateCounters",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "CollectAll",
+          "params": [],
+          "returnType": "MetricsCollector::SystemMetrics",
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "CollectPerformance",
+          "params": [],
+          "returnType": "MetricsCollector::PerformanceMetrics",
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "CollectGpu",
+          "params": [],
+          "returnType": "MetricsCollector::GpuMetrics",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "CollectProcesses",
+          "params": [],
+          "returnType": "MetricsCollector::ProcessMetrics",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "CheckUpdates",
+          "params": [],
+          "returnType": "MetricsCollector::UpdateStatus",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "InvalidateCache",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "SetCachingEnabled",
+          "params": [
+            "enabled"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "GetFormattedMetrics",
+          "params": [],
+          "returnType": "std::string",
+          "exported": true,
+          "lineCount": 29
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "MetricsCollector.h",
+          "specifiers": [
+            "MetricsCollector.h"
+          ]
+        },
+        {
+          "source": "core/Platform.h",
+          "specifiers": [
+            "core/Platform.h"
+          ]
+        },
+        {
+          "source": "sstream",
+          "specifiers": [
+            "sstream"
+          ]
+        },
+        {
+          "source": "iomanip",
+          "specifiers": [
+            "iomanip"
+          ]
+        }
+      ],
+      "exports": [
+        "MetricsCollector",
+        "~MetricsCollector",
+        "UpdateCounters",
+        "CollectAll",
+        "CollectPerformance",
+        "CollectGpu",
+        "CollectProcesses",
+        "CheckUpdates",
+        "InvalidateCache",
+        "SetCachingEnabled",
+        "GetFormattedMetrics"
+      ],
+      "totalLines": 127,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/metrics/MetricsCollector.h": {
+      "filePath": "src/modules/metrics/MetricsCollector.h",
+      "contentHash": "6eaa8590daf47df0c746be8c7b2b473ae0403169223621f2d8c31617e21c1203",
+      "functions": [
+        {
+          "name": "MetricsCollector",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "Platform",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "MetricsCollector",
+          "methods": [
+            "UpdateCounters",
+            "CollectAll",
+            "CollectPerformance",
+            "CollectGpu",
+            "CollectProcesses",
+            "CheckUpdates",
+            "InvalidateCache",
+            "SetCachingEnabled",
+            "GetFormattedMetrics",
+            "MetricsCollector"
+          ],
+          "properties": [
+            "platform_",
+            "cachingEnabled_"
+          ],
+          "exported": true,
+          "lineCount": 118
+        }
+      ],
+      "imports": [
+        {
+          "source": "core/SystemState.h",
+          "specifiers": [
+            "core/SystemState.h"
+          ]
+        },
+        {
+          "source": "MetricCache.h",
+          "specifiers": [
+            "MetricCache.h"
+          ]
+        },
+        {
+          "source": "memory",
+          "specifiers": [
+            "memory"
+          ]
+        },
+        {
+          "source": "string",
+          "specifiers": [
+            "string"
+          ]
+        },
+        {
+          "source": "functional",
+          "specifiers": [
+            "functional"
+          ]
+        }
+      ],
+      "exports": [
+        "Platform",
+        "UpdateCounters",
+        "CollectAll",
+        "CollectPerformance",
+        "CollectGpu",
+        "CollectProcesses",
+        "CheckUpdates",
+        "InvalidateCache",
+        "SetCachingEnabled",
+        "GetFormattedMetrics",
+        "MetricsCollector",
+        "MetricsCollector"
+      ],
+      "totalLines": 136,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/regedits/Regedit.cpp": {
+      "filePath": "src/modules/regedits/Regedit.cpp",
+      "contentHash": "f7b7e5ef550d6b644803bd58818ee5244ae932e7b99e650fe15015d12b993b9b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 180,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/regedits/Regedit.h": {
+      "filePath": "src/modules/regedits/Regedit.h",
+      "contentHash": "69d38eab02c414676b512c75c0df68a83d31d1da84327b25b67be2f3dba6f845",
+      "functions": [],
+      "classes": [
+        {
+          "name": "WindowsPlatform",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "Regedit",
+          "methods": [
+            "Read",
+            "Write",
+            "Create",
+            "Delete"
+          ],
+          "properties": [
+            "platform_"
+          ],
+          "exported": true,
+          "lineCount": 12
+        }
+      ],
+      "imports": [
+        {
+          "source": "string",
+          "specifiers": [
+            "string"
+          ]
+        },
+        {
+          "source": "functional",
+          "specifiers": [
+            "functional"
+          ]
+        }
+      ],
+      "exports": [
+        "WindowsPlatform",
+        "Read",
+        "Write",
+        "Create",
+        "Delete",
+        "Regedit"
+      ],
+      "totalLines": 19,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/serial/SerialManager.cpp": {
+      "filePath": "src/modules/serial/SerialManager.cpp",
+      "contentHash": "f01e547c75c1014ff4429f2f6d74f48356428750c6dd6c19aa3346c14666e1c4",
+      "functions": [
+        {
+          "name": "SerialManager",
+          "params": [
+            "onMessage"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "~SerialManager",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "Open",
+          "params": [
+            "portName",
+            "baudrate"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 101
+        },
+        {
+          "name": "Close",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "IsOpen",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "Write",
+          "params": [
+            "data"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 29
+        },
+        {
+          "name": "Read",
+          "params": [
+            "data"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "ProcessIncomingData",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "TryReconnect",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "SetRetryDelay",
+          "params": [
+            "delayMs"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "SerialManager.h",
+          "specifiers": [
+            "SerialManager.h"
+          ]
+        },
+        {
+          "source": "iostream",
+          "specifiers": [
+            "iostream"
+          ]
+        }
+      ],
+      "exports": [
+        "SerialManager",
+        "~SerialManager",
+        "Open",
+        "Close",
+        "IsOpen",
+        "Write",
+        "Read",
+        "ProcessIncomingData",
+        "TryReconnect",
+        "SetRetryDelay"
+      ],
+      "totalLines": 252,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/serial/SerialManager.h": {
+      "filePath": "src/modules/serial/SerialManager.h",
+      "contentHash": "ce5dd992f80a4fe20924385988744ccacbf32d16e5c312a2160ef80ec8e8fed9",
+      "functions": [
+        {
+          "name": "SerialManager",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "SerialManager",
+          "methods": [
+            "Open",
+            "Close",
+            "IsOpen",
+            "Write",
+            "Read",
+            "ProcessIncomingData",
+            "TryReconnect",
+            "SetRetryDelay",
+            "SerialManager"
+          ],
+          "properties": [
+            "onMessage_",
+            "rxBuffer_",
+            "portName_",
+            "baudrate_",
+            "isOpen_",
+            "lastAttempt_",
+            "retryDelayMs_"
+          ],
+          "exported": true,
+          "lineCount": 87
+        }
+      ],
+      "imports": [
+        {
+          "source": "string",
+          "specifiers": [
+            "string"
+          ]
+        },
+        {
+          "source": "functional",
+          "specifiers": [
+            "functional"
+          ]
+        },
+        {
+          "source": "atomic",
+          "specifiers": [
+            "atomic"
+          ]
+        },
+        {
+          "source": "chrono",
+          "specifiers": [
+            "chrono"
+          ]
+        }
+      ],
+      "exports": [
+        "Open",
+        "Close",
+        "IsOpen",
+        "Write",
+        "Read",
+        "ProcessIncomingData",
+        "TryReconnect",
+        "SetRetryDelay",
+        "SerialManager",
+        "SerialManager"
+      ],
+      "totalLines": 103,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/service/ServiceManager.cpp": {
+      "filePath": "src/modules/service/ServiceManager.cpp",
+      "contentHash": "c7fdb69dd485182773eece178789ad23d0fcdcb5f7c7e96867167a13672149e8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 436,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/service/ServiceManager.h": {
+      "filePath": "src/modules/service/ServiceManager.h",
+      "contentHash": "8ed3d3203e649f2817732383f3d100e0697149ac369fc266f1acac56beeae327",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 164,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/session/SessionMonitor.cpp": {
+      "filePath": "src/modules/session/SessionMonitor.cpp",
+      "contentHash": "953242ea3c3b1e9ed1362ad970ae47ddb6fdcb7c72ce8f2e024355a724a39e38",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 295,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/session/SessionMonitor.h": {
+      "filePath": "src/modules/session/SessionMonitor.h",
+      "contentHash": "6d2ed08a3798f798b93397c552fc246c6dafa6f96c138543113a547646c38aac",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/tray/TrayApp.cpp": {
+      "filePath": "src/modules/tray/TrayApp.cpp",
+      "contentHash": "306601aeb68785b2962333cc7d6b3e99fcfefcbdbe2429bce0242607e407fe7b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 351,
+      "hasStructuralAnalysis": true
+    },
+    "src/modules/tray/TrayApp.h": {
+      "filePath": "src/modules/tray/TrayApp.h",
+      "contentHash": "69b05eabc250b965687e171b51c3adda6764e02ca70494a6a0b083048110f640",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": true
+    },
+    "src/platform/LinuxPlatform.cpp": {
+      "filePath": "src/platform/LinuxPlatform.cpp",
+      "contentHash": "468893c26462a00ed7e39225ea210f5edc3fc0997328e82d78edd2d621c627aa",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 685,
+      "hasStructuralAnalysis": true
+    },
+    "src/platform/Windows_Addon.h": {
+      "filePath": "src/platform/Windows_Addon.h",
+      "contentHash": "fe963e43ac0737dfa63cdb5aab1e52a4c0936b64c0dceb9f44022e21996e0dc8",
+      "functions": [
+        {
+          "name": "operator()",
+          "params": [
+            "h"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "operator()",
+          "params": [
+            "h"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "ComInitializer",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "~ComInitializer",
+          "params": [],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "Succeeded",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "GetHResult",
+          "params": [],
+          "returnType": "HRESULT",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "ComInitializer",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "HandleCloser",
+          "methods": [
+            "operator()"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "PdhQueryCloser",
+          "methods": [
+            "operator()"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "ComInitializer",
+          "methods": [
+            "ComInitializer",
+            "~ComInitializer",
+            "Succeeded",
+            "GetHResult",
+            "ComInitializer"
+          ],
+          "properties": [
+            "hr_"
+          ],
+          "exported": true,
+          "lineCount": 18
+        }
+      ],
+      "imports": [
+        {
+          "source": "windows.h",
+          "specifiers": [
+            "windows.h"
+          ]
+        },
+        {
+          "source": "memory",
+          "specifiers": [
+            "memory"
+          ]
+        },
+        {
+          "source": "pdh.h",
+          "specifiers": [
+            "pdh.h"
+          ]
+        },
+        {
+          "source": "objbase.h",
+          "specifiers": [
+            "objbase.h"
+          ]
+        }
+      ],
+      "exports": [
+        "operator()",
+        "HandleCloser",
+        "operator()",
+        "PdhQueryCloser",
+        "ComInitializer",
+        "~ComInitializer",
+        "Succeeded",
+        "GetHResult",
+        "ComInitializer",
+        "ComInitializer"
+      ],
+      "totalLines": 53,
+      "hasStructuralAnalysis": true
+    },
+    "src/platform/WindowsPlatform.cpp": {
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "contentHash": "ddc0af96b549676aee4f3cb0cc7153e372b992354b8e054315b57634f6edaa40",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1191,
+      "hasStructuralAnalysis": true
+    },
+    "src/platform/WindowsPlatform.h": {
+      "filePath": "src/platform/WindowsPlatform.h",
+      "contentHash": "41f04178ec6b9fb7c5c3272cd02011d2ddb86a2445b41b24554d36f565d1f763",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 164,
+      "hasStructuralAnalysis": true
+    },
+    "src/version.h": {
+      "filePath": "src/version.h",
+      "contentHash": "d9e3acfa46a1dff6c5980eb2b52284f479ab7228f2f9507d058e6cd2540f5261",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

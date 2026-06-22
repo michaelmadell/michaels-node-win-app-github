@@ -1,0 +1,15 @@
+{
+  "projectRoot": "D:/michaels-node-win-app-github",
+  "batchFiles": [
+    {"path": "src/platform/LinuxPlatform.cpp", "language": "cpp", "sizeLines": 684, "fileCategory": "code"},
+    {"path": "src/platform/Windows_Addon.h", "language": "c", "sizeLines": 52, "fileCategory": "code"},
+    {"path": "src/platform/WindowsPlatform.cpp", "language": "cpp", "sizeLines": 1190, "fileCategory": "code"},
+    {"path": "src/platform/WindowsPlatform.h", "language": "c", "sizeLines": 163, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/platform/LinuxPlatform.cpp": [],
+    "src/platform/Windows_Addon.h": [],
+    "src/platform/WindowsPlatform.cpp": [],
+    "src/platform/WindowsPlatform.h": []
+  }
+}

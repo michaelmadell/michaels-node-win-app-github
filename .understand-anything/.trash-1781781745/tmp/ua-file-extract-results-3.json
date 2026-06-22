@@ -1,0 +1,196 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 7,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "CMakeLists.txt",
+      "language": "txt",
+      "fileCategory": "docs",
+      "totalLines": 395,
+      "nonEmptyLines": 345,
+      "metrics": {}
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 406,
+      "nonEmptyLines": 351,
+      "sections": [
+        {
+          "heading": "README #",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Files ##",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Linux Build ##",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "User Guide ###",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "To Install ###",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "Windows Build ##",
+          "level": 2,
+          "line": 126
+        },
+        {
+          "heading": "User guide",
+          "level": 3,
+          "line": 130
+        },
+        {
+          "heading": "Debug output",
+          "level": 3,
+          "line": 143
+        },
+        {
+          "heading": "Tray helper (interactive mode)",
+          "level": 3,
+          "line": 146
+        },
+        {
+          "heading": "To build",
+          "level": 3,
+          "line": 169
+        },
+        {
+          "heading": "Build machine setup #",
+          "level": 3,
+          "line": 176
+        },
+        {
+          "heading": "Day to Day use",
+          "level": 3,
+          "line": 232
+        },
+        {
+          "heading": "How to sign and exe",
+          "level": 3,
+          "line": 248
+        },
+        {
+          "heading": "Working with services",
+          "level": 3,
+          "line": 260
+        },
+        {
+          "heading": "PowerShell Execution policies",
+          "level": 3,
+          "line": 292
+        },
+        {
+          "heading": "Lint-ing",
+          "level": 3,
+          "line": 305
+        },
+        {
+          "heading": "Future development",
+          "level": 3,
+          "line": 343
+        },
+        {
+          "heading": "Session state defines",
+          "level": 3,
+          "line": 352
+        },
+        {
+          "heading": "Serial output",
+          "level": 3,
+          "line": 369
+        },
+        {
+          "heading": "System power up",
+          "level": 4,
+          "line": 371
+        },
+        {
+          "heading": "Log in",
+          "level": 4,
+          "line": 383
+        },
+        {
+          "heading": "Lock windows session",
+          "level": 4,
+          "line": 389
+        },
+        {
+          "heading": "Unlock session",
+          "level": 4,
+          "line": 394
+        },
+        {
+          "heading": "Power down from log in screen",
+          "level": 4,
+          "line": 399
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 24
+      }
+    },
+    {
+      "path": "build.bat",
+      "language": "batch",
+      "fileCategory": "script",
+      "totalLines": 87,
+      "nonEmptyLines": 72,
+      "metrics": {}
+    },
+    {
+      "path": "build.sh",
+      "language": "shell",
+      "fileCategory": "script",
+      "totalLines": 60,
+      "nonEmptyLines": 47,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "release-notes.txt",
+      "language": "txt",
+      "fileCategory": "docs",
+      "totalLines": 53,
+      "nonEmptyLines": 39,
+      "metrics": {}
+    },
+    {
+      "path": "setup-remotes.ps1",
+      "language": "powershell",
+      "fileCategory": "script",
+      "totalLines": 7,
+      "nonEmptyLines": 7,
+      "metrics": {}
+    },
+    {
+      "path": "sign.bat",
+      "language": "batch",
+      "fileCategory": "script",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "metrics": {}
+    }
+  ]
+}

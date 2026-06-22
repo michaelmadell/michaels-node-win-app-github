@@ -1,0 +1,17 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 0,
+  "edgesRestored": 5,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 0,
+  "complexityRemapped": 0,
+  "notes": [
+    "Merge script 'Fixed' section was not included as pattern counts in this run's report (only the summary input/output counts and the 'could not fix' list were provided); node/edge counts before and after (158/267 -> 158/257) are consistent with only the 10 dangling edges being dropped, no other mechanical issues observed.",
+    "All 158 nodes have valid known types (file, class, function, config, document, resource, service, pipeline) and no missing-id or unknown-complexity issues were found in the assembled graph - the 'could not fix' list contained only the 10 dangling edges.",
+    "Confirmed via batch-1.json that the analyzer for src/core/Platform.h created only the class:src/core/Platform.h:Platform node and never created individual function: nodes for Platform's virtual methods (getNetworkInterfaces, getHostname, getLoggedInUser, getOsVersion, getOsBuild, getCurrentSessionState, run, showMessageDialog, etc.). No alternate IDs for these methods exist anywhere in the assembled graph.",
+    "Re-pointed 9 of the 10 dropped 'calls' edges (targets on Platform's unimplemented virtual methods) to the existing class:src/core/Platform.h:Platform node instead, per the dropped-edge recovery guidance (method-level node missing -> edge to class node is acceptable). Edges with identical (source, target, type) after re-pointing were deduplicated: serialThread->Platform (4 methods collapsed to 1 edge), checkSystemState->Platform (3 methods collapsed to 1 edge), main->Platform (1), processIncomingCommand->Platform (1). Each restored edge carries a 'note' field documenting which original method calls it represents.",
+    "The 10th dropped edge (function:src/main.cpp:serialThread -> function:src/modules/3kcheck/3kcheck.h:GetCpuInfo) was a different class of problem: GetCpuInfo is actually implemented in 3kcheck.cpp (node function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo exists in the assembled graph), not 3kcheck.h. Re-pointed this edge to the correct existing function node rather than to a class node.",
+    "Cross-batch edge check: verified all 5 importMap entries (Platform.h->SystemState.h, main.cpp->Platform.h/SystemState.h/3kcheck.h/SerialManager.h/version.h, MetricsCollector.cpp->Platform.h/MetricsCollector.h, MetricsCollector.h->SystemState.h/MetricCache.h, SerialManager.cpp->SerialManager.h) already have corresponding 'imports' edges in the assembled graph. No edges needed to be added; this matches the merge script's own report of 0 recovered imports edges (they were already present, just not missing).",
+    "Final graph: 158 nodes (unchanged), 262 edges (257 + 5 net distinct edges restored after dedup)."
+  ]
+}

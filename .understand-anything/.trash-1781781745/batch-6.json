@@ -1,0 +1,862 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/platform/LinuxPlatform.cpp",
+      "type": "file",
+      "name": "LinuxPlatform.cpp",
+      "filePath": "src/platform/LinuxPlatform.cpp",
+      "summary": "Linux-specific implementation of the Platform interface, providing serial port I/O, network interface enumeration, system metrics (CPU/RAM/disk/GPU), D-Bus session monitoring, and syslog-based logging for the host agent.",
+      "tags": ["platform-implementation", "linux", "system-metrics", "serial-communication", "service"],
+      "complexity": "complex",
+      "languageNotes": "Uses libdbus for session-state signal monitoring on a dedicated thread, /proc parsing for CPU/RAM stats, and popen-based shell command execution for GPU and Windows-Update-equivalent checks."
+    },
+    {
+      "id": "file:src/platform/Windows_Addon.h",
+      "type": "file",
+      "name": "Windows_Addon.h",
+      "filePath": "src/platform/Windows_Addon.h",
+      "summary": "Small header of Windows-specific RAII helpers: custom deleters for HANDLE and PDH_HQUERY smart pointers, and a COM library initializer/uninitializer wrapper.",
+      "tags": ["utility", "raii", "windows", "type-definition", "resource-management"],
+      "complexity": "simple",
+      "languageNotes": "Defines std::unique_ptr type aliases (UniqueHandle, UniquePdhQuery) with custom deleter functors to ensure deterministic cleanup of Win32 resources."
+    },
+    {
+      "id": "class:src/platform/Windows_Addon.h:HandleCloser",
+      "type": "class",
+      "name": "HandleCloser",
+      "filePath": "src/platform/Windows_Addon.h",
+      "lineRange": [8, 14],
+      "summary": "Functor used as the deleter for UniqueHandle; calls CloseHandle on valid, non-null Win32 handles.",
+      "tags": ["raii", "functor", "windows"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/platform/Windows_Addon.h:PdhQueryCloser",
+      "type": "class",
+      "name": "PdhQueryCloser",
+      "filePath": "src/platform/Windows_Addon.h",
+      "lineRange": [22, 28],
+      "summary": "Functor used as the deleter for UniquePdhQuery; calls PdhCloseQuery on a non-null PDH query handle.",
+      "tags": ["raii", "functor", "windows", "performance-counters"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/platform/Windows_Addon.h:ComInitializer",
+      "type": "class",
+      "name": "ComInitializer",
+      "filePath": "src/platform/Windows_Addon.h",
+      "lineRange": [35, 52],
+      "summary": "RAII wrapper around CoInitializeEx/CoUninitialize that initializes the COM library on construction and tears it down on destruction if initialization succeeded; non-copyable.",
+      "tags": ["raii", "com", "windows", "resource-management"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/platform/WindowsPlatform.cpp",
+      "type": "file",
+      "name": "WindowsPlatform.cpp",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "summary": "Windows-specific implementation of the Platform interface and Windows Service entry point: handles SCM service lifecycle, serial port I/O, network/adapter enumeration via IP Helper API, WMI-based GPU driver queries, PDH performance counters, registry-based OS version detection, and high-RAM process discovery.",
+      "tags": ["platform-implementation", "windows", "windows-service", "system-metrics", "com"],
+      "complexity": "complex",
+      "languageNotes": "Combines Win32 Service Control Manager APIs (ServiceMain, ServiceCtrlHandler), WMI/COM (IWbemServices) for GPU driver info, PDH performance counters, and metric caching via MetricCache<T> to avoid redundant expensive system calls."
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+      "type": "function",
+      "name": "WideToUtf8",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [66, 74],
+      "summary": "Converts a wide (UTF-16) string to a UTF-8 std::string using WideCharToMultiByte.",
+      "tags": ["utility", "string-conversion", "windows"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:Trim",
+      "type": "function",
+      "name": "Trim",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [78, 91],
+      "summary": "Trims leading and trailing whitespace from a std::string.",
+      "tags": ["utility", "string-formatting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+      "type": "function",
+      "name": "ServiceMain",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [105, 116],
+      "summary": "Windows Service entry point invoked by the SCM; registers the control handler, reports running status, starts the service, and blocks on the stop event.",
+      "tags": ["windows-service", "entry-point", "service-lifecycle"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:ServiceCtrlHandler",
+      "type": "function",
+      "name": "ServiceCtrlHandler",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [119, 124],
+      "summary": "SCM control handler callback that translates service control codes into a stop request with the appropriate stop reason.",
+      "tags": ["windows-service", "event-handler"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:createPlatform",
+      "type": "function",
+      "name": "createPlatform",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [127, 131],
+      "summary": "Factory function returning a unique_ptr<Platform> constructed as a WindowsPlatform, used by platform-agnostic callers to obtain the OS-specific implementation.",
+      "tags": ["factory", "entry-point", "platform-implementation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:run",
+      "type": "function",
+      "name": "WindowsPlatform::run",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [180, 247],
+      "summary": "Main run loop dispatching to either Windows Service mode (via StartServiceCtrlDispatcherW) or interactive console mode depending on command-line switches, wiring up start/stop/power/session callbacks.",
+      "tags": ["entry-point", "service-lifecycle", "windows-service"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:runningUnderServiceControlManager",
+      "type": "function",
+      "name": "WindowsPlatform::runningUnderServiceControlManager",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [269, 307],
+      "summary": "Walks the process snapshot via Toolhelp32 to determine whether the current process's parent is services.exe, used to detect SCM-managed execution.",
+      "tags": ["windows-service", "process-inspection"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getNetworkInterfaces",
+      "type": "function",
+      "name": "WindowsPlatform::getNetworkInterfaces",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [366, 433],
+      "summary": "Enumerates active network adapters via GetAdaptersAddresses, extracting MAC address, IPv4/IPv6 addresses, and adapter metadata into NetworkInterface structures.",
+      "tags": ["networking", "system-metrics"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getLoggedInUser",
+      "type": "function",
+      "name": "WindowsPlatform::getLoggedInUser",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [452, 472],
+      "summary": "Queries the active console session's logged-in username via WTSEnumerateSessionsW/WTSQuerySessionInformationW.",
+      "tags": ["windows", "session-management", "system-metrics"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getOsVersion",
+      "type": "function",
+      "name": "WindowsPlatform::getOsVersion",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [476, 522],
+      "summary": "Resolves the Windows OS display version/name by dynamically loading RtlGetVersion and reading registry ProductName/DisplayVersion keys, with fallbacks for newer Windows 11 naming.",
+      "tags": ["windows", "system-metrics", "registry"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getOsBuild",
+      "type": "function",
+      "name": "WindowsPlatform::getOsBuild",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [525, 543],
+      "summary": "Retrieves the OS build number via dynamically loaded RtlGetVersion.",
+      "tags": ["windows", "system-metrics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:openSerialPort",
+      "type": "function",
+      "name": "WindowsPlatform::openSerialPort",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [545, 606],
+      "summary": "Opens and configures a Windows COM serial port (baud rate, timeouts) using CreateFileA, GetCommState/SetCommState, and SetCommTimeouts, wrapped in a UniqueHandle.",
+      "tags": ["serial-communication", "windows"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:writeSerial",
+      "type": "function",
+      "name": "WindowsPlatform::writeSerial",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [615, 643],
+      "summary": "Writes data to the open serial port, lazily reopening it if needed (rate-limited retry), and logs success/failure.",
+      "tags": ["serial-communication", "windows"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:readSerial",
+      "type": "function",
+      "name": "WindowsPlatform::readSerial",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [653, 666],
+      "summary": "Reads available bytes from the open serial port via ReadFile into the provided output string.",
+      "tags": ["serial-communication", "windows"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:logMessage",
+      "type": "function",
+      "name": "WindowsPlatform::logMessage",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [682, 723],
+      "summary": "Appends a timestamped message to the agent's rotating log file, performing log rotation (rename/delete) when size limits are exceeded, and creating the log directory if missing.",
+      "tags": ["logging", "windows", "file-io"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getCpuUsagePercentImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getCpuUsagePercentImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [734, 765],
+      "summary": "Computes CPU usage percentage by comparing successive GetSystemTimes idle/kernel/user time deltas.",
+      "tags": ["system-metrics", "windows"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getRamUsagePercentImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getRamUsagePercentImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [772, 780],
+      "summary": "Computes RAM usage percentage via GlobalMemoryStatusEx.",
+      "tags": ["system-metrics", "windows"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getFreeDiskSpaceGBImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getFreeDiskSpaceGBImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [789, 809],
+      "summary": "Returns free disk space in GB for the given drive path using GetDiskFreeSpaceExW.",
+      "tags": ["system-metrics", "windows", "disk"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getWindowsUpdateStateImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getWindowsUpdateStateImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [811, 851],
+      "summary": "Reads registry keys under Windows Update / WaaSMedic to determine pending-update/reboot state.",
+      "tags": ["system-metrics", "windows", "registry"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:updatePdhMetrics",
+      "type": "function",
+      "name": "WindowsPlatform::updatePdhMetrics",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [853, 858],
+      "summary": "Refreshes the PDH performance counter query and updates cached CPU time samples.",
+      "tags": ["system-metrics", "windows", "performance-counters"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getDiskQueueLengthImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getDiskQueueLengthImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [863, 873],
+      "summary": "Reads the current disk queue length PDH counter value.",
+      "tags": ["system-metrics", "windows", "performance-counters", "disk"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getNetworkRetransRateImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getNetworkRetransRateImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [879, 889],
+      "summary": "Reads the current TCP segment retransmission rate PDH counter value.",
+      "tags": ["system-metrics", "windows", "performance-counters", "networking"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getSystemUptimeImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getSystemUptimeImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [921, 943],
+      "summary": "Formats system uptime (from GetTickCount64) into a days:hours:minutes string.",
+      "tags": ["system-metrics", "windows"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getGpuDriverInfoImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getGpuDriverInfoImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [950, 1036],
+      "summary": "Queries WMI (Win32_VideoController) via COM/IWbemServices to retrieve GPU name and driver version, handling COM connection, security blanket setup, and result enumeration.",
+      "tags": ["com", "wmi", "system-metrics", "gpu"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getGpuUsagePercentImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getGpuUsagePercentImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [1038, 1065],
+      "summary": "Aggregates GPU engine utilization percentages from a PDH wildcard counter array to compute overall GPU usage.",
+      "tags": ["system-metrics", "windows", "performance-counters", "gpu"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getProcessName",
+      "type": "function",
+      "name": "WindowsPlatform::getProcessName",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [1074, 1092],
+      "summary": "Resolves a process's executable base name from its HANDLE via QueryFullProcessImageNameW with a GetModuleBaseName fallback.",
+      "tags": ["process-inspection", "windows", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:getHighRamProcessesImpl",
+      "type": "function",
+      "name": "WindowsPlatform::getHighRamProcessesImpl",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [1095, 1149],
+      "summary": "Enumerates running processes via EnumProcesses, queries memory info for each, and returns a formatted list of processes exceeding a RAM usage threshold.",
+      "tags": ["system-metrics", "windows", "process-inspection"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:registerServiceHandler",
+      "type": "function",
+      "name": "WindowsPlatform::registerServiceHandler",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [1151, 1162],
+      "summary": "Registers the SCM service control handler and reports the initial start-pending status.",
+      "tags": ["windows-service", "service-lifecycle"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:startService",
+      "type": "function",
+      "name": "WindowsPlatform::startService",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [1168, 1173],
+      "summary": "Starts the session monitor and invokes the registered on-start callback.",
+      "tags": ["windows-service", "service-lifecycle"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform/WindowsPlatform.cpp:stopService",
+      "type": "function",
+      "name": "WindowsPlatform::stopService",
+      "filePath": "src/platform/WindowsPlatform.cpp",
+      "lineRange": [1175, 1189],
+      "summary": "Handles a graceful service stop: prevents double-stop via an atomic flag, reports stop-pending status, stops the session monitor, invokes the stop callback, and signals the stop event.",
+      "tags": ["windows-service", "service-lifecycle"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/platform/WindowsPlatform.h",
+      "type": "file",
+      "name": "WindowsPlatform.h",
+      "filePath": "src/platform/WindowsPlatform.h",
+      "summary": "Declares the WindowsPlatform class implementing the Platform interface for Windows, including service-management members, PDH counters, COM initializer, metric caches, and Windows-specific helper methods.",
+      "tags": ["platform-implementation", "windows", "type-definition", "windows-service"],
+      "complexity": "moderate",
+      "languageNotes": "Uses preprocessor guards (#ifdef ENABLE_TRAY_APP / ENABLE_SESSION_MONITOR) to conditionally include optional module members, and templated MetricCache<T> fields to cache expensive metric computations per-field."
+    },
+    {
+      "id": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+      "type": "class",
+      "name": "WindowsPlatform",
+      "filePath": "src/platform/WindowsPlatform.h",
+      "lineRange": [27, 162],
+      "summary": "Concrete Platform implementation for Windows; exposes networking, serial communication, system metrics, GPU info, and Windows Service lifecycle management, backed by PDH counters, COM, and per-metric caches.",
+      "tags": ["platform-implementation", "windows", "windows-service", "system-metrics"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/platform/LinuxPlatform.cpp",
+      "target": "file:src/core/Platform.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/platform/LinuxPlatform.cpp",
+      "target": "file:src/core/Platform.h",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.h",
+      "target": "file:src/core/Platform.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+      "target": "file:src/core/Platform.h",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.h",
+      "target": "file:src/platform/Windows_Addon.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "file:src/platform/WindowsPlatform.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "file:src/platform/Windows_Addon.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "file:src/platform/WindowsPlatform.h",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/platform/Windows_Addon.h",
+      "target": "class:src/platform/Windows_Addon.h:HandleCloser",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/Windows_Addon.h",
+      "target": "class:src/platform/Windows_Addon.h:PdhQueryCloser",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/Windows_Addon.h",
+      "target": "class:src/platform/Windows_Addon.h:ComInitializer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/Windows_Addon.h",
+      "target": "class:src/platform/Windows_Addon.h:HandleCloser",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform/Windows_Addon.h",
+      "target": "class:src/platform/Windows_Addon.h:PdhQueryCloser",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform/Windows_Addon.h",
+      "target": "class:src/platform/Windows_Addon.h:ComInitializer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.h",
+      "target": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.h",
+      "target": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+      "target": "class:src/platform/Windows_Addon.h:ComInitializer",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:Trim",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:ServiceCtrlHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:createPlatform",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:createPlatform",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:runningUnderServiceControlManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getNetworkInterfaces",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getLoggedInUser",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getOsVersion",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getOsBuild",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:openSerialPort",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:writeSerial",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:readSerial",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getCpuUsagePercentImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getRamUsagePercentImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getFreeDiskSpaceGBImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getWindowsUpdateStateImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:updatePdhMetrics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getDiskQueueLengthImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getNetworkRetransRateImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getSystemUptimeImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getGpuDriverInfoImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getGpuUsagePercentImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getProcessName",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:getHighRamProcessesImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:registerServiceHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:startService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform/WindowsPlatform.cpp",
+      "target": "function:src/platform/WindowsPlatform.cpp:stopService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:getCpuUsagePercentImpl",
+      "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:getNetworkInterfaces",
+      "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:getLoggedInUser",
+      "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:getGpuDriverInfoImpl",
+      "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:getProcessName",
+      "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:writeSerial",
+      "target": "function:src/platform/WindowsPlatform.cpp:openSerialPort",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:writeSerial",
+      "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:readSerial",
+      "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:openSerialPort",
+      "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:updatePdhMetrics",
+      "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:stopService",
+      "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:startService",
+      "target": "function:src/platform/WindowsPlatform.cpp:run",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:run",
+      "target": "function:src/platform/WindowsPlatform.cpp:runningUnderServiceControlManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:run",
+      "target": "function:src/platform/WindowsPlatform.cpp:startService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:registerServiceHandler",
+      "target": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+      "target": "function:src/platform/WindowsPlatform.cpp:registerServiceHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+      "target": "function:src/platform/WindowsPlatform.cpp:startService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:ServiceCtrlHandler",
+      "target": "function:src/platform/WindowsPlatform.cpp:stopService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:getHighRamProcessesImpl",
+      "target": "function:src/platform/WindowsPlatform.cpp:getProcessName",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/platform/WindowsPlatform.cpp:createPlatform",
+      "target": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

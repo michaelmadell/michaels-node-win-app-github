@@ -1,0 +1,142 @@
+[
+  {
+    "source": "file:src/core/Platform.h",
+    "target": "file:src/core/SystemState.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.h",
+    "target": "file:src/core/SystemState.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.h",
+    "target": "file:src/modules/metrics/MetricCache.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "file:src/core/Platform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "file:src/modules/metrics/MetricsCollector.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/core/Platform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/core/SystemState.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/modules/3kcheck/3kcheck.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/modules/serial/SerialManager.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/version.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "file:src/modules/serial/SerialManager.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/regedits/Regedit.cpp",
+    "target": "file:src/modules/regedits/Regedit.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "file:src/modules/service/ServiceManager.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.cpp",
+    "target": "file:src/modules/session/SessionMonitor.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "file:src/modules/tray/TrayApp.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/LinuxPlatform.cpp",
+    "target": "file:src/core/Platform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.h",
+    "target": "file:src/core/Platform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.h",
+    "target": "file:src/platform/Windows_Addon.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "file:src/platform/WindowsPlatform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "file:src/platform/Windows_Addon.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  }
+]
