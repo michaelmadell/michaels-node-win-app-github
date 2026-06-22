@@ -1,5 +1,3 @@
-#ifdef _WIN32
-
 #include <string>
 
 struct CPUInfo {
@@ -10,5 +8,3 @@ struct CPUInfo {
 
 CPUInfo GetCpuInfo();
 bool IsHX2KCPU(CPUInfo* info);
-
-#endif

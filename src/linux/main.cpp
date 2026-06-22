@@ -1,6 +1,7 @@
 #include "../core/Platform.h"
 #include "../core/SystemState.h"
 #include "../modules/serial/SerialManager.h"
+#include "../modules/3kcheck/3kcheck.h"
 #include "../version.h"
 
 #include <iostream>
@@ -121,7 +122,18 @@ void processIncomingCommand(const std::string& command) {
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
-    const std::string portName = "/dev/ttyS1";
+    std::string portName = SERIAL_PORT;
+    CPUInfo cpuInfo = GetCpuInfo();
+    std::cout << "[DEBUG] CPUInfo: " << cpuInfo.manufacturer << " " << cpuInfo.model << " " << cpuInfo.clockspeed << std::endl;
+    if (IsHX2KCPU(&cpuInfo)) {
+        std::cout << "[DEBUG] Detected HX2000 CPU. Setting port to /dev/ttyS2..." << std::endl;
+        platform->logMessage("Detected HX2000 CPU. Setting port to /dev/ttyS2...");
+        portName = "/dev/ttyS2";
+    } else {
+        std::cout << "[DEBUG] No HX2000 CPU detected. Using /dev/ttyS0" << std::endl;
+        platform->logMessage("No HX2000 CPU detected. Using /dev/ttyS0");
+        portName = "/dev/ttyS0";
+    }
 
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
     platform->logMessage("Serial Thread Started. Attempting to open port " + portName);
