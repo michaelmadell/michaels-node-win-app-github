@@ -56,11 +56,10 @@ std::atomic<bool> g_stop_request_sent{false};
 void sendLineToBmc(const std::string& output_string) {
     if (!serialManager) return;
 
-    // --- ADD THIS LINE ---
     std::cout << "[SENDING] " << output_string << std::endl;
 
     platform->logMessage(output_string);
-    serialManager->Write(output_string + "\r\n\0");
+    serialManager->Write(output_string + "\r\n\0"); // TODO: Work out if the NUL byte can be removed without breaking the BMC parser
 }
 
 void notifyStopRequested(const std::string& stopReason) {
@@ -371,6 +370,10 @@ bool reassignComPort() {
         platform->logMessage("reassignComPort: Device is still on COM3 after reassignment attempt.");
         return false;
     }
+    if (newInfo.comPort != L"COM4") {
+        platform->logMessage("reassignComPort: Device is on " + std::string(newInfo.comPort.begin(), newInfo.comPort.end()) + " instead of COM4 after reassignment attempt.");
+        return false;
+    }
 
     platform->logMessage("reassignComPort: Successfully assigned AMT Serial Port to "
         + std::string(newInfo.comPort.begin(), newInfo.comPort.end()));
@@ -519,7 +522,7 @@ void serialThread() {
 #ifdef _WIN32
         OutputDebugStringW(L"[FATAL] Failed to Open Serial Port.\n");
 #endif
-        return;
+        return; //TODO: Re-implement retry logic here properly
     }
 
     std::cout << "[DEBUG] Serial Port opened successfully." << std::endl;

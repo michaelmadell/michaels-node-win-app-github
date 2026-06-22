@@ -630,7 +630,7 @@ bool WindowsPlatform::writeSerial(const std::string &data)
     }
 
     DWORD bytesWritten = 0;
-    if (WriteFile(hSerial.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
+    if (!WriteFile(hSerial.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
         DWORD err = GetLastError();
         logMessage("WriteFile failed (Error " + std::to_string(err) + "), closing serial port");
         closeSerialPort();
@@ -646,6 +646,10 @@ bool WindowsPlatform::writeSerial(const std::string &data)
 
 bool WindowsPlatform::readSerial(std::string &readData) {
     if (!hSerial) {
+        return false;
+    }
+
+    if (hSerial == INVALID_HANDLE_VALUE) {
         return false;
     }
 

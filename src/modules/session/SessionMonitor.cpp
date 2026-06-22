@@ -209,7 +209,6 @@ std::string SessionMonitor::GetCurrentSessionState() {
         if (platform_) {
             platform_->logMessage("Workstation appears to be locked");
         }
-        CloseDesktop(hDesk);
         return "7";
     }
 
