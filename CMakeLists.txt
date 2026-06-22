@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project configuration
 project(CoreStationHXAgent
-    VERSION 20.26.5.1
+    VERSION 20.26.5.2
     DESCRIPTION "CoreStation Host Agent for serial monitoring"
     LANGUAGES CXX
 )
@@ -136,9 +136,15 @@ namespace GitInfo {
 endif()
 
 # Core Sources
-set(CORE_SOURCES
+if (WIN32)
+  set(CORE_SOURCES
     src/main.cpp
-)
+  )
+elseif (UNIX AND NOT APPLE)
+  set(CORE_SOURCES
+    src/linux/main.cpp
+  )
+endif()
 
 # Module Sources
 set(MODULE_SOURCES

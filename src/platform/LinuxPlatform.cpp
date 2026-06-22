@@ -1,5 +1,5 @@
 #ifdef __linux__
-#include "Platform.h"
+#include "../core/Platform.h"
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -210,12 +210,11 @@ public:
     // --- Core Platform Methods (Already Implemented Down Below) ---
     std::vector<NetworkInterface> getNetworkInterfaces() override;
     std::string getHostname() override;
+    std::string getCurrentSessionState() override;
     std::string getLoggedInUser() override;
     std::string getOsVersion() override;
     std::string getOsBuild() override;
     void logMessage(const std::string& message) override;
-
-    std::string getCurrentSessionState() override;
 
     // --- Performance Metrics (Need Stubs or Linux Implementation) ---
     int getCpuUsagePercent() override;
@@ -285,7 +284,7 @@ int LinuxPlatform::run(
         sleep(1);
     }
 
-    logMessage("Termination signal received. Shutting Down.");
+    logMessage("Termination signal recieved. Shutting Down.");
     if (power_cb) {
         power_cb("controlShutdown");
     }
@@ -711,8 +710,8 @@ std::string LinuxPlatform::getLoggedInUser() {
         result.erase(result.find_last_not_of("\n\r") + 1);
     }
 
-    pclose(pipe);
-    return result.empty() ? "none" : result;
+    std::string user = executeCommand("loginctl show-session " + sessionId + " -p Name --value");
+    return user.empty() ? "none" : user;
 }
 
 std::string LinuxPlatform::getCurrentSessionState() {
