@@ -7,6 +7,8 @@
 node_modules/
 dist/
 build/
+.claude/
+.vscode/
 .vs/
 
 # Compiled Java class files

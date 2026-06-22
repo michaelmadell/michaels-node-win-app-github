@@ -1,0 +1,122 @@
+{
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\.vscode\\c_cpp_properties.json": {
+    "mtime": 1780593523.4218123,
+    "ast_hash": "2bae8e8dd78bdc10dad2e18b7dccc149",
+    "semantic_hash": "2bae8e8dd78bdc10dad2e18b7dccc149"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\.vscode\\settings.json": {
+    "mtime": 1780593523.4374697,
+    "ast_hash": "dc13e6d27cf468f817816890e9b5d68a",
+    "semantic_hash": "dc13e6d27cf468f817816890e9b5d68a"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\.vscode\\tasks.json": {
+    "mtime": 1780593523.4374697,
+    "ast_hash": "faf7acc48e57b31a98c0cc918dac89e4",
+    "semantic_hash": "faf7acc48e57b31a98c0cc918dac89e4"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\CMakeSettings.json": {
+    "mtime": 1780593523.4374697,
+    "ast_hash": "33d1bd80135e4039818b630fd9c88340",
+    "semantic_hash": "33d1bd80135e4039818b630fd9c88340"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\debian\\postinst": {
+    "mtime": 1780593523.4532113,
+    "ast_hash": "838b977d618829120e6cb0e9fad4bfb1",
+    "semantic_hash": "838b977d618829120e6cb0e9fad4bfb1"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\debian\\postrm": {
+    "mtime": 1780593523.4532113,
+    "ast_hash": "989353023b6d77e71195f65ea41c706b",
+    "semantic_hash": "989353023b6d77e71195f65ea41c706b"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\debian\\prerm": {
+    "mtime": 1780593523.4552214,
+    "ast_hash": "ed750993d3fb016372c3942d2ba68726",
+    "semantic_hash": "ed750993d3fb016372c3942d2ba68726"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\installer\\install.ps1": {
+    "mtime": 1780593523.457232,
+    "ast_hash": "3c584133113c325c6284e99d388af28f",
+    "semantic_hash": "3c584133113c325c6284e99d388af28f"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\installer\\remove.ps1": {
+    "mtime": 1780593523.4592402,
+    "ast_hash": "f82bcc87be03307be571b7ccf756f407",
+    "semantic_hash": "f82bcc87be03307be571b7ccf756f407"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\LinuxPlatform.cpp": {
+    "mtime": 1780593523.4672754,
+    "ast_hash": "8be3b1bef76b3b65950d0780da24b1e7",
+    "semantic_hash": "8be3b1bef76b3b65950d0780da24b1e7"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\Platform.h": {
+    "mtime": 1780593523.4672754,
+    "ast_hash": "07da7536702926b31149d61a9363b664",
+    "semantic_hash": "07da7536702926b31149d61a9363b664"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\SystemState.h": {
+    "mtime": 1780593523.469025,
+    "ast_hash": "a651f44e4b9a40dd2df2a83971cb7ba4",
+    "semantic_hash": "a651f44e4b9a40dd2df2a83971cb7ba4"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\WindowsPlatform.cpp": {
+    "mtime": 1780593523.469025,
+    "ast_hash": "e74f54d6218ee3a46a83e405a359c6e3",
+    "semantic_hash": "e74f54d6218ee3a46a83e405a359c6e3"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\main.cpp": {
+    "mtime": 1780593523.469025,
+    "ast_hash": "3e1868d1af0a185dc450a838fb3ae122",
+    "semantic_hash": "3e1868d1af0a185dc450a838fb3ae122"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\src\\version.h": {
+    "mtime": 1780593523.469025,
+    "ast_hash": "c5b77b9326598d3d5959fe40e92daafb",
+    "semantic_hash": "c5b77b9326598d3d5959fe40e92daafb"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\start.ps1": {
+    "mtime": 1780593523.469025,
+    "ast_hash": "6b37eebb39b633f5a061220fc63caa47",
+    "semantic_hash": "6b37eebb39b633f5a061220fc63caa47"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\stop.ps1": {
+    "mtime": 1780593523.469025,
+    "ast_hash": "cc85c755bcd1166dc813aa3ea2a484b4",
+    "semantic_hash": "cc85c755bcd1166dc813aa3ea2a484b4"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\CMakeLists.txt": {
+    "mtime": 1780593523.4374697,
+    "ast_hash": "07f2396ee7c2fbee06c4eeb0674ee895",
+    "semantic_hash": "07f2396ee7c2fbee06c4eeb0674ee895"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\README.md": {
+    "mtime": 1780593523.4374697,
+    "ast_hash": "0aeaa62b267de7704c310636303b5d5a",
+    "semantic_hash": "0aeaa62b267de7704c310636303b5d5a"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\installer\\release-notes.txt": {
+    "mtime": 1780593523.4592402,
+    "ast_hash": "44929d6a2384c2795da4b7ccaa7a5d8c",
+    "semantic_hash": "44929d6a2384c2795da4b7ccaa7a5d8c"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\release-notes.txt": {
+    "mtime": 1780593523.4632566,
+    "ast_hash": "44929d6a2384c2795da4b7ccaa7a5d8c",
+    "semantic_hash": "44929d6a2384c2795da4b7ccaa7a5d8c"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\changeSerialPort.png": {
+    "mtime": 1780593523.4374697,
+    "ast_hash": "019d6886883728fd208a0bae9ef39196",
+    "semantic_hash": "019d6886883728fd208a0bae9ef39196"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\serialPorts.png": {
+    "mtime": 1780593523.4632566,
+    "ast_hash": "b180e2be15f465c7a0236b56723a6423",
+    "semantic_hash": "b180e2be15f465c7a0236b56723a6423"
+  },
+  "C:\\Users\\monke\\source\\repos\\michaels-node-win-app\\serial_port_details.png": {
+    "mtime": 1780593523.4652667,
+    "ast_hash": "9ea39ad66b4ef5bf87bb9467600bdd0c",
+    "semantic_hash": "9ea39ad66b4ef5bf87bb9467600bdd0c"
+  }
+}

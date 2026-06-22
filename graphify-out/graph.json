@@ -1,0 +1,5131 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "hyperedges": [
+      {
+        "id": "platform_implementations",
+        "label": "Platform Abstract Interface + Implementations (Windows and Linux)",
+        "nodes": [
+          "src_platform_platform",
+          "src_windowsplatform_windowsplatform",
+          "src_linuxplatform_linuxplatform"
+        ],
+        "relation": "implement",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "src/Platform.h"
+      },
+      {
+        "id": "service_lifecycle_windows",
+        "label": "Windows Service Lifecycle (install, start, stop, remove)",
+        "nodes": [
+          "installer_install_install_ps1",
+          "installer_remove_remove_ps1",
+          "root_start_start_ps1",
+          "root_stop_stop_ps1",
+          "src_windowsplatform_servicemain",
+          "src_windowsplatform_servicectrlhandler"
+        ],
+        "relation": "participate_in",
+        "confidence": "INFERRED",
+        "confidence_score": 0.95,
+        "source_file": "installer/install.ps1"
+      },
+      {
+        "id": "service_lifecycle_linux",
+        "label": "Linux systemd Service Lifecycle (install .deb, postinst, prerm, postrm)",
+        "nodes": [
+          "debian_postinst_postinst",
+          "debian_prerm_prerm",
+          "debian_postrm_postrm",
+          "root_cmakelists_cmakelists"
+        ],
+        "relation": "participate_in",
+        "confidence": "INFERRED",
+        "confidence_score": 0.95,
+        "source_file": "debian/postinst"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "label": "c_cpp_properties.json",
+      "file_type": "code",
+      "source_file": ".vscode/c_cpp_properties.json",
+      "source_location": "L1",
+      "id": "vscode_c_cpp_properties",
+      "community": 9,
+      "norm_label": "c_cpp_properties.json"
+    },
+    {
+      "label": "configurations",
+      "file_type": "code",
+      "source_file": ".vscode/c_cpp_properties.json",
+      "source_location": "L2",
+      "id": "vscode_c_cpp_properties_configurations",
+      "community": 9,
+      "norm_label": "configurations"
+    },
+    {
+      "label": "version",
+      "file_type": "code",
+      "source_file": ".vscode/c_cpp_properties.json",
+      "source_location": "L31",
+      "id": "vscode_c_cpp_properties_version",
+      "community": 9,
+      "norm_label": "version"
+    },
+    {
+      "label": "settings.json",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L1",
+      "id": "vscode_settings",
+      "community": 7,
+      "norm_label": "settings.json"
+    },
+    {
+      "label": "cmake.generator",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L2",
+      "id": "vscode_settings_cmake_generator",
+      "community": 7,
+      "norm_label": "cmake.generator"
+    },
+    {
+      "label": "cmake.buildDirectory",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L3",
+      "id": "vscode_settings_cmake_builddirectory",
+      "community": 7,
+      "norm_label": "cmake.builddirectory"
+    },
+    {
+      "label": "cmake.configureOnOpen",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L4",
+      "id": "vscode_settings_cmake_configureonopen",
+      "community": 7,
+      "norm_label": "cmake.configureonopen"
+    },
+    {
+      "label": "files.associations",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L5",
+      "id": "vscode_settings_files_associations",
+      "community": 0,
+      "norm_label": "files.associations"
+    },
+    {
+      "label": "atomic",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L6",
+      "id": "vscode_settings_files_associations_atomic",
+      "community": 0,
+      "norm_label": "atomic"
+    },
+    {
+      "label": "cctype",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L7",
+      "id": "vscode_settings_files_associations_cctype",
+      "community": 0,
+      "norm_label": "cctype"
+    },
+    {
+      "label": "compare",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L8",
+      "id": "vscode_settings_files_associations_compare",
+      "community": 0,
+      "norm_label": "compare"
+    },
+    {
+      "label": "concepts",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L9",
+      "id": "vscode_settings_files_associations_concepts",
+      "community": 0,
+      "norm_label": "concepts"
+    },
+    {
+      "label": "cstddef",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L10",
+      "id": "vscode_settings_files_associations_cstddef",
+      "community": 0,
+      "norm_label": "cstddef"
+    },
+    {
+      "label": "cstdint",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L11",
+      "id": "vscode_settings_files_associations_cstdint",
+      "community": 0,
+      "norm_label": "cstdint"
+    },
+    {
+      "label": "cstdio",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L12",
+      "id": "vscode_settings_files_associations_cstdio",
+      "community": 0,
+      "norm_label": "cstdio"
+    },
+    {
+      "label": "cstdlib",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L13",
+      "id": "vscode_settings_files_associations_cstdlib",
+      "community": 0,
+      "norm_label": "cstdlib"
+    },
+    {
+      "label": "cstring",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L14",
+      "id": "vscode_settings_files_associations_cstring",
+      "community": 0,
+      "norm_label": "cstring"
+    },
+    {
+      "label": "ctime",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L15",
+      "id": "vscode_settings_files_associations_ctime",
+      "community": 0,
+      "norm_label": "ctime"
+    },
+    {
+      "label": "cwchar",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L16",
+      "id": "vscode_settings_files_associations_cwchar",
+      "community": 0,
+      "norm_label": "cwchar"
+    },
+    {
+      "label": "exception",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L17",
+      "id": "vscode_settings_files_associations_exception",
+      "community": 0,
+      "norm_label": "exception"
+    },
+    {
+      "label": "initializer_list",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L18",
+      "id": "vscode_settings_files_associations_initializer_list",
+      "community": 0,
+      "norm_label": "initializer_list"
+    },
+    {
+      "label": "iosfwd",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L19",
+      "id": "vscode_settings_files_associations_iosfwd",
+      "community": 0,
+      "norm_label": "iosfwd"
+    },
+    {
+      "label": "limits",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L20",
+      "id": "vscode_settings_files_associations_limits",
+      "community": 0,
+      "norm_label": "limits"
+    },
+    {
+      "label": "memory",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L21",
+      "id": "vscode_settings_files_associations_memory",
+      "community": 0,
+      "norm_label": "memory"
+    },
+    {
+      "label": "new",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L22",
+      "id": "vscode_settings_files_associations_new",
+      "community": 0,
+      "norm_label": "new"
+    },
+    {
+      "label": "ratio",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L23",
+      "id": "vscode_settings_files_associations_ratio",
+      "community": 0,
+      "norm_label": "ratio"
+    },
+    {
+      "label": "stop_token",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L24",
+      "id": "vscode_settings_files_associations_stop_token",
+      "community": 0,
+      "norm_label": "stop_token"
+    },
+    {
+      "label": "string",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L25",
+      "id": "vscode_settings_files_associations_string",
+      "community": 0,
+      "norm_label": "string"
+    },
+    {
+      "label": "thread",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L26",
+      "id": "vscode_settings_files_associations_thread",
+      "community": 0,
+      "norm_label": "thread"
+    },
+    {
+      "label": "tuple",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L27",
+      "id": "vscode_settings_files_associations_tuple",
+      "community": 0,
+      "norm_label": "tuple"
+    },
+    {
+      "label": "type_traits",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L28",
+      "id": "vscode_settings_files_associations_type_traits",
+      "community": 0,
+      "norm_label": "type_traits"
+    },
+    {
+      "label": "typeinfo",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L29",
+      "id": "vscode_settings_files_associations_typeinfo",
+      "community": 0,
+      "norm_label": "typeinfo"
+    },
+    {
+      "label": "utility",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L30",
+      "id": "vscode_settings_files_associations_utility",
+      "community": 0,
+      "norm_label": "utility"
+    },
+    {
+      "label": "vector",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L31",
+      "id": "vscode_settings_files_associations_vector",
+      "community": 0,
+      "norm_label": "vector"
+    },
+    {
+      "label": "xmemory",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L32",
+      "id": "vscode_settings_files_associations_xmemory",
+      "community": 0,
+      "norm_label": "xmemory"
+    },
+    {
+      "label": "xstring",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L33",
+      "id": "vscode_settings_files_associations_xstring",
+      "community": 0,
+      "norm_label": "xstring"
+    },
+    {
+      "label": "xtr1common",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L34",
+      "id": "vscode_settings_files_associations_xtr1common",
+      "community": 0,
+      "norm_label": "xtr1common"
+    },
+    {
+      "label": "xutility",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L35",
+      "id": "vscode_settings_files_associations_xutility",
+      "community": 0,
+      "norm_label": "xutility"
+    },
+    {
+      "label": "algorithm",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L36",
+      "id": "vscode_settings_files_associations_algorithm",
+      "community": 0,
+      "norm_label": "algorithm"
+    },
+    {
+      "label": "bit",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L37",
+      "id": "vscode_settings_files_associations_bit",
+      "community": 0,
+      "norm_label": "bit"
+    },
+    {
+      "label": "charconv",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L38",
+      "id": "vscode_settings_files_associations_charconv",
+      "community": 0,
+      "norm_label": "charconv"
+    },
+    {
+      "label": "chrono",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L39",
+      "id": "vscode_settings_files_associations_chrono",
+      "community": 0,
+      "norm_label": "chrono"
+    },
+    {
+      "label": "clocale",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L40",
+      "id": "vscode_settings_files_associations_clocale",
+      "community": 0,
+      "norm_label": "clocale"
+    },
+    {
+      "label": "cmath",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L41",
+      "id": "vscode_settings_files_associations_cmath",
+      "community": 0,
+      "norm_label": "cmath"
+    },
+    {
+      "label": "format",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L42",
+      "id": "vscode_settings_files_associations_format",
+      "community": 0,
+      "norm_label": "format"
+    },
+    {
+      "label": "forward_list",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L43",
+      "id": "vscode_settings_files_associations_forward_list",
+      "community": 0,
+      "norm_label": "forward_list"
+    },
+    {
+      "label": "iomanip",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L44",
+      "id": "vscode_settings_files_associations_iomanip",
+      "community": 0,
+      "norm_label": "iomanip"
+    },
+    {
+      "label": "ios",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L45",
+      "id": "vscode_settings_files_associations_ios",
+      "community": 0,
+      "norm_label": "ios"
+    },
+    {
+      "label": "istream",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L46",
+      "id": "vscode_settings_files_associations_istream",
+      "community": 0,
+      "norm_label": "istream"
+    },
+    {
+      "label": "iterator",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L47",
+      "id": "vscode_settings_files_associations_iterator",
+      "community": 0,
+      "norm_label": "iterator"
+    },
+    {
+      "label": "locale",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L48",
+      "id": "vscode_settings_files_associations_locale",
+      "community": 0,
+      "norm_label": "locale"
+    },
+    {
+      "label": "optional",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L49",
+      "id": "vscode_settings_files_associations_optional",
+      "community": 0,
+      "norm_label": "optional"
+    },
+    {
+      "label": "sstream",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L50",
+      "id": "vscode_settings_files_associations_sstream",
+      "community": 0,
+      "norm_label": "sstream"
+    },
+    {
+      "label": "stdexcept",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L51",
+      "id": "vscode_settings_files_associations_stdexcept",
+      "community": 0,
+      "norm_label": "stdexcept"
+    },
+    {
+      "label": "streambuf",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L52",
+      "id": "vscode_settings_files_associations_streambuf",
+      "community": 0,
+      "norm_label": "streambuf"
+    },
+    {
+      "label": "system_error",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L53",
+      "id": "vscode_settings_files_associations_system_error",
+      "community": 0,
+      "norm_label": "system_error"
+    },
+    {
+      "label": "xfacet",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L54",
+      "id": "vscode_settings_files_associations_xfacet",
+      "community": 0,
+      "norm_label": "xfacet"
+    },
+    {
+      "label": "xiosbase",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L55",
+      "id": "vscode_settings_files_associations_xiosbase",
+      "community": 0,
+      "norm_label": "xiosbase"
+    },
+    {
+      "label": "xlocale",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L56",
+      "id": "vscode_settings_files_associations_xlocale",
+      "community": 0,
+      "norm_label": "xlocale"
+    },
+    {
+      "label": "xlocbuf",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L57",
+      "id": "vscode_settings_files_associations_xlocbuf",
+      "community": 0,
+      "norm_label": "xlocbuf"
+    },
+    {
+      "label": "xlocinfo",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L58",
+      "id": "vscode_settings_files_associations_xlocinfo",
+      "community": 0,
+      "norm_label": "xlocinfo"
+    },
+    {
+      "label": "xlocmes",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L59",
+      "id": "vscode_settings_files_associations_xlocmes",
+      "community": 0,
+      "norm_label": "xlocmes"
+    },
+    {
+      "label": "xlocmon",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L60",
+      "id": "vscode_settings_files_associations_xlocmon",
+      "community": 0,
+      "norm_label": "xlocmon"
+    },
+    {
+      "label": "xlocnum",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L61",
+      "id": "vscode_settings_files_associations_xlocnum",
+      "community": 0,
+      "norm_label": "xlocnum"
+    },
+    {
+      "label": "xloctime",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L62",
+      "id": "vscode_settings_files_associations_xloctime",
+      "community": 0,
+      "norm_label": "xloctime"
+    },
+    {
+      "label": "codecvt",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L63",
+      "id": "vscode_settings_files_associations_codecvt",
+      "community": 0,
+      "norm_label": "codecvt"
+    },
+    {
+      "label": "mutex",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L64",
+      "id": "vscode_settings_files_associations_mutex",
+      "community": 0,
+      "norm_label": "mutex"
+    },
+    {
+      "label": "fstream",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L65",
+      "id": "vscode_settings_files_associations_fstream",
+      "community": 0,
+      "norm_label": "fstream"
+    },
+    {
+      "label": "iostream",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L66",
+      "id": "vscode_settings_files_associations_iostream",
+      "community": 0,
+      "norm_label": "iostream"
+    },
+    {
+      "label": "ostream",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L67",
+      "id": "vscode_settings_files_associations_ostream",
+      "community": 0,
+      "norm_label": "ostream"
+    },
+    {
+      "label": "csignal",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L68",
+      "id": "vscode_settings_files_associations_csignal",
+      "community": 0,
+      "norm_label": "csignal"
+    },
+    {
+      "label": "functional",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L69",
+      "id": "vscode_settings_files_associations_functional",
+      "community": 0,
+      "norm_label": "functional"
+    },
+    {
+      "label": "list",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L70",
+      "id": "vscode_settings_files_associations_list",
+      "community": 0,
+      "norm_label": "list"
+    },
+    {
+      "label": "unordered_map",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L71",
+      "id": "vscode_settings_files_associations_unordered_map",
+      "community": 0,
+      "norm_label": "unordered_map"
+    },
+    {
+      "label": "xhash",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L72",
+      "id": "vscode_settings_files_associations_xhash",
+      "community": 0,
+      "norm_label": "xhash"
+    },
+    {
+      "label": "array",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L73",
+      "id": "vscode_settings_files_associations_array",
+      "community": 0,
+      "norm_label": "array"
+    },
+    {
+      "label": "cwctype",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L74",
+      "id": "vscode_settings_files_associations_cwctype",
+      "community": 0,
+      "norm_label": "cwctype"
+    },
+    {
+      "label": "numbers",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L75",
+      "id": "vscode_settings_files_associations_numbers",
+      "community": 0,
+      "norm_label": "numbers"
+    },
+    {
+      "label": "string_view",
+      "file_type": "code",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L76",
+      "id": "vscode_settings_files_associations_string_view",
+      "community": 0,
+      "norm_label": "string_view"
+    },
+    {
+      "label": "tasks.json",
+      "file_type": "code",
+      "source_file": ".vscode/tasks.json",
+      "source_location": "L1",
+      "id": "vscode_tasks",
+      "community": 8,
+      "norm_label": "tasks.json"
+    },
+    {
+      "label": "tasks",
+      "file_type": "code",
+      "source_file": ".vscode/tasks.json",
+      "source_location": "L2",
+      "id": "vscode_tasks_tasks",
+      "community": 8,
+      "norm_label": "tasks"
+    },
+    {
+      "label": "problemMatcher",
+      "file_type": "code",
+      "source_file": ".vscode/tasks.json",
+      "source_location": "L71",
+      "id": "vscode_tasks_problemmatcher",
+      "community": 8,
+      "norm_label": "problemmatcher"
+    },
+    {
+      "label": "version",
+      "file_type": "code",
+      "source_file": ".vscode/tasks.json",
+      "source_location": "L85",
+      "id": "vscode_tasks_version",
+      "community": 8,
+      "norm_label": "version"
+    },
+    {
+      "label": "CMakeSettings.json",
+      "file_type": "code",
+      "source_file": "CMakeSettings.json",
+      "source_location": "L1",
+      "id": "cmakesettings",
+      "community": 10,
+      "norm_label": "cmakesettings.json"
+    },
+    {
+      "label": "configurations",
+      "file_type": "code",
+      "source_file": "CMakeSettings.json",
+      "source_location": "L2",
+      "id": "cmakesettings_configurations",
+      "community": 10,
+      "norm_label": "configurations"
+    },
+    {
+      "label": "install.ps1",
+      "file_type": "code",
+      "source_file": "installer/install.ps1",
+      "source_location": "L1",
+      "id": "installer_install",
+      "community": 11,
+      "norm_label": "install.ps1"
+    },
+    {
+      "label": "remove.ps1",
+      "file_type": "code",
+      "source_file": "installer/remove.ps1",
+      "source_location": "L1",
+      "id": "installer_remove",
+      "community": 12,
+      "norm_label": "remove.ps1"
+    },
+    {
+      "label": "LinuxPlatform.cpp",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L1",
+      "id": "src_linuxplatform",
+      "community": 5,
+      "norm_label": "linuxplatform.cpp"
+    },
+    {
+      "label": "getDhcpStatus()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L35",
+      "id": "src_linuxplatform_getdhcpstatus",
+      "community": 5,
+      "norm_label": "getdhcpstatus()"
+    },
+    {
+      "label": "string",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L35",
+      "id": "src_linuxplatform_cpp_string",
+      "community": 5,
+      "norm_label": "string"
+    },
+    {
+      "label": "LinuxPlatform",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L79",
+      "id": "src_linuxplatform_linuxplatform",
+      "community": 3,
+      "norm_label": "linuxplatform"
+    },
+    {
+      "label": "dbusThread()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L84",
+      "id": "src_linuxplatform_dbusthread",
+      "community": 3,
+      "norm_label": "dbusthread()"
+    },
+    {
+      "label": "signal_handler()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L117",
+      "id": "src_linuxplatform_signal_handler",
+      "community": 5,
+      "norm_label": "signal_handler()"
+    },
+    {
+      "label": "Platform",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "id": "platform",
+      "community": 3,
+      "norm_label": "platform"
+    },
+    {
+      "label": ".LinuxPlatform()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L123",
+      "id": "src_linuxplatform_linuxplatform_linuxplatform",
+      "community": 3,
+      "norm_label": ".linuxplatform()"
+    },
+    {
+      "label": "getNetworkInterfaces",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L126",
+      "id": "src_linuxplatform_linuxplatform_getnetworkinterfaces",
+      "community": 3,
+      "norm_label": "getnetworkinterfaces"
+    },
+    {
+      "label": "getHostname",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L127",
+      "id": "src_linuxplatform_linuxplatform_gethostname",
+      "community": 3,
+      "norm_label": "gethostname"
+    },
+    {
+      "label": "getLoggedInUser",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L128",
+      "id": "src_linuxplatform_linuxplatform_getloggedinuser",
+      "community": 3,
+      "norm_label": "getloggedinuser"
+    },
+    {
+      "label": "getOsVersion",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L129",
+      "id": "src_linuxplatform_linuxplatform_getosversion",
+      "community": 3,
+      "norm_label": "getosversion"
+    },
+    {
+      "label": "openSerialPort",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L130",
+      "id": "src_linuxplatform_linuxplatform_openserialport",
+      "community": 3,
+      "norm_label": "openserialport"
+    },
+    {
+      "label": "closeSerialPort",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L131",
+      "id": "src_linuxplatform_linuxplatform_closeserialport",
+      "community": 3,
+      "norm_label": "closeserialport"
+    },
+    {
+      "label": "writeSerial",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L132",
+      "id": "src_linuxplatform_linuxplatform_writeserial",
+      "community": 3,
+      "norm_label": "writeserial"
+    },
+    {
+      "label": "logMessage",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L133",
+      "id": "src_linuxplatform_linuxplatform_logmessage",
+      "community": 3,
+      "norm_label": "logmessage"
+    },
+    {
+      "label": "run",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L135",
+      "id": "src_linuxplatform_linuxplatform_run",
+      "community": 3,
+      "norm_label": "run"
+    },
+    {
+      "label": "serial_fd",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L144",
+      "id": "src_linuxplatform_linuxplatform_serial_fd",
+      "community": 3,
+      "norm_label": "serial_fd"
+    },
+    {
+      "label": "thread",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L145",
+      "id": "thread",
+      "community": 5,
+      "norm_label": "thread"
+    },
+    {
+      "label": "m_dbus_thread",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L145",
+      "id": "src_linuxplatform_linuxplatform_m_dbus_thread",
+      "community": 3,
+      "norm_label": "m_dbus_thread"
+    },
+    {
+      "label": "createPlatform()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L148",
+      "id": "src_linuxplatform_createplatform",
+      "community": 3,
+      "norm_label": "createplatform()"
+    },
+    {
+      "label": "unique_ptr",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L148",
+      "id": "src_linuxplatform_cpp_unique_ptr",
+      "community": 3,
+      "norm_label": "unique_ptr"
+    },
+    {
+      "label": "run()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L152",
+      "id": "src_linuxplatform_run",
+      "community": 5,
+      "norm_label": "run()"
+    },
+    {
+      "label": "VoidCallback",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L152",
+      "id": "src_linuxplatform_cpp_voidcallback",
+      "community": 5,
+      "norm_label": "voidcallback"
+    },
+    {
+      "label": "PowerStateCallback",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L152",
+      "id": "src_linuxplatform_cpp_powerstatecallback",
+      "community": 5,
+      "norm_label": "powerstatecallback"
+    },
+    {
+      "label": "SessionStateCallback",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L152",
+      "id": "src_linuxplatform_cpp_sessionstatecallback",
+      "community": 5,
+      "norm_label": "sessionstatecallback"
+    },
+    {
+      "label": "openSerialPort()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L211",
+      "id": "src_linuxplatform_openserialport",
+      "community": 5,
+      "norm_label": "openserialport()"
+    },
+    {
+      "label": "closeSerialPort()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L250",
+      "id": "src_linuxplatform_closeserialport",
+      "community": 5,
+      "norm_label": "closeserialport()"
+    },
+    {
+      "label": "writeSerial()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L257",
+      "id": "src_linuxplatform_writeserial",
+      "community": 5,
+      "norm_label": "writeserial()"
+    },
+    {
+      "label": "getNetworkInterfaces()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L281",
+      "id": "src_linuxplatform_getnetworkinterfaces",
+      "community": 5,
+      "norm_label": "getnetworkinterfaces()"
+    },
+    {
+      "label": "vector",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L281",
+      "id": "src_linuxplatform_cpp_vector",
+      "community": 5,
+      "norm_label": "vector"
+    },
+    {
+      "label": "NetworkInterface",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L281",
+      "id": "src_linuxplatform_cpp_networkinterface",
+      "community": 5,
+      "norm_label": "networkinterface"
+    },
+    {
+      "label": "getOsVersion()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L340",
+      "id": "src_linuxplatform_getosversion",
+      "community": 5,
+      "norm_label": "getosversion()"
+    },
+    {
+      "label": "logMessage()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L353",
+      "id": "src_linuxplatform_logmessage",
+      "community": 5,
+      "norm_label": "logmessage()"
+    },
+    {
+      "label": "getHostname()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L357",
+      "id": "src_linuxplatform_gethostname",
+      "community": 5,
+      "norm_label": "gethostname()"
+    },
+    {
+      "label": "getLoggedInUser()",
+      "file_type": "code",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L364",
+      "id": "src_linuxplatform_getloggedinuser",
+      "community": 5,
+      "norm_label": "getloggedinuser()"
+    },
+    {
+      "label": "Platform.h",
+      "file_type": "code",
+      "source_file": "src/Platform.h",
+      "source_location": "L1",
+      "id": "src_platform",
+      "community": 6,
+      "norm_label": "platform.h"
+    },
+    {
+      "label": "Platform()",
+      "file_type": "code",
+      "source_file": "src/Platform.h",
+      "source_location": "L13",
+      "id": "src_platform_platform",
+      "community": 6,
+      "norm_label": "platform()"
+    },
+    {
+      "label": "class",
+      "file_type": "code",
+      "source_file": "src/Platform.h",
+      "source_location": "L13",
+      "id": "class",
+      "community": 6,
+      "norm_label": "class"
+    },
+    {
+      "label": "SystemState.h",
+      "file_type": "code",
+      "source_file": "src/SystemState.h",
+      "source_location": "L1",
+      "id": "src_systemstate",
+      "community": 6,
+      "norm_label": "systemstate.h"
+    },
+    {
+      "label": "WindowsPlatform.cpp",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L1",
+      "id": "src_windowsplatform",
+      "community": 2,
+      "norm_label": "windowsplatform.cpp"
+    },
+    {
+      "label": "WideToUtf8()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L20",
+      "id": "src_windowsplatform_widetoutf8",
+      "community": 2,
+      "norm_label": "widetoutf8()"
+    },
+    {
+      "label": "string",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L20",
+      "id": "src_windowsplatform_cpp_string",
+      "community": 2,
+      "norm_label": "string"
+    },
+    {
+      "label": "wstring",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L20",
+      "id": "wstring",
+      "community": 2,
+      "norm_label": "wstring"
+    },
+    {
+      "label": "WindowsPlatform",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L34",
+      "id": "src_windowsplatform_windowsplatform",
+      "community": 1,
+      "norm_label": "windowsplatform"
+    },
+    {
+      "label": "getNetworkInterfaces",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L40",
+      "id": "src_windowsplatform_windowsplatform_getnetworkinterfaces",
+      "community": 1,
+      "norm_label": "getnetworkinterfaces"
+    },
+    {
+      "label": "getHostname",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L41",
+      "id": "src_windowsplatform_windowsplatform_gethostname",
+      "community": 1,
+      "norm_label": "gethostname"
+    },
+    {
+      "label": "getLoggedInUser",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L42",
+      "id": "src_windowsplatform_windowsplatform_getloggedinuser",
+      "community": 1,
+      "norm_label": "getloggedinuser"
+    },
+    {
+      "label": "getOsVersion",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L43",
+      "id": "src_windowsplatform_windowsplatform_getosversion",
+      "community": 1,
+      "norm_label": "getosversion"
+    },
+    {
+      "label": "openSerialPort",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L44",
+      "id": "src_windowsplatform_windowsplatform_openserialport",
+      "community": 1,
+      "norm_label": "openserialport"
+    },
+    {
+      "label": "closeSerialPort",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L45",
+      "id": "src_windowsplatform_windowsplatform_closeserialport",
+      "community": 1,
+      "norm_label": "closeserialport"
+    },
+    {
+      "label": "writeSerial",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L46",
+      "id": "src_windowsplatform_windowsplatform_writeserial",
+      "community": 1,
+      "norm_label": "writeserial"
+    },
+    {
+      "label": "logMessage",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L47",
+      "id": "src_windowsplatform_windowsplatform_logmessage",
+      "community": 1,
+      "norm_label": "logmessage"
+    },
+    {
+      "label": "run",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L49",
+      "id": "src_windowsplatform_windowsplatform_run",
+      "community": 1,
+      "norm_label": "run"
+    },
+    {
+      "label": "reportStatus",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L57",
+      "id": "src_windowsplatform_windowsplatform_reportstatus",
+      "community": 1,
+      "norm_label": "reportstatus"
+    },
+    {
+      "label": "registerServiceHandler",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L58",
+      "id": "src_windowsplatform_windowsplatform_registerservicehandler",
+      "community": 1,
+      "norm_label": "registerservicehandler"
+    },
+    {
+      "label": "getStopEvent",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L59",
+      "id": "src_windowsplatform_windowsplatform_getstopevent",
+      "community": 1,
+      "norm_label": "getstopevent"
+    },
+    {
+      "label": "startService",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L60",
+      "id": "src_windowsplatform_windowsplatform_startservice",
+      "community": 1,
+      "norm_label": "startservice"
+    },
+    {
+      "label": "stopService",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L61",
+      "id": "src_windowsplatform_windowsplatform_stopservice",
+      "community": 1,
+      "norm_label": "stopservice"
+    },
+    {
+      "label": "HANDLE",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L64",
+      "id": "handle",
+      "community": 2,
+      "norm_label": "handle"
+    },
+    {
+      "label": "hSerial",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L64",
+      "id": "src_windowsplatform_windowsplatform_hserial",
+      "community": 1,
+      "norm_label": "hserial"
+    },
+    {
+      "label": "VoidCallback",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L65",
+      "id": "src_windowsplatform_cpp_voidcallback",
+      "community": 1,
+      "norm_label": "voidcallback"
+    },
+    {
+      "label": "on_start_callback",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L65",
+      "id": "src_windowsplatform_windowsplatform_on_start_callback",
+      "community": 1,
+      "norm_label": "on_start_callback"
+    },
+    {
+      "label": "on_stop_callback",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L66",
+      "id": "src_windowsplatform_windowsplatform_on_stop_callback",
+      "community": 1,
+      "norm_label": "on_stop_callback"
+    },
+    {
+      "label": "PowerStateCallback",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L67",
+      "id": "src_windowsplatform_cpp_powerstatecallback",
+      "community": 1,
+      "norm_label": "powerstatecallback"
+    },
+    {
+      "label": "power_callback",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L67",
+      "id": "src_windowsplatform_windowsplatform_power_callback",
+      "community": 1,
+      "norm_label": "power_callback"
+    },
+    {
+      "label": "SessionStateCallback",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L68",
+      "id": "src_windowsplatform_cpp_sessionstatecallback",
+      "community": 1,
+      "norm_label": "sessionstatecallback"
+    },
+    {
+      "label": "session_callback",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L68",
+      "id": "src_windowsplatform_windowsplatform_session_callback",
+      "community": 1,
+      "norm_label": "session_callback"
+    },
+    {
+      "label": "SERVICE_STATUS",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L69",
+      "id": "service_status",
+      "community": 1,
+      "norm_label": "service_status"
+    },
+    {
+      "label": "g_service_status",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L69",
+      "id": "src_windowsplatform_windowsplatform_g_service_status",
+      "community": 1,
+      "norm_label": "g_service_status"
+    },
+    {
+      "label": "SERVICE_STATUS_HANDLE",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L70",
+      "id": "service_status_handle",
+      "community": 1,
+      "norm_label": "service_status_handle"
+    },
+    {
+      "label": "g_status_handle",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L70",
+      "id": "src_windowsplatform_windowsplatform_g_status_handle",
+      "community": 1,
+      "norm_label": "g_status_handle"
+    },
+    {
+      "label": "g_stop_event",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L71",
+      "id": "src_windowsplatform_windowsplatform_g_stop_event",
+      "community": 1,
+      "norm_label": "g_stop_event"
+    },
+    {
+      "label": "ServiceMain()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L77",
+      "id": "src_windowsplatform_servicemain",
+      "community": 2,
+      "norm_label": "servicemain()"
+    },
+    {
+      "label": "DWORD",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L77",
+      "id": "dword",
+      "community": 2,
+      "norm_label": "dword"
+    },
+    {
+      "label": "LPTSTR",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L77",
+      "id": "lptstr",
+      "community": 2,
+      "norm_label": "lptstr"
+    },
+    {
+      "label": "ServiceCtrlHandler()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L89",
+      "id": "src_windowsplatform_servicectrlhandler",
+      "community": 2,
+      "norm_label": "servicectrlhandler()"
+    },
+    {
+      "label": "createPlatform()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L105",
+      "id": "src_windowsplatform_createplatform",
+      "community": 3,
+      "norm_label": "createplatform()"
+    },
+    {
+      "label": "unique_ptr",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L105",
+      "id": "src_windowsplatform_cpp_unique_ptr",
+      "community": 3,
+      "norm_label": "unique_ptr"
+    },
+    {
+      "label": "run()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L121",
+      "id": "src_windowsplatform_run",
+      "community": 1,
+      "norm_label": "run()"
+    },
+    {
+      "label": "getNetworkInterfaces()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L151",
+      "id": "src_windowsplatform_getnetworkinterfaces",
+      "community": 2,
+      "norm_label": "getnetworkinterfaces()"
+    },
+    {
+      "label": "vector",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L151",
+      "id": "src_windowsplatform_cpp_vector",
+      "community": 2,
+      "norm_label": "vector"
+    },
+    {
+      "label": "NetworkInterface",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L151",
+      "id": "src_windowsplatform_cpp_networkinterface",
+      "community": 2,
+      "norm_label": "networkinterface"
+    },
+    {
+      "label": "getHostname()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L219",
+      "id": "src_windowsplatform_gethostname",
+      "community": 2,
+      "norm_label": "gethostname()"
+    },
+    {
+      "label": "getLoggedInUser()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L229",
+      "id": "src_windowsplatform_getloggedinuser",
+      "community": 2,
+      "norm_label": "getloggedinuser()"
+    },
+    {
+      "label": "getOsVersion()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L256",
+      "id": "src_windowsplatform_getosversion",
+      "community": 2,
+      "norm_label": "getosversion()"
+    },
+    {
+      "label": "openSerialPort()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L306",
+      "id": "src_windowsplatform_openserialport",
+      "community": 2,
+      "norm_label": "openserialport()"
+    },
+    {
+      "label": "closeSerialPort()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L361",
+      "id": "src_windowsplatform_closeserialport",
+      "community": 2,
+      "norm_label": "closeserialport()"
+    },
+    {
+      "label": "writeSerial()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L369",
+      "id": "src_windowsplatform_writeserial",
+      "community": 2,
+      "norm_label": "writeserial()"
+    },
+    {
+      "label": "logMessage()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L376",
+      "id": "src_windowsplatform_logmessage",
+      "community": 2,
+      "norm_label": "logmessage()"
+    },
+    {
+      "label": "reportStatus()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L409",
+      "id": "src_windowsplatform_reportstatus",
+      "community": 2,
+      "norm_label": "reportstatus()"
+    },
+    {
+      "label": "registerServiceHandler()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L419",
+      "id": "src_windowsplatform_registerservicehandler",
+      "community": 2,
+      "norm_label": "registerservicehandler()"
+    },
+    {
+      "label": "getStopEvent()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L427",
+      "id": "src_windowsplatform_getstopevent",
+      "community": 2,
+      "norm_label": "getstopevent()"
+    },
+    {
+      "label": "startService()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L432",
+      "id": "src_windowsplatform_startservice",
+      "community": 1,
+      "norm_label": "startservice()"
+    },
+    {
+      "label": "stopService()",
+      "file_type": "code",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L438",
+      "id": "src_windowsplatform_stopservice",
+      "community": 1,
+      "norm_label": "stopservice()"
+    },
+    {
+      "label": "main.cpp",
+      "file_type": "code",
+      "source_file": "src/main.cpp",
+      "source_location": "L1",
+      "id": "src_main",
+      "community": 6,
+      "norm_label": "main.cpp"
+    },
+    {
+      "label": "sendLineToBmc()",
+      "file_type": "code",
+      "source_file": "src/main.cpp",
+      "source_location": "L23",
+      "id": "src_main_sendlinetobmc",
+      "community": 6,
+      "norm_label": "sendlinetobmc()"
+    },
+    {
+      "label": "string",
+      "file_type": "code",
+      "source_file": "src/main.cpp",
+      "source_location": "L23",
+      "id": "src_main_cpp_string",
+      "community": 6,
+      "norm_label": "string"
+    },
+    {
+      "label": "heartbeatThread()",
+      "file_type": "code",
+      "source_file": "src/main.cpp",
+      "source_location": "L33",
+      "id": "src_main_heartbeatthread",
+      "community": 6,
+      "norm_label": "heartbeatthread()"
+    },
+    {
+      "label": "checkSystemState()",
+      "file_type": "code",
+      "source_file": "src/main.cpp",
+      "source_location": "L46",
+      "id": "src_main_checksystemstate",
+      "community": 6,
+      "norm_label": "checksystemstate()"
+    },
+    {
+      "label": "serialThread()",
+      "file_type": "code",
+      "source_file": "src/main.cpp",
+      "source_location": "L63",
+      "id": "src_main_serialthread",
+      "community": 6,
+      "norm_label": "serialthread()"
+    },
+    {
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "src/main.cpp",
+      "source_location": "L135",
+      "id": "src_main_main",
+      "community": 6,
+      "norm_label": "main()"
+    },
+    {
+      "label": "version.h",
+      "file_type": "code",
+      "source_file": "src/version.h",
+      "source_location": "L1",
+      "id": "src_version",
+      "community": 6,
+      "norm_label": "version.h"
+    },
+    {
+      "label": "start.ps1",
+      "file_type": "code",
+      "source_file": "start.ps1",
+      "source_location": "L1",
+      "id": "start",
+      "community": 15,
+      "norm_label": "start.ps1"
+    },
+    {
+      "label": "stop.ps1",
+      "file_type": "code",
+      "source_file": "stop.ps1",
+      "source_location": "L1",
+      "id": "stop",
+      "community": 16,
+      "norm_label": "stop.ps1"
+    },
+    {
+      "label": "PowerStateCallback",
+      "file_type": "code",
+      "source_file": "src/Platform.h",
+      "source_location": "8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "src_platform_powerstatecallback",
+      "community": 13,
+      "norm_label": "powerstatecallback"
+    },
+    {
+      "label": "SessionStateCallback",
+      "file_type": "code",
+      "source_file": "src/Platform.h",
+      "source_location": "9",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "src_platform_sessionstatecallback",
+      "community": 3,
+      "norm_label": "sessionstatecallback"
+    },
+    {
+      "label": "VoidCallback",
+      "file_type": "code",
+      "source_file": "src/Platform.h",
+      "source_location": "10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "src_platform_voidcallback",
+      "community": 14,
+      "norm_label": "voidcallback"
+    },
+    {
+      "label": "NetworkInterface (struct)",
+      "file_type": "code",
+      "source_file": "src/SystemState.h",
+      "source_location": "7",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "src_systemstate_networkinterface",
+      "community": 6,
+      "norm_label": "networkinterface (struct)"
+    },
+    {
+      "label": "SystemState (struct)",
+      "file_type": "code",
+      "source_file": "src/SystemState.h",
+      "source_location": "26",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "src_systemstate_systemstate",
+      "community": 6,
+      "norm_label": "systemstate (struct)"
+    },
+    {
+      "label": "version.h (version defines + SERIAL_PORT)",
+      "file_type": "code",
+      "source_file": "src/version.h",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "src_version_version_h",
+      "community": 4,
+      "norm_label": "version.h (version defines + serial_port)"
+    },
+    {
+      "label": "createPlatform() declaration (main.cpp)",
+      "file_type": "code",
+      "source_file": "src/main.cpp",
+      "source_location": "13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "src_main_createplatform_decl",
+      "community": 6,
+      "norm_label": "createplatform() declaration (main.cpp)"
+    },
+    {
+      "label": "install.ps1 (Windows service installer)",
+      "file_type": "code",
+      "source_file": "installer/install.ps1",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "installer_install_install_ps1",
+      "community": 4,
+      "norm_label": "install.ps1 (windows service installer)"
+    },
+    {
+      "label": "remove.ps1 (Windows service remover)",
+      "file_type": "code",
+      "source_file": "installer/remove.ps1",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "installer_remove_remove_ps1",
+      "community": 4,
+      "norm_label": "remove.ps1 (windows service remover)"
+    },
+    {
+      "label": "postinst (Debian post-install: enable+start systemd service)",
+      "file_type": "code",
+      "source_file": "debian/postinst",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "debian_postinst_postinst",
+      "community": 4,
+      "norm_label": "postinst (debian post-install: enable+start systemd service)"
+    },
+    {
+      "label": "prerm (Debian pre-removal: stop systemd service)",
+      "file_type": "code",
+      "source_file": "debian/prerm",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "debian_prerm_prerm",
+      "community": 4,
+      "norm_label": "prerm (debian pre-removal: stop systemd service)"
+    },
+    {
+      "label": "postrm (Debian post-removal: disable+purge systemd service)",
+      "file_type": "code",
+      "source_file": "debian/postrm",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "debian_postrm_postrm",
+      "community": 4,
+      "norm_label": "postrm (debian post-removal: disable+purge systemd service)"
+    },
+    {
+      "label": "start.ps1 (start CoreStationService on Windows)",
+      "file_type": "code",
+      "source_file": "start.ps1",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_start_start_ps1",
+      "community": 4,
+      "norm_label": "start.ps1 (start corestationservice on windows)"
+    },
+    {
+      "label": "stop.ps1 (stop CoreStationService on Windows)",
+      "file_type": "code",
+      "source_file": "stop.ps1",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_stop_stop_ps1",
+      "community": 4,
+      "norm_label": "stop.ps1 (stop corestationservice on windows)"
+    },
+    {
+      "label": "CMakeLists.txt (build configuration)",
+      "file_type": "code",
+      "source_file": "CMakeLists.txt",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_cmakelists_cmakelists",
+      "community": 4,
+      "norm_label": "cmakelists.txt (build configuration)"
+    },
+    {
+      "label": "README.md (project documentation)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_readme_readme",
+      "community": 4,
+      "norm_label": "readme.md (project documentation)"
+    },
+    {
+      "label": "release-notes.txt",
+      "file_type": "document",
+      "source_file": "release-notes.txt",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_releasenotes_release_notes",
+      "community": 4,
+      "norm_label": "release-notes.txt"
+    },
+    {
+      "label": "installer/release-notes.txt",
+      "file_type": "document",
+      "source_file": "installer/release-notes.txt",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "installer_releasenotes_release_notes",
+      "community": 4,
+      "norm_label": "installer/release-notes.txt"
+    },
+    {
+      "label": "serialPorts.png \u2013 Windows Device Manager showing COM3 (Communications Port) selected under Ports (COM & LPT)",
+      "file_type": "image",
+      "source_file": "serialPorts.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_serialports_serialports_png",
+      "community": 4,
+      "norm_label": "serialports.png \u2013 windows device manager showing com3 (communications port) selected under ports (com & lpt)"
+    },
+    {
+      "label": "serial_port_details.png \u2013 Side-by-side Device Properties: COM3 Hardware ID (ACPI\\VEN_AHC&DEV_0501) vs COM4 Intel AMT SOL (PCI\\VEN_8086)",
+      "file_type": "image",
+      "source_file": "serial_port_details.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_serial_port_details_serial_port_details_png",
+      "community": 4,
+      "norm_label": "serial_port_details.png \u2013 side-by-side device properties: com3 hardware id (acpi\\ven_ahc&dev_0501) vs com4 intel amt sol (pci\\ven_8086)"
+    },
+    {
+      "label": "changeSerialPort.png \u2013 Windows Device Manager Port Settings Advanced dialog showing COM Port Number selector with CoreStation Management Service visible in Services list",
+      "file_type": "image",
+      "source_file": "changeSerialPort.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_changeserialport_changeserialport_png",
+      "community": 4,
+      "norm_label": "changeserialport.png \u2013 windows device manager port settings advanced dialog showing com port number selector with corestation management service visible in services list"
+    },
+    {
+      "label": "tasks.json (VSCode build + clang-tidy tasks)",
+      "file_type": "code",
+      "source_file": ".vscode/tasks.json",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "vscode_tasks_tasks_json",
+      "community": 4,
+      "norm_label": "tasks.json (vscode build + clang-tidy tasks)"
+    },
+    {
+      "label": "CMakeSettings.json (x64-Debug Ninja config)",
+      "file_type": "code",
+      "source_file": "CMakeSettings.json",
+      "source_location": "1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "root_cmakesettings_cmakesettings",
+      "community": 4,
+      "norm_label": "cmakesettings.json (x64-debug ninja config)"
+    },
+    {
+      "label": "BMC Serial Protocol (key=value CSV messages over serial port to management controller)",
+      "file_type": "rationale",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "concept_bmc_serial_protocol",
+      "community": 4,
+      "norm_label": "bmc serial protocol (key=value csv messages over serial port to management controller)"
+    },
+    {
+      "label": "Cross-Platform Service Pattern (same logic runs as Windows Service or Linux systemd daemon)",
+      "file_type": "rationale",
+      "source_file": "src/Platform.h",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "concept_cross_platform_service",
+      "community": 6,
+      "norm_label": "cross-platform service pattern (same logic runs as windows service or linux systemd daemon)"
+    },
+    {
+      "label": "CoreStationHXAgent Service (system monitoring agent for Amulet Hotkey CoreStation hardware)",
+      "file_type": "concept",
+      "source_file": "CMakeLists.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "concept_corestationhxagent_service",
+      "community": 4,
+      "norm_label": "corestationhxagent service (system monitoring agent for amulet hotkey corestation hardware)"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/c_cpp_properties.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "vscode_c_cpp_properties",
+      "target": "vscode_c_cpp_properties_configurations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/c_cpp_properties.json",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "vscode_c_cpp_properties",
+      "target": "vscode_c_cpp_properties_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "vscode_settings",
+      "target": "vscode_settings_cmake_builddirectory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "vscode_settings",
+      "target": "vscode_settings_cmake_configureonopen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "vscode_settings",
+      "target": "vscode_settings_cmake_generator",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "vscode_settings",
+      "target": "vscode_settings_files_associations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_algorithm",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_array",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_atomic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_bit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cctype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_charconv",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_chrono",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_clocale",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L41",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cmath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_codecvt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_compare",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_concepts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L68",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_csignal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cstddef",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cstdint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cstdio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cstdlib",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_ctime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cwchar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_cwctype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_exception",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_format",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_forward_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_fstream",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_functional",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_initializer_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_iomanip",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_ios",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_iosfwd",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_iostream",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_istream",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L47",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_iterator",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_limits",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_locale",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_memory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_mutex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_new",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L75",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_numbers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_optional",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_ostream",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_ratio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_sstream",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_stdexcept",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_stop_token",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_streambuf",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L76",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_string_view",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_system_error",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_thread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_tuple",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_type_traits",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_typeinfo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_unordered_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_utility",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_vector",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xfacet",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L72",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xhash",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L55",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xiosbase",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xlocale",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xlocbuf",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xlocinfo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xlocmes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L60",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xlocmon",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xlocnum",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xloctime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xmemory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xtr1common",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/settings.json",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "vscode_settings_files_associations",
+      "target": "vscode_settings_files_associations_xutility",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/tasks.json",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "vscode_tasks",
+      "target": "vscode_tasks_problemmatcher",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/tasks.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "vscode_tasks",
+      "target": "vscode_tasks_tasks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".vscode/tasks.json",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "vscode_tasks",
+      "target": "vscode_tasks_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CMakeSettings.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "cmakesettings",
+      "target": "cmakesettings_configurations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L250",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_closeserialport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_cpp_vector",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L148",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_createplatform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_dbusthread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_getdhcpstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L357",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_gethostname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L364",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_getloggedinuser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L281",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_getnetworkinterfaces",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L340",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_getosversion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L121",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L353",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L211",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_openserialport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L152",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_signal_handler",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L257",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_linuxplatform_writeserial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "src_platform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_linuxplatform",
+      "target": "thread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "src_linuxplatform_getdhcpstatus",
+      "target": "src_linuxplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L305",
+      "weight": 1.0,
+      "source": "src_linuxplatform_getnetworkinterfaces",
+      "target": "src_linuxplatform_getdhcpstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "305",
+      "weight": 1.0,
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_getdhcpstatus"
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L357",
+      "weight": 1.0,
+      "source": "src_linuxplatform_gethostname",
+      "target": "src_linuxplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L364",
+      "weight": 1.0,
+      "source": "src_linuxplatform_getloggedinuser",
+      "target": "src_linuxplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L325",
+      "weight": 1.0,
+      "source": "src_linuxplatform_getnetworkinterfaces",
+      "target": "src_linuxplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L340",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "src_linuxplatform_getosversion",
+      "target": "src_linuxplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L353",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_linuxplatform_logmessage",
+      "target": "src_linuxplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L211",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_linuxplatform_openserialport",
+      "target": "src_linuxplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L257",
+      "weight": 1.0,
+      "source": "src_linuxplatform_writeserial",
+      "target": "src_linuxplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "concept_cross_platform_service",
+      "target": "src_linuxplatform_linuxplatform"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CMakeLists.txt",
+      "source_location": "46",
+      "weight": 1.0,
+      "source": "root_cmakelists_cmakelists",
+      "target": "src_linuxplatform_linuxplatform"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "149",
+      "weight": 1.0,
+      "source": "src_linuxplatform_createplatform",
+      "target": "src_linuxplatform_linuxplatform"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L121",
+      "weight": 1.0,
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "platform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "187",
+      "weight": 1.0,
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_dbusthread"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L131",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_closeserialport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L127",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_gethostname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L128",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_getloggedinuser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L126",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_getnetworkinterfaces",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L129",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_getosversion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L124",
+      "weight": 1.0,
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_linuxplatform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L133",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L145",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_m_dbus_thread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L130",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_openserialport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L135",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L144",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_serial_fd",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L132",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_linuxplatform_linuxplatform_writeserial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "121",
+      "weight": 1.0,
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "src_platform_platform"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L145",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_linuxplatform_linuxplatform",
+      "target": "thread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_linuxplatform_linuxplatform"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "108",
+      "weight": 1.0,
+      "source": "src_linuxplatform_dbusthread",
+      "target": "src_platform_sessionstatecallback"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L148",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "source": "src_linuxplatform_createplatform",
+      "target": "platform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L105",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "source": "src_windowsplatform_createplatform",
+      "target": "platform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "platform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "src_linuxplatform_run",
+      "target": "thread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "thread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L148",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "src_linuxplatform_createplatform",
+      "target": "src_linuxplatform_cpp_unique_ptr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L152",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_linuxplatform_run",
+      "target": "src_linuxplatform_cpp_powerstatecallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L152",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_linuxplatform_run",
+      "target": "src_linuxplatform_cpp_sessionstatecallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L152",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_linuxplatform_run",
+      "target": "src_linuxplatform_cpp_voidcallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L198",
+      "weight": 1.0,
+      "source": "src_linuxplatform_run",
+      "target": "src_linuxplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L214",
+      "weight": 1.0,
+      "source": "src_linuxplatform_openserialport",
+      "target": "src_linuxplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L260",
+      "weight": 1.0,
+      "source": "src_linuxplatform_writeserial",
+      "target": "src_linuxplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L281",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "source": "src_linuxplatform_getnetworkinterfaces",
+      "target": "src_linuxplatform_cpp_networkinterface",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L281",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "src_linuxplatform_getnetworkinterfaces",
+      "target": "src_linuxplatform_cpp_vector",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L286",
+      "weight": 1.0,
+      "source": "src_linuxplatform_getnetworkinterfaces",
+      "target": "src_linuxplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/LinuxPlatform.cpp",
+      "source_location": "L371",
+      "weight": 1.0,
+      "source": "src_linuxplatform_getloggedinuser",
+      "target": "src_linuxplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_platform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/Platform.h",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_platform",
+      "target": "src_platform_platform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/Platform.h",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_platform",
+      "target": "src_systemstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_platform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/Platform.h",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "concept_cross_platform_service",
+      "target": "src_platform_platform"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/main.cpp",
+      "source_location": "29",
+      "weight": 1.0,
+      "source": "src_main_sendlinetobmc",
+      "target": "src_platform_platform"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/Platform.h",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "src_platform_platform",
+      "target": "class",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/Platform.h",
+      "source_location": "17",
+      "weight": 1.0,
+      "source": "src_platform_platform",
+      "target": "src_systemstate_networkinterface"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "34",
+      "weight": 1.0,
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_platform_platform"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_systemstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L361",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_closeserialport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_cpp_vector",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_createplatform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L219",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_gethostname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L229",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_getloggedinuser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L151",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_getnetworkinterfaces",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L256",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_getosversion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L427",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_getstopevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L376",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L306",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_openserialport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L419",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_registerservicehandler",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L409",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_reportstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L121",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_servicectrlhandler",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_servicemain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L432",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_startservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L438",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_stopservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_widetoutf8",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L116",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L369",
+      "weight": 1.0,
+      "source": "src_windowsplatform",
+      "target": "src_windowsplatform_writeserial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L245",
+      "weight": 1.0,
+      "source": "src_windowsplatform_getloggedinuser",
+      "target": "src_windowsplatform_widetoutf8",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L181",
+      "weight": 1.0,
+      "source": "src_windowsplatform_getnetworkinterfaces",
+      "target": "src_windowsplatform_widetoutf8",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_windowsplatform_widetoutf8",
+      "target": "src_windowsplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L20",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_widetoutf8",
+      "target": "wstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "181",
+      "weight": 1.0,
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_widetoutf8"
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L219",
+      "weight": 1.0,
+      "source": "src_windowsplatform_gethostname",
+      "target": "src_windowsplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L229",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "src_windowsplatform_getloggedinuser",
+      "target": "src_windowsplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L256",
+      "weight": 1.0,
+      "source": "src_windowsplatform_getosversion",
+      "target": "src_windowsplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L376",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_logmessage",
+      "target": "src_windowsplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L306",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_openserialport",
+      "target": "src_windowsplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L369",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_writeserial",
+      "target": "src_windowsplatform_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L245",
+      "weight": 1.0,
+      "source": "src_windowsplatform_getloggedinuser",
+      "target": "wstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "concept_cross_platform_service",
+      "target": "src_windowsplatform_windowsplatform"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CMakeLists.txt",
+      "source_location": "44",
+      "weight": 1.0,
+      "source": "root_cmakelists_cmakelists",
+      "target": "src_windowsplatform_windowsplatform"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "107",
+      "weight": 1.0,
+      "source": "src_windowsplatform_createplatform",
+      "target": "src_windowsplatform_windowsplatform"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "95",
+      "weight": 1.0,
+      "source": "src_windowsplatform_servicectrlhandler",
+      "target": "src_windowsplatform_windowsplatform"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "81",
+      "weight": 1.0,
+      "source": "src_windowsplatform_servicemain",
+      "target": "src_windowsplatform_windowsplatform"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L71",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "handle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L69",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "service_status",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L70",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "service_status_handle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L67",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_cpp_powerstatecallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L68",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_cpp_sessionstatecallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L66",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_cpp_voidcallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L45",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_closeserialport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L69",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_g_service_status",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L70",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_g_status_handle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L71",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_g_stop_event",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L41",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_gethostname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L42",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_getloggedinuser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L40",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_getnetworkinterfaces",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L43",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_getosversion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_getstopevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L64",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_hserial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L47",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L65",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_on_start_callback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L66",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_on_stop_callback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L44",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_openserialport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L67",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_power_callback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L58",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_registerservicehandler",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L57",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_reportstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L49",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L68",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_session_callback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_startservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L61",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_stopservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L46",
+      "weight": 1.0,
+      "context": "field",
+      "source": "src_windowsplatform_windowsplatform",
+      "target": "src_windowsplatform_windowsplatform_writeserial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L427",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "src_windowsplatform_getstopevent",
+      "target": "handle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L121",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_run",
+      "target": "src_windowsplatform_cpp_voidcallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "src_windowsplatform_run",
+      "target": "src_windowsplatform_windowsplatform_on_start_callback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L435",
+      "weight": 1.0,
+      "source": "src_windowsplatform_startservice",
+      "target": "src_windowsplatform_windowsplatform_on_start_callback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L145",
+      "weight": 1.0,
+      "source": "src_windowsplatform_run",
+      "target": "src_windowsplatform_windowsplatform_on_stop_callback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L441",
+      "weight": 1.0,
+      "source": "src_windowsplatform_stopservice",
+      "target": "src_windowsplatform_windowsplatform_on_stop_callback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L121",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_run",
+      "target": "src_windowsplatform_cpp_powerstatecallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L121",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_run",
+      "target": "src_windowsplatform_cpp_sessionstatecallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L77",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_servicemain",
+      "target": "dword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L77",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_servicemain",
+      "target": "lptstr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "src_windowsplatform_servicemain",
+      "target": "src_windowsplatform_getstopevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "src_windowsplatform_servicemain",
+      "target": "src_windowsplatform_registerservicehandler",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L82",
+      "weight": 1.0,
+      "source": "src_windowsplatform_servicemain",
+      "target": "src_windowsplatform_reportstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "src_windowsplatform_servicemain",
+      "target": "src_windowsplatform_startservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L409",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_reportstatus",
+      "target": "dword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L89",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_windowsplatform_servicectrlhandler",
+      "target": "dword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "src_windowsplatform_servicectrlhandler",
+      "target": "src_windowsplatform_reportstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "src_windowsplatform_servicectrlhandler",
+      "target": "src_windowsplatform_stopservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L105",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "src_windowsplatform_createplatform",
+      "target": "src_windowsplatform_cpp_unique_ptr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L139",
+      "weight": 1.0,
+      "source": "src_windowsplatform_run",
+      "target": "src_windowsplatform_logmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L151",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "source": "src_windowsplatform_getnetworkinterfaces",
+      "target": "src_windowsplatform_cpp_networkinterface",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L151",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "src_windowsplatform_getnetworkinterfaces",
+      "target": "src_windowsplatform_cpp_vector",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/WindowsPlatform.cpp",
+      "source_location": "L424",
+      "weight": 1.0,
+      "source": "src_windowsplatform_registerservicehandler",
+      "target": "src_windowsplatform_reportstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_main_checksystemstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_main_heartbeatthread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L135",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_main_main",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_main_sendlinetobmc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_main_serialthread",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "59",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_main_checksystemstate",
+      "target": "src_main_sendlinetobmc"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "41",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_main_heartbeatthread",
+      "target": "src_main_sendlinetobmc"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L169",
+      "weight": 1.0,
+      "source": "src_main_main",
+      "target": "src_main_sendlinetobmc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/main.cpp",
+      "source_location": "23",
+      "weight": 1.0,
+      "source": "src_main_sendlinetobmc",
+      "target": "concept_bmc_serial_protocol"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L23",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "src_main_sendlinetobmc",
+      "target": "src_main_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "93",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_main_serialthread",
+      "target": "src_main_sendlinetobmc"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.cpp",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "src_main_serialthread",
+      "target": "src_main_cpp_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/main.cpp",
+      "source_location": "151",
+      "weight": 1.0,
+      "source": "src_main_main",
+      "target": "src_main_heartbeatthread"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/main.cpp",
+      "source_location": "47",
+      "weight": 1.0,
+      "source": "src_main_checksystemstate",
+      "target": "src_systemstate_systemstate"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/main.cpp",
+      "source_location": "150",
+      "weight": 1.0,
+      "source": "src_main_main",
+      "target": "src_main_serialthread"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/main.cpp",
+      "source_location": "105",
+      "weight": 1.0,
+      "source": "src_main_serialthread",
+      "target": "src_systemstate_systemstate"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/main.cpp",
+      "source_location": "67",
+      "weight": 1.0,
+      "source": "src_main_serialthread",
+      "target": "src_version_version_h"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CMakeLists.txt",
+      "source_location": "42",
+      "weight": 1.0,
+      "source": "root_cmakelists_cmakelists",
+      "target": "src_main_main"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/main.cpp",
+      "source_location": "139",
+      "weight": 1.0,
+      "source": "src_main_main",
+      "target": "src_main_createplatform_decl"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/SystemState.h",
+      "source_location": "27",
+      "weight": 1.0,
+      "source": "src_systemstate_systemstate",
+      "target": "src_systemstate_networkinterface"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CMakeLists.txt",
+      "source_location": "8",
+      "weight": 1.0,
+      "source": "root_cmakelists_cmakelists",
+      "target": "src_version_version_h"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "release-notes.txt",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "root_releasenotes_release_notes",
+      "target": "src_version_version_h"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "serialPorts.png",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "root_serialports_serialports_png",
+      "target": "src_version_version_h"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "installer/install.ps1",
+      "source_location": "23",
+      "weight": 1.0,
+      "source": "installer_install_install_ps1",
+      "target": "concept_corestationhxagent_service"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "installer/install.ps1",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "installer_install_install_ps1",
+      "target": "installer_remove_remove_ps1"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "installer/remove.ps1",
+      "source_location": "16",
+      "weight": 1.0,
+      "source": "installer_remove_remove_ps1",
+      "target": "concept_corestationhxagent_service"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "debian/postinst",
+      "source_location": "12",
+      "weight": 1.0,
+      "source": "debian_postinst_postinst",
+      "target": "concept_corestationhxagent_service"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CMakeLists.txt",
+      "source_location": "82",
+      "weight": 1.0,
+      "source": "root_cmakelists_cmakelists",
+      "target": "debian_postinst_postinst"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "debian/prerm",
+      "source_location": "9",
+      "weight": 1.0,
+      "source": "debian_prerm_prerm",
+      "target": "concept_corestationhxagent_service"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "debian/prerm",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "debian_prerm_prerm",
+      "target": "debian_postrm_postrm"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "debian/postrm",
+      "source_location": "8",
+      "weight": 1.0,
+      "source": "debian_postrm_postrm",
+      "target": "concept_corestationhxagent_service"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "start.ps1",
+      "source_location": "3",
+      "weight": 1.0,
+      "source": "root_start_start_ps1",
+      "target": "concept_corestationhxagent_service"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "start.ps1",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "root_start_start_ps1",
+      "target": "root_stop_stop_ps1"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "stop.ps1",
+      "source_location": "18",
+      "weight": 1.0,
+      "source": "root_stop_stop_ps1",
+      "target": "concept_corestationhxagent_service"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "CMakeSettings.json",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "root_cmakesettings_cmakesettings",
+      "target": "root_cmakelists_cmakelists"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".vscode/tasks.json",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "vscode_tasks_tasks_json",
+      "target": "root_cmakelists_cmakelists"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "329",
+      "weight": 1.0,
+      "source": "root_readme_readme",
+      "target": "concept_bmc_serial_protocol"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "114",
+      "weight": 1.0,
+      "source": "root_readme_readme",
+      "target": "root_changeserialport_changeserialport_png"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "111",
+      "weight": 1.0,
+      "source": "root_readme_readme",
+      "target": "root_serial_port_details_serial_port_details_png"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "108",
+      "weight": 1.0,
+      "source": "root_readme_readme",
+      "target": "root_serialports_serialports_png"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "release-notes.txt",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "root_releasenotes_release_notes",
+      "target": "installer_releasenotes_release_notes"
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "platform_implementations",
+      "label": "Platform Abstract Interface + Implementations (Windows and Linux)",
+      "nodes": [
+        "src_platform_platform",
+        "src_windowsplatform_windowsplatform",
+        "src_linuxplatform_linuxplatform"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/Platform.h"
+    },
+    {
+      "id": "service_lifecycle_windows",
+      "label": "Windows Service Lifecycle (install, start, stop, remove)",
+      "nodes": [
+        "installer_install_install_ps1",
+        "installer_remove_remove_ps1",
+        "root_start_start_ps1",
+        "root_stop_stop_ps1",
+        "src_windowsplatform_servicemain",
+        "src_windowsplatform_servicectrlhandler"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "installer/install.ps1"
+    },
+    {
+      "id": "service_lifecycle_linux",
+      "label": "Linux systemd Service Lifecycle (install .deb, postinst, prerm, postrm)",
+      "nodes": [
+        "debian_postinst_postinst",
+        "debian_prerm_prerm",
+        "debian_postrm_postrm",
+        "root_cmakelists_cmakelists"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "debian/postinst"
+    }
+  ],
+  "built_at_commit": "91ffc3084601387e9f4e8fe97991fc2a7b259145"
+}
