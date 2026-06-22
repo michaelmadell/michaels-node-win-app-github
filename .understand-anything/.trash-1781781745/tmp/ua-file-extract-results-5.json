@@ -1,0 +1,2392 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": ".understand-anything/.understandignore",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 73,
+      "nonEmptyLines": 69,
+      "metrics": {}
+    },
+    {
+      "path": "app.rc",
+      "language": "rc",
+      "fileCategory": "code",
+      "totalLines": 61,
+      "nonEmptyLines": 54,
+      "metrics": {}
+    },
+    {
+      "path": "app.res",
+      "language": "res",
+      "fileCategory": "code",
+      "totalLines": 81,
+      "nonEmptyLines": 79,
+      "metrics": {}
+    },
+    {
+      "path": "CoreStationHXAgent.service",
+      "language": "service",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "metrics": {}
+    },
+    {
+      "path": "debian/changelog",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 5,
+      "nonEmptyLines": 3,
+      "metrics": {}
+    },
+    {
+      "path": "debian/clean",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "metrics": {}
+    },
+    {
+      "path": "debian/compat",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 1,
+      "metrics": {}
+    },
+    {
+      "path": "debian/control",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 12,
+      "metrics": {}
+    },
+    {
+      "path": "debian/copyright",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 27,
+      "nonEmptyLines": 27,
+      "metrics": {}
+    },
+    {
+      "path": "debian/dh-cmake.compat",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 1,
+      "metrics": {}
+    },
+    {
+      "path": "debian/files",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "metrics": {}
+    },
+    {
+      "path": "debian/postinst",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 18,
+      "metrics": {}
+    },
+    {
+      "path": "debian/postrm",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 16,
+      "metrics": {}
+    },
+    {
+      "path": "debian/prerm",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 17,
+      "metrics": {}
+    },
+    {
+      "path": "debian/rules",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 5,
+      "nonEmptyLines": 4,
+      "metrics": {}
+    },
+    {
+      "path": "debian/source/format",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 1,
+      "metrics": {}
+    },
+    {
+      "path": "src/modules/3kcheck/3kcheck.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 103,
+      "nonEmptyLines": 80,
+      "callGraph": [
+        {
+          "caller": "trim",
+          "callee": "std::find_if_not",
+          "lineNumber": 15
+        },
+        {
+          "caller": "trim",
+          "callee": "begin",
+          "lineNumber": 15
+        },
+        {
+          "caller": "trim",
+          "callee": "end",
+          "lineNumber": 15
+        },
+        {
+          "caller": "trim",
+          "callee": "std::isspace",
+          "lineNumber": 16
+        },
+        {
+          "caller": "trim",
+          "callee": "base",
+          "lineNumber": 19
+        },
+        {
+          "caller": "trim",
+          "callee": "std::find_if_not",
+          "lineNumber": 19
+        },
+        {
+          "caller": "trim",
+          "callee": "rbegin",
+          "lineNumber": 19
+        },
+        {
+          "caller": "trim",
+          "callee": "rend",
+          "lineNumber": 19
+        },
+        {
+          "caller": "trim",
+          "callee": "std::isspace",
+          "lineNumber": 20
+        },
+        {
+          "caller": "trim",
+          "callee": "std::string",
+          "lineNumber": 27
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "__cpuid",
+          "lineNumber": 44
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 44
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "std::memcpy",
+          "lineNumber": 46
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 46
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "std::memcpy",
+          "lineNumber": 47
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 47
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "std::memcpy",
+          "lineNumber": 48
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 48
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "trim",
+          "lineNumber": 49
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "std::string",
+          "lineNumber": 49
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 49
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "__cpuid",
+          "lineNumber": 52
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 52
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "static_cast<unsigned int>",
+          "lineNumber": 53
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 56
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "__cpuid",
+          "lineNumber": 59
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 59
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "std::memcpy",
+          "lineNumber": 60
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 60
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "trim",
+          "lineNumber": 64
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "std::string",
+          "lineNumber": 64
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "data",
+          "lineNumber": 64
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "find",
+          "lineNumber": 67
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "trim",
+          "lineNumber": 69
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "substr",
+          "lineNumber": 69
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "trim",
+          "lineNumber": 70
+        },
+        {
+          "caller": "GetCpuInfo",
+          "callee": "substr",
+          "lineNumber": 70
+        },
+        {
+          "caller": "IsHX2KCPU",
+          "callee": "empty",
+          "lineNumber": 78
+        },
+        {
+          "caller": "IsHX2KCPU",
+          "callee": "empty",
+          "lineNumber": 78
+        },
+        {
+          "caller": "IsHX2KCPU",
+          "callee": "empty",
+          "lineNumber": 78
+        },
+        {
+          "caller": "IsHX2KCPU",
+          "callee": "GetCpuInfo",
+          "lineNumber": 81
+        },
+        {
+          "caller": "IsHX2KCPU",
+          "callee": "find",
+          "lineNumber": 87
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/regedits/Regedit.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 180,
+      "nonEmptyLines": 166,
+      "callGraph": [
+        {
+          "caller": "Read",
+          "callee": "find_last_of",
+          "lineNumber": 17
+        },
+        {
+          "caller": "Read",
+          "callee": "logMessage",
+          "lineNumber": 19
+        },
+        {
+          "caller": "Read",
+          "callee": "substr",
+          "lineNumber": 22
+        },
+        {
+          "caller": "Read",
+          "callee": "substr",
+          "lineNumber": 23
+        },
+        {
+          "caller": "Read",
+          "callee": "RegOpenKeyExA",
+          "lineNumber": 24
+        },
+        {
+          "caller": "Read",
+          "callee": "c_str",
+          "lineNumber": 24
+        },
+        {
+          "caller": "Read",
+          "callee": "logMessage",
+          "lineNumber": 25
+        },
+        {
+          "caller": "Read",
+          "callee": "RegQueryValueExA",
+          "lineNumber": 31
+        },
+        {
+          "caller": "Read",
+          "callee": "c_str",
+          "lineNumber": 31
+        },
+        {
+          "caller": "Read",
+          "callee": "RegCloseKey",
+          "lineNumber": 32
+        },
+        {
+          "caller": "Read",
+          "callee": "logMessage",
+          "lineNumber": 34
+        },
+        {
+          "caller": "Read",
+          "callee": "logMessage",
+          "lineNumber": 37
+        },
+        {
+          "caller": "Read",
+          "callee": "std::string",
+          "lineNumber": 37
+        },
+        {
+          "caller": "Write",
+          "callee": "find_last_of",
+          "lineNumber": 44
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 46
+        },
+        {
+          "caller": "Write",
+          "callee": "substr",
+          "lineNumber": 49
+        },
+        {
+          "caller": "Write",
+          "callee": "substr",
+          "lineNumber": 50
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 55
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 55
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 56
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 59
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 59
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 60
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 63
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 63
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 64
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 67
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 67
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 68
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 71
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 71
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 72
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 75
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 75
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 76
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 79
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 79
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 80
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 83
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 83
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 84
+        },
+        {
+          "caller": "Write",
+          "callee": "RegSetValueExA",
+          "lineNumber": 87
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 87
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 87
+        },
+        {
+          "caller": "Write",
+          "callee": "(DWORD)",
+          "lineNumber": 87
+        },
+        {
+          "caller": "Write",
+          "callee": "size",
+          "lineNumber": 87
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCloseKey",
+          "lineNumber": 88
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 90
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 93
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 93
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 94
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 98
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 102
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 102
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 103
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 106
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 106
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 107
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 110
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 110
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 111
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 115
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 118
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 118
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 119
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 122
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 122
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 123
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 126
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 126
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 127
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 130
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 130
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 131
+        },
+        {
+          "caller": "Write",
+          "callee": "RegSetValueExA",
+          "lineNumber": 134
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 134
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 134
+        },
+        {
+          "caller": "Write",
+          "callee": "(DWORD)",
+          "lineNumber": 134
+        },
+        {
+          "caller": "Write",
+          "callee": "size",
+          "lineNumber": 134
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCloseKey",
+          "lineNumber": 135
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 137
+        },
+        {
+          "caller": "Write",
+          "callee": "RegCreateKeyExA",
+          "lineNumber": 140
+        },
+        {
+          "caller": "Write",
+          "callee": "c_str",
+          "lineNumber": 140
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 141
+        },
+        {
+          "caller": "Write",
+          "callee": "logMessage",
+          "lineNumber": 145
+        },
+        {
+          "caller": "Create",
+          "callee": "Write",
+          "lineNumber": 152
+        },
+        {
+          "caller": "Delete",
+          "callee": "find_last_of",
+          "lineNumber": 158
+        },
+        {
+          "caller": "Delete",
+          "callee": "logMessage",
+          "lineNumber": 160
+        },
+        {
+          "caller": "Delete",
+          "callee": "substr",
+          "lineNumber": 163
+        },
+        {
+          "caller": "Delete",
+          "callee": "substr",
+          "lineNumber": 164
+        },
+        {
+          "caller": "Delete",
+          "callee": "RegOpenKeyExA",
+          "lineNumber": 165
+        },
+        {
+          "caller": "Delete",
+          "callee": "c_str",
+          "lineNumber": 165
+        },
+        {
+          "caller": "Delete",
+          "callee": "logMessage",
+          "lineNumber": 166
+        },
+        {
+          "caller": "Delete",
+          "callee": "RegDeleteValueA",
+          "lineNumber": 169
+        },
+        {
+          "caller": "Delete",
+          "callee": "c_str",
+          "lineNumber": 169
+        },
+        {
+          "caller": "Delete",
+          "callee": "RegCloseKey",
+          "lineNumber": 170
+        },
+        {
+          "caller": "Delete",
+          "callee": "logMessage",
+          "lineNumber": 172
+        },
+        {
+          "caller": "Delete",
+          "callee": "logMessage",
+          "lineNumber": 175
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/regedits/Regedit.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 15,
+      "classes": [
+        {
+          "name": "WindowsPlatform",
+          "startLine": 6,
+          "endLine": 6,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "Regedit",
+          "startLine": 8,
+          "endLine": 19,
+          "methods": [
+            "Read",
+            "Write",
+            "Create",
+            "Delete"
+          ],
+          "properties": [
+            "platform_"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "WindowsPlatform",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "Read",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "Write",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "Create",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "Delete",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "Regedit",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 6,
+        "functionCount": 0,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "src/modules/service/ServiceManager.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 436,
+      "nonEmptyLines": 362,
+      "callGraph": [
+        {
+          "caller": "ServiceManager",
+          "callee": "ZeroMemory",
+          "lineNumber": 11
+        },
+        {
+          "caller": "ServiceManager",
+          "callee": "CreateEvent",
+          "lineNumber": 17
+        },
+        {
+          "caller": "~ServiceManager",
+          "callee": "CloseHandle",
+          "lineNumber": 22
+        },
+        {
+          "caller": "Install",
+          "callee": "GetModuleFileNameW",
+          "lineNumber": 34
+        },
+        {
+          "caller": "Install",
+          "callee": "LogError",
+          "lineNumber": 35
+        },
+        {
+          "caller": "Install",
+          "callee": "OpenSCManagerW",
+          "lineNumber": 40
+        },
+        {
+          "caller": "Install",
+          "callee": "LogError",
+          "lineNumber": 42
+        },
+        {
+          "caller": "Install",
+          "callee": "CreateServiceW",
+          "lineNumber": 47
+        },
+        {
+          "caller": "Install",
+          "callee": "c_str",
+          "lineNumber": 49
+        },
+        {
+          "caller": "Install",
+          "callee": "c_str",
+          "lineNumber": 50
+        },
+        {
+          "caller": "Install",
+          "callee": "empty",
+          "lineNumber": 58
+        },
+        {
+          "caller": "Install",
+          "callee": "c_str",
+          "lineNumber": 58
+        },
+        {
+          "caller": "Install",
+          "callee": "c_str",
+          "lineNumber": 59
+        },
+        {
+          "caller": "Install",
+          "callee": "empty",
+          "lineNumber": 60
+        },
+        {
+          "caller": "Install",
+          "callee": "c_str",
+          "lineNumber": 60
+        },
+        {
+          "caller": "Install",
+          "callee": "GetLastError",
+          "lineNumber": 64
+        },
+        {
+          "caller": "Install",
+          "callee": "logMessage",
+          "lineNumber": 66
+        },
+        {
+          "caller": "Install",
+          "callee": "LogError",
+          "lineNumber": 71
+        },
+        {
+          "caller": "Install",
+          "callee": "const_cast<LPWSTR>",
+          "lineNumber": 78
+        },
+        {
+          "caller": "Install",
+          "callee": "c_str",
+          "lineNumber": 78
+        },
+        {
+          "caller": "Install",
+          "callee": "ChangeServiceConfig2W",
+          "lineNumber": 80
+        },
+        {
+          "caller": "Install",
+          "callee": "logMessage",
+          "lineNumber": 83
+        },
+        {
+          "caller": "Install",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 89
+        },
+        {
+          "caller": "Install",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 92
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "OpenServiceManager",
+          "lineNumber": 103
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "OpenServiceHandle",
+          "lineNumber": 107
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 108
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "ControlService",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "logMessage",
+          "lineNumber": 116
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "Sleep",
+          "lineNumber": 118
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "DeleteService",
+          "lineNumber": 122
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "logMessage",
+          "lineNumber": 124
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "LogError",
+          "lineNumber": 129
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 132
+        },
+        {
+          "caller": "Uninstall",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 133
+        },
+        {
+          "caller": "StartService",
+          "callee": "OpenServiceManager",
+          "lineNumber": 143
+        },
+        {
+          "caller": "StartService",
+          "callee": "OpenServiceHandle",
+          "lineNumber": 147
+        },
+        {
+          "caller": "StartService",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 148
+        },
+        {
+          "caller": "StartService",
+          "callee": "QueryServiceStatus",
+          "lineNumber": 154
+        },
+        {
+          "caller": "StartService",
+          "callee": "logMessage",
+          "lineNumber": 157
+        },
+        {
+          "caller": "StartService",
+          "callee": "::StartServiceW",
+          "lineNumber": 164
+        },
+        {
+          "caller": "StartService",
+          "callee": "logMessage",
+          "lineNumber": 166
+        },
+        {
+          "caller": "StartService",
+          "callee": "QueryServiceStatus",
+          "lineNumber": 170
+        },
+        {
+          "caller": "StartService",
+          "callee": "logMessage",
+          "lineNumber": 173
+        },
+        {
+          "caller": "StartService",
+          "callee": "LogError",
+          "lineNumber": 180
+        },
+        {
+          "caller": "StartService",
+          "callee": "Sleep",
+          "lineNumber": 184
+        },
+        {
+          "caller": "StartService",
+          "callee": "LogError",
+          "lineNumber": 188
+        },
+        {
+          "caller": "StartService",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 192
+        },
+        {
+          "caller": "StartService",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 193
+        },
+        {
+          "caller": "StopService",
+          "callee": "OpenServiceManager",
+          "lineNumber": 203
+        },
+        {
+          "caller": "StopService",
+          "callee": "OpenServiceHandle",
+          "lineNumber": 207
+        },
+        {
+          "caller": "StopService",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 208
+        },
+        {
+          "caller": "StopService",
+          "callee": "ControlService",
+          "lineNumber": 213
+        },
+        {
+          "caller": "StopService",
+          "callee": "logMessage",
+          "lineNumber": 215
+        },
+        {
+          "caller": "StopService",
+          "callee": "QueryServiceStatus",
+          "lineNumber": 219
+        },
+        {
+          "caller": "StopService",
+          "callee": "logMessage",
+          "lineNumber": 222
+        },
+        {
+          "caller": "StopService",
+          "callee": "Sleep",
+          "lineNumber": 227
+        },
+        {
+          "caller": "StopService",
+          "callee": "GetLastError",
+          "lineNumber": 231
+        },
+        {
+          "caller": "StopService",
+          "callee": "logMessage",
+          "lineNumber": 233
+        },
+        {
+          "caller": "StopService",
+          "callee": "LogError",
+          "lineNumber": 238
+        },
+        {
+          "caller": "StopService",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 242
+        },
+        {
+          "caller": "StopService",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 243
+        },
+        {
+          "caller": "QueryStatus",
+          "callee": "OpenServiceManager",
+          "lineNumber": 253
+        },
+        {
+          "caller": "QueryStatus",
+          "callee": "OpenServiceHandle",
+          "lineNumber": 257
+        },
+        {
+          "caller": "QueryStatus",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 258
+        },
+        {
+          "caller": "QueryStatus",
+          "callee": "QueryServiceStatus",
+          "lineNumber": 263
+        },
+        {
+          "caller": "QueryStatus",
+          "callee": "LogError",
+          "lineNumber": 273
+        },
+        {
+          "caller": "QueryStatus",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 276
+        },
+        {
+          "caller": "QueryStatus",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 277
+        },
+        {
+          "caller": "IsInstalled",
+          "callee": "OpenServiceManager",
+          "lineNumber": 286
+        },
+        {
+          "caller": "IsInstalled",
+          "callee": "OpenServiceHandle",
+          "lineNumber": 290
+        },
+        {
+          "caller": "IsInstalled",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 293
+        },
+        {
+          "caller": "IsInstalled",
+          "callee": "CloseServiceHandle",
+          "lineNumber": 296
+        },
+        {
+          "caller": "IsRunning",
+          "callee": "QueryStatus",
+          "lineNumber": 304
+        },
+        {
+          "caller": "ReportStatus",
+          "callee": "SetServiceStatus",
+          "lineNumber": 335
+        },
+        {
+          "caller": "RegisterServiceHandler",
+          "callee": "RegisterServiceCtrlHandlerW",
+          "lineNumber": 340
+        },
+        {
+          "caller": "RegisterServiceHandler",
+          "callee": "c_str",
+          "lineNumber": 340
+        },
+        {
+          "caller": "ServiceMainProc",
+          "callee": "ReportStatus",
+          "lineNumber": 357
+        },
+        {
+          "caller": "ServiceMainProc",
+          "callee": "onStart_",
+          "lineNumber": 360
+        },
+        {
+          "caller": "ServiceMainProc",
+          "callee": "ReportStatus",
+          "lineNumber": 363
+        },
+        {
+          "caller": "ServiceMainProc",
+          "callee": "WaitForSingleObject",
+          "lineNumber": 366
+        },
+        {
+          "caller": "ServiceMainProc",
+          "callee": "ReportStatus",
+          "lineNumber": 368
+        },
+        {
+          "caller": "ServiceCtrlProc",
+          "callee": "ReportStatus",
+          "lineNumber": 375
+        },
+        {
+          "caller": "ServiceCtrlProc",
+          "callee": "onStop_",
+          "lineNumber": 377
+        },
+        {
+          "caller": "ServiceCtrlProc",
+          "callee": "SetEvent",
+          "lineNumber": 379
+        },
+        {
+          "caller": "OpenServiceManager",
+          "callee": "OpenSCManagerW",
+          "lineNumber": 391
+        },
+        {
+          "caller": "OpenServiceManager",
+          "callee": "LogError",
+          "lineNumber": 393
+        },
+        {
+          "caller": "OpenServiceHandle",
+          "callee": "OpenServiceW",
+          "lineNumber": 401
+        },
+        {
+          "caller": "OpenServiceHandle",
+          "callee": "c_str",
+          "lineNumber": 401
+        },
+        {
+          "caller": "OpenServiceHandle",
+          "callee": "LogError",
+          "lineNumber": 403
+        },
+        {
+          "caller": "LogError",
+          "callee": "GetLastErrorString",
+          "lineNumber": 411
+        },
+        {
+          "caller": "LogError",
+          "callee": "logMessage",
+          "lineNumber": 412
+        },
+        {
+          "caller": "GetLastErrorString",
+          "callee": "GetLastError",
+          "lineNumber": 417
+        },
+        {
+          "caller": "GetLastErrorString",
+          "callee": "FormatMessageA",
+          "lineNumber": 420
+        },
+        {
+          "caller": "GetLastErrorString",
+          "callee": "MAKELANGID",
+          "lineNumber": 424
+        },
+        {
+          "caller": "GetLastErrorString",
+          "callee": "LocalFree",
+          "lineNumber": 431
+        },
+        {
+          "caller": "GetLastErrorString",
+          "callee": "std::to_string",
+          "lineNumber": 433
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/service/ServiceManager.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 164,
+      "nonEmptyLines": 138,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/session/SessionMonitor.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 295,
+      "nonEmptyLines": 245,
+      "callGraph": [
+        {
+          "caller": "~SessionMonitor",
+          "callee": "Stop",
+          "lineNumber": 11
+        },
+        {
+          "caller": "Start",
+          "callee": "std::thread",
+          "lineNumber": 16
+        },
+        {
+          "caller": "Start",
+          "callee": "ThreadProc",
+          "lineNumber": 16
+        },
+        {
+          "caller": "Start",
+          "callee": "logMessage",
+          "lineNumber": 18
+        },
+        {
+          "caller": "Stop",
+          "callee": "PostMessage",
+          "lineNumber": 25
+        },
+        {
+          "caller": "Stop",
+          "callee": "joinable",
+          "lineNumber": 28
+        },
+        {
+          "caller": "Stop",
+          "callee": "join",
+          "lineNumber": 29
+        },
+        {
+          "caller": "Stop",
+          "callee": "logMessage",
+          "lineNumber": 33
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "GetModuleHandle",
+          "lineNumber": 38
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "RegisterClassExW",
+          "lineNumber": 46
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "CreateWindowExW",
+          "lineNumber": 48
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "logMessage",
+          "lineNumber": 62
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "WTSRegisterSessionNotification",
+          "lineNumber": 67
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "GetLastError",
+          "lineNumber": 68
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "logMessage",
+          "lineNumber": 70
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "std::to_string",
+          "lineNumber": 70
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "DestroyWindow",
+          "lineNumber": 72
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "logMessage",
+          "lineNumber": 77
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "GetMessage",
+          "lineNumber": 81
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "TranslateMessage",
+          "lineNumber": 82
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "DispatchMessage",
+          "lineNumber": 83
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "WTSUnRegisterSessionNotification",
+          "lineNumber": 86
+        },
+        {
+          "caller": "ThreadProc",
+          "callee": "DestroyWindow",
+          "lineNumber": 87
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "reinterpret_cast<LPCREATESTRUCT>",
+          "lineNumber": 95
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "reinterpret_cast<SessionMonitor*>",
+          "lineNumber": 96
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "SetWindowLongPtr",
+          "lineNumber": 97
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "reinterpret_cast<LONG_PTR>",
+          "lineNumber": 97
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "reinterpret_cast<SessionMonitor*>",
+          "lineNumber": 100
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "GetWindowLongPtr",
+          "lineNumber": 100
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "static_cast<DWORD>",
+          "lineNumber": 106
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "static_cast<DWORD>",
+          "lineNumber": 107
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "HandleSessionChange",
+          "lineNumber": 108
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "PostQuitMessage",
+          "lineNumber": 114
+        },
+        {
+          "caller": "SessionMonitor::WndProc",
+          "callee": "DefWindowProc",
+          "lineNumber": 118
+        },
+        {
+          "caller": "HandleSessionChange",
+          "callee": "std::to_string",
+          "lineNumber": 184
+        },
+        {
+          "caller": "HandleSessionChange",
+          "callee": "logMessage",
+          "lineNumber": 189
+        },
+        {
+          "caller": "HandleSessionChange",
+          "callee": "std::to_string",
+          "lineNumber": 190
+        },
+        {
+          "caller": "HandleSessionChange",
+          "callee": "callback_",
+          "lineNumber": 194
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "WTSGetActiveConsoleSessionId",
+          "lineNumber": 199
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 202
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "OpenInputDesktop",
+          "lineNumber": 207
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 210
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "CloseDesktop",
+          "lineNumber": 212
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "GetUserObjectInformation",
+          "lineNumber": 218
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 221
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "find",
+          "lineNumber": 224
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "CloseDesktop",
+          "lineNumber": 225
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 227
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "CloseDesktop",
+          "lineNumber": 232
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "GetSystemMetrics",
+          "lineNumber": 234
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 236
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "WTSQuerySessionInformationW",
+          "lineNumber": 244
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "WTSFreeMemory",
+          "lineNumber": 247
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 252
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 258
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 264
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 270
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 276
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "std::to_string",
+          "lineNumber": 276
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "getLoggedInUser",
+          "lineNumber": 284
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "empty",
+          "lineNumber": 285
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 286
+        },
+        {
+          "caller": "GetCurrentSessionState",
+          "callee": "logMessage",
+          "lineNumber": 290
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/session/SessionMonitor.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 87,
+      "nonEmptyLines": 73,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/tray/TrayApp.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 351,
+      "nonEmptyLines": 298,
+      "callGraph": [
+        {
+          "caller": "Trim",
+          "callee": "empty",
+          "lineNumber": 15
+        },
+        {
+          "caller": "Trim",
+          "callee": "std::string",
+          "lineNumber": 16
+        },
+        {
+          "caller": "Trim",
+          "callee": "find_first_not_of",
+          "lineNumber": 20
+        },
+        {
+          "caller": "Trim",
+          "callee": "std::string",
+          "lineNumber": 22
+        },
+        {
+          "caller": "Trim",
+          "callee": "find_last_not_of",
+          "lineNumber": 25
+        },
+        {
+          "caller": "Trim",
+          "callee": "substr",
+          "lineNumber": 26
+        },
+        {
+          "caller": "TrayApp",
+          "callee": "CreateEvent",
+          "lineNumber": 30
+        },
+        {
+          "caller": "~TrayApp",
+          "callee": "Stop",
+          "lineNumber": 34
+        },
+        {
+          "caller": "~TrayApp",
+          "callee": "CloseHandle",
+          "lineNumber": 36
+        },
+        {
+          "caller": "Start",
+          "callee": "ResetEvent",
+          "lineNumber": 45
+        },
+        {
+          "caller": "Start",
+          "callee": "std::thread",
+          "lineNumber": 48
+        },
+        {
+          "caller": "Start",
+          "callee": "UiThreadProc",
+          "lineNumber": 48
+        },
+        {
+          "caller": "Start",
+          "callee": "wait_for",
+          "lineNumber": 52
+        },
+        {
+          "caller": "Start",
+          "callee": "std::chrono::seconds",
+          "lineNumber": 52
+        },
+        {
+          "caller": "Start",
+          "callee": "load",
+          "lineNumber": 53
+        },
+        {
+          "caller": "Start",
+          "callee": "std::thread",
+          "lineNumber": 56
+        },
+        {
+          "caller": "Start",
+          "callee": "PipeThreadProc",
+          "lineNumber": 56
+        },
+        {
+          "caller": "Stop",
+          "callee": "exchange",
+          "lineNumber": 61
+        },
+        {
+          "caller": "Stop",
+          "callee": "SetEvent",
+          "lineNumber": 66
+        },
+        {
+          "caller": "Stop",
+          "callee": "PostMessage",
+          "lineNumber": 70
+        },
+        {
+          "caller": "Stop",
+          "callee": "joinable",
+          "lineNumber": 73
+        },
+        {
+          "caller": "Stop",
+          "callee": "join",
+          "lineNumber": 74
+        },
+        {
+          "caller": "Stop",
+          "callee": "joinable",
+          "lineNumber": 76
+        },
+        {
+          "caller": "Stop",
+          "callee": "join",
+          "lineNumber": 77
+        },
+        {
+          "caller": "Log",
+          "callee": "logMessage",
+          "lineNumber": 83
+        },
+        {
+          "caller": "UpdateData",
+          "callee": "empty",
+          "lineNumber": 90
+        },
+        {
+          "caller": "UpdateData",
+          "callee": "empty",
+          "lineNumber": 91
+        },
+        {
+          "caller": "UpdateData",
+          "callee": "empty",
+          "lineNumber": 92
+        },
+        {
+          "caller": "UpdateData",
+          "callee": "PostMessage",
+          "lineNumber": 96
+        },
+        {
+          "caller": "ApplyTooltip",
+          "callee": "size",
+          "lineNumber": 107
+        },
+        {
+          "caller": "ApplyTooltip",
+          "callee": "resize",
+          "lineNumber": 108
+        },
+        {
+          "caller": "ApplyTooltip",
+          "callee": "begin",
+          "lineNumber": 111
+        },
+        {
+          "caller": "ApplyTooltip",
+          "callee": "end",
+          "lineNumber": 111
+        },
+        {
+          "caller": "ApplyTooltip",
+          "callee": "wcsncpy_s",
+          "lineNumber": 112
+        },
+        {
+          "caller": "ApplyTooltip",
+          "callee": "c_str",
+          "lineNumber": 112
+        },
+        {
+          "caller": "ApplyTooltip",
+          "callee": "Shell_NotifyIconW",
+          "lineNumber": 114
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "reinterpret_cast<LPCREATESTRUCT>",
+          "lineNumber": 119
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "SetWindowLongPtr",
+          "lineNumber": 121
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "reinterpret_cast<LONG_PTR>",
+          "lineNumber": 122
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "reinterpret_cast<TrayApp*>",
+          "lineNumber": 126
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "GetWindowLongPtr",
+          "lineNumber": 126
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "ApplyTooltip",
+          "lineNumber": 131
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "Shell_NotifyIconW",
+          "lineNumber": 136
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "PostQuitMessage",
+          "lineNumber": 138
+        },
+        {
+          "caller": "TrayApp::WndProc",
+          "callee": "DefWindowProc",
+          "lineNumber": 141
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "GetModuleHandle",
+          "lineNumber": 146
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "LoadIcon",
+          "lineNumber": 155
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "LoadCursor",
+          "lineNumber": 156
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "(HBRUSH)",
+          "lineNumber": 157
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "c_str",
+          "lineNumber": 159
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "LoadIcon",
+          "lineNumber": 160
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "RegisterClassExW",
+          "lineNumber": 162
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "CreateWindowExW",
+          "lineNumber": 164
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "c_str",
+          "lineNumber": 166
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "notify_all",
+          "lineNumber": 178
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "Log",
+          "lineNumber": 182
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "ZeroMemory",
+          "lineNumber": 186
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "LoadIcon",
+          "lineNumber": 191
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "size",
+          "lineNumber": 200
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "resize",
+          "lineNumber": 201
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "begin",
+          "lineNumber": 204
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "end",
+          "lineNumber": 204
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "wcsncpy_s",
+          "lineNumber": 205
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "c_str",
+          "lineNumber": 205
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "Shell_NotifyIconW",
+          "lineNumber": 208
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "Log",
+          "lineNumber": 209
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "Shell_NotifyIconW",
+          "lineNumber": 213
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "ApplyTooltip",
+          "lineNumber": 214
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "GetMessage",
+          "lineNumber": 218
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "TranslateMessage",
+          "lineNumber": 219
+        },
+        {
+          "caller": "UiThreadProc",
+          "callee": "DispatchMessage",
+          "lineNumber": 220
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "Log",
+          "lineNumber": 225
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "load",
+          "lineNumber": 227
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CreateNamedPipeA",
+          "lineNumber": 228
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "Log",
+          "lineNumber": 239
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "std::this_thread::sleep_for",
+          "lineNumber": 240
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "std::chrono::seconds",
+          "lineNumber": 240
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CreateEvent",
+          "lineNumber": 245
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "ConnectNamedPipe",
+          "lineNumber": 246
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "GetLastError",
+          "lineNumber": 247
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "WaitForMultipleObjects",
+          "lineNumber": 251
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CancelIoEx",
+          "lineNumber": 253
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "load",
+          "lineNumber": 263
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CreateEvent",
+          "lineNumber": 268
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "ReadFile",
+          "lineNumber": 270
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "GetLastError",
+          "lineNumber": 272
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "WaitForMultipleObjects",
+          "lineNumber": 275
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CancelIoEx",
+          "lineNumber": 277
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CloseHandle",
+          "lineNumber": 278
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "GetOverlappedResult",
+          "lineNumber": 281
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CloseHandle",
+          "lineNumber": 284
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "GetOverlappedResult",
+          "lineNumber": 289
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CloseHandle",
+          "lineNumber": 292
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "std::getline",
+          "lineNumber": 314
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "Trim",
+          "lineNumber": 315
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "empty",
+          "lineNumber": 316
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "find",
+          "lineNumber": 317
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "find",
+          "lineNumber": 319
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "Trim",
+          "lineNumber": 322
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "substr",
+          "lineNumber": 322
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "Trim",
+          "lineNumber": 323
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "substr",
+          "lineNumber": 323
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "std::transform",
+          "lineNumber": 324
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "begin",
+          "lineNumber": 324
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "end",
+          "lineNumber": 324
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "begin",
+          "lineNumber": 324
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "static_cast<char>",
+          "lineNumber": 325
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "std::tolower",
+          "lineNumber": 325
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "UpdateData",
+          "lineNumber": 337
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CloseHandle",
+          "lineNumber": 342
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "DisconnectNamedPipe",
+          "lineNumber": 344
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "CloseHandle",
+          "lineNumber": 345
+        },
+        {
+          "caller": "PipeThreadProc",
+          "callee": "Log",
+          "lineNumber": 348
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/tray/TrayApp.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 110,
+      "nonEmptyLines": 92,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

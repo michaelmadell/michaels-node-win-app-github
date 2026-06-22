@@ -1,0 +1,1841 @@
+[
+  {
+    "source": "file:src/core/Platform.h",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/core/Platform.h",
+    "target": "file:src/core/SystemState.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "class:src/core/Platform.h:Platform",
+    "target": "class:src/core/SystemState.h:NetworkInterface",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/core/SystemState.h",
+    "target": "class:src/core/SystemState.h:NetworkInterface",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/core/SystemState.h",
+    "target": "class:src/core/SystemState.h:SystemState",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "class:src/core/SystemState.h:SystemState",
+    "target": "class:src/core/SystemState.h:NetworkInterface",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/modules/metrics/MetricCache.h",
+    "target": "class:src/modules/metrics/MetricCache.h:MetricCache",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.h",
+    "target": "class:src/modules/metrics/MetricsCollector.h:MetricsCollector",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.h",
+    "target": "file:src/core/SystemState.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.h",
+    "target": "file:src/modules/metrics/MetricCache.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "class:src/modules/metrics/MetricsCollector.h:MetricsCollector",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "class:src/modules/metrics/MetricsCollector.h:MetricsCollector",
+    "target": "class:src/modules/metrics/MetricCache.h:MetricCache",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:MetricsCollector",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectPerformance",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectGpu",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectProcesses",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CheckUpdates",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:GetFormattedMetrics",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "file:src/core/Platform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/metrics/MetricsCollector.cpp",
+    "target": "file:src/modules/metrics/MetricsCollector.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectPerformance",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectGpu",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectProcesses",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:CheckUpdates",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:GetFormattedMetrics",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectPerformance",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectGpu",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CollectProcesses",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/metrics/MetricsCollector.cpp:CollectAll",
+    "target": "function:src/modules/metrics/MetricsCollector.cpp:CheckUpdates",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/core/Platform.h",
+    "target": "function:src/main.cpp:main",
+    "type": "related",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/core/Platform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/core/SystemState.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/modules/3kcheck/3kcheck.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/modules/serial/SerialManager.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "file:src/version.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "file:src/modules/serial/SerialManager.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:sendLineToBmc",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:notifyStopRequested",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:heartbeatThread",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "class:src/main.cpp:AMTPortInfo",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:GetAMTInstanceId",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:GetAMTComPort",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:disableAMTComPort",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:enableAMTComPort",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:reassignComPort",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:checkSystemState",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:processIncomingCommand",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:processIncomingSerialData",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:readSerialPortWorker",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:serialThread",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/main.cpp",
+    "target": "function:src/main.cpp:main",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "function:src/modules/serial/SerialManager.cpp:SerialManager",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "function:src/modules/serial/SerialManager.cpp:Open",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "function:src/modules/serial/SerialManager.cpp:Close",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "function:src/modules/serial/SerialManager.cpp:Write",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "function:src/modules/serial/SerialManager.cpp:Read",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "function:src/modules/serial/SerialManager.cpp:ProcessIncomingData",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.cpp",
+    "target": "function:src/modules/serial/SerialManager.cpp:TryReconnect",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.h",
+    "target": "class:src/modules/serial/SerialManager.h:SerialManager",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/serial/SerialManager.h",
+    "target": "class:src/modules/serial/SerialManager.h:SerialManager",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "class:src/modules/serial/SerialManager.h:SerialManager",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "function:src/main.cpp:processIncomingCommand",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "function:src/main.cpp:sendLineToBmc",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "function:src/main.cpp:checkSystemState",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:checkSystemState",
+    "target": "function:src/main.cpp:sendLineToBmc",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:processIncomingSerialData",
+    "target": "function:src/main.cpp:processIncomingCommand",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:heartbeatThread",
+    "target": "function:src/main.cpp:sendLineToBmc",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:notifyStopRequested",
+    "target": "function:src/main.cpp:sendLineToBmc",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:disableAMTComPort",
+    "target": "function:src/main.cpp:GetAMTInstanceId",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:enableAMTComPort",
+    "target": "function:src/main.cpp:GetAMTInstanceId",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:reassignComPort",
+    "target": "function:src/main.cpp:disableAMTComPort",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:reassignComPort",
+    "target": "function:src/main.cpp:enableAMTComPort",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:reassignComPort",
+    "target": "function:src/main.cpp:GetAMTComPort",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:main",
+    "target": "function:src/main.cpp:GetAMTComPort",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:main",
+    "target": "function:src/main.cpp:reassignComPort",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:main",
+    "target": "function:src/main.cpp:disableAMTComPort",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:main",
+    "target": "function:src/main.cpp:enableAMTComPort",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:main",
+    "target": "function:src/main.cpp:notifyStopRequested",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:main",
+    "target": "function:src/main.cpp:sendLineToBmc",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/serial/SerialManager.cpp:Open",
+    "target": "function:src/modules/serial/SerialManager.cpp:Close",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/serial/SerialManager.cpp:Write",
+    "target": "function:src/modules/serial/SerialManager.cpp:Close",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/serial/SerialManager.cpp:ProcessIncomingData",
+    "target": "function:src/modules/serial/SerialManager.cpp:Read",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/serial/SerialManager.cpp:TryReconnect",
+    "target": "function:src/modules/serial/SerialManager.cpp:Open",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "function:src/modules/serial/SerialManager.cpp:Open",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "function:src/modules/serial/SerialManager.cpp:ProcessIncomingData",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "function:src/modules/serial/SerialManager.cpp:TryReconnect",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "document:README.md",
+    "target": "config:CMakeLists.txt",
+    "type": "documents",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "document:README.md",
+    "target": "file:build.bat",
+    "type": "documents",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "document:README.md",
+    "target": "file:build.sh",
+    "type": "documents",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "document:README.md",
+    "target": "document:release-notes.txt",
+    "type": "documents",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "document:README.md",
+    "target": "file:sign.bat",
+    "type": "documents",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "file:build.bat",
+    "target": "config:CMakeLists.txt",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:build.bat",
+    "target": "document:release-notes.txt",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:build.sh",
+    "target": "config:CMakeLists.txt",
+    "type": "related",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "document:installer/release-notes.txt",
+    "target": "file:installer/install.ps1",
+    "type": "documents",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "document:installer/release-notes.txt",
+    "target": "file:installer/remove.ps1",
+    "type": "documents",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "file:src/modules/3kcheck/3kcheck.cpp",
+    "target": "function:src/modules/3kcheck/3kcheck.cpp:trim",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/3kcheck/3kcheck.cpp",
+    "target": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/3kcheck/3kcheck.cpp",
+    "target": "function:src/modules/3kcheck/3kcheck.cpp:IsHX2KCPU",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/3kcheck/3kcheck.cpp",
+    "target": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/modules/3kcheck/3kcheck.cpp",
+    "target": "function:src/modules/3kcheck/3kcheck.cpp:IsHX2KCPU",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+    "target": "function:src/modules/3kcheck/3kcheck.cpp:trim",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/3kcheck/3kcheck.cpp:IsHX2KCPU",
+    "target": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/modules/regedits/Regedit.cpp",
+    "target": "file:src/modules/regedits/Regedit.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/regedits/Regedit.cpp",
+    "target": "function:src/modules/regedits/Regedit.cpp:Read",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/regedits/Regedit.cpp",
+    "target": "function:src/modules/regedits/Regedit.cpp:Write",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/regedits/Regedit.cpp",
+    "target": "function:src/modules/regedits/Regedit.cpp:Create",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/regedits/Regedit.cpp",
+    "target": "function:src/modules/regedits/Regedit.cpp:Delete",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "function:src/modules/regedits/Regedit.cpp:Create",
+    "target": "function:src/modules/regedits/Regedit.cpp:Write",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/modules/regedits/Regedit.h",
+    "target": "class:src/modules/regedits/Regedit.h:Regedit",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/regedits/Regedit.h",
+    "target": "class:src/modules/regedits/Regedit.h:Regedit",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "class:src/modules/regedits/Regedit.h:Regedit",
+    "target": "function:src/modules/regedits/Regedit.cpp:Read",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "class:src/modules/regedits/Regedit.h:Regedit",
+    "target": "function:src/modules/regedits/Regedit.cpp:Write",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "file:src/modules/service/ServiceManager.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:Install",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:Uninstall",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:StartService",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:StopService",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:IsInstalled",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:IsRunning",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:ReportStatus",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:RegisterServiceHandler",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:ServiceMainProc",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:ServiceCtrlProc",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:LogError",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.cpp",
+    "target": "function:src/modules/service/ServiceManager.cpp:GetLastErrorString",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:Uninstall",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:Uninstall",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:StartService",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:StartService",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:StopService",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:StopService",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:IsInstalled",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceManager",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:IsInstalled",
+    "target": "function:src/modules/service/ServiceManager.cpp:OpenServiceHandle",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:IsRunning",
+    "target": "function:src/modules/service/ServiceManager.cpp:QueryStatus",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:ServiceMainProc",
+    "target": "function:src/modules/service/ServiceManager.cpp:ReportStatus",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:ServiceCtrlProc",
+    "target": "function:src/modules/service/ServiceManager.cpp:ReportStatus",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:Install",
+    "target": "function:src/modules/service/ServiceManager.cpp:LogError",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/service/ServiceManager.cpp:LogError",
+    "target": "function:src/modules/service/ServiceManager.cpp:GetLastErrorString",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.h",
+    "target": "class:src/modules/service/ServiceManager.h:ServiceManager",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/service/ServiceManager.h",
+    "target": "class:src/modules/service/ServiceManager.h:ServiceManager",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "class:src/modules/service/ServiceManager.h:ServiceManager",
+    "target": "function:src/modules/service/ServiceManager.cpp:Install",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "class:src/modules/service/ServiceManager.h:ServiceManager",
+    "target": "function:src/modules/service/ServiceManager.cpp:ServiceMainProc",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.cpp",
+    "target": "file:src/modules/session/SessionMonitor.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.cpp",
+    "target": "function:src/modules/session/SessionMonitor.cpp:Start",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.cpp",
+    "target": "function:src/modules/session/SessionMonitor.cpp:Stop",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.cpp",
+    "target": "function:src/modules/session/SessionMonitor.cpp:ThreadProc",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.cpp",
+    "target": "function:src/modules/session/SessionMonitor.cpp:WndProc",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.cpp",
+    "target": "function:src/modules/session/SessionMonitor.cpp:HandleSessionChange",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.cpp",
+    "target": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "function:src/modules/session/SessionMonitor.cpp:Start",
+    "target": "function:src/modules/session/SessionMonitor.cpp:ThreadProc",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/session/SessionMonitor.cpp:WndProc",
+    "target": "function:src/modules/session/SessionMonitor.cpp:HandleSessionChange",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+    "target": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.h",
+    "target": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/session/SessionMonitor.h",
+    "target": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+    "target": "function:src/modules/session/SessionMonitor.cpp:Start",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "class:src/modules/session/SessionMonitor.h:SessionMonitor",
+    "target": "function:src/modules/session/SessionMonitor.cpp:GetCurrentSessionState",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "file:src/modules/tray/TrayApp.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "function:src/modules/tray/TrayApp.cpp:Trim",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "function:src/modules/tray/TrayApp.cpp:Start",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "function:src/modules/tray/TrayApp.cpp:Stop",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "function:src/modules/tray/TrayApp.cpp:UpdateData",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "function:src/modules/tray/TrayApp.cpp:WndProc",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "function:src/modules/tray/TrayApp.cpp:UiThreadProc",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.cpp",
+    "target": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "function:src/modules/tray/TrayApp.cpp:Start",
+    "target": "function:src/modules/tray/TrayApp.cpp:UiThreadProc",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/tray/TrayApp.cpp:Start",
+    "target": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/tray/TrayApp.cpp:UpdateData",
+    "target": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/tray/TrayApp.cpp:WndProc",
+    "target": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/tray/TrayApp.cpp:UiThreadProc",
+    "target": "function:src/modules/tray/TrayApp.cpp:ApplyTooltip",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+    "target": "function:src/modules/tray/TrayApp.cpp:Trim",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+    "target": "function:src/modules/tray/TrayApp.cpp:UpdateData",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.h",
+    "target": "class:src/modules/tray/TrayApp.h:TrayApp",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/modules/tray/TrayApp.h",
+    "target": "class:src/modules/tray/TrayApp.h:TrayApp",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "class:src/modules/tray/TrayApp.h:TrayApp",
+    "target": "function:src/modules/tray/TrayApp.cpp:Start",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "class:src/modules/tray/TrayApp.h:TrayApp",
+    "target": "function:src/modules/tray/TrayApp.cpp:PipeThreadProc",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "service:debian/postinst",
+    "target": "service:CoreStationHXAgent.service",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "service:debian/prerm",
+    "target": "service:CoreStationHXAgent.service",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "service:debian/postrm",
+    "target": "service:CoreStationHXAgent.service",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "pipeline:debian/rules",
+    "target": "config:debian/control",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "config:debian/control",
+    "target": "service:CoreStationHXAgent.service",
+    "type": "related",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "resource:app.res",
+    "target": "resource:app.rc",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/platform/LinuxPlatform.cpp",
+    "target": "file:src/core/Platform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/LinuxPlatform.cpp",
+    "target": "file:src/core/Platform.h",
+    "type": "implements",
+    "direction": "forward",
+    "weight": 0.9
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.h",
+    "target": "file:src/core/Platform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+    "target": "file:src/core/Platform.h",
+    "type": "implements",
+    "direction": "forward",
+    "weight": 0.9
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.h",
+    "target": "file:src/platform/Windows_Addon.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "file:src/platform/WindowsPlatform.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "file:src/platform/Windows_Addon.h",
+    "type": "imports",
+    "direction": "forward",
+    "weight": 0.7
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "file:src/platform/WindowsPlatform.h",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/platform/Windows_Addon.h",
+    "target": "class:src/platform/Windows_Addon.h:HandleCloser",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/Windows_Addon.h",
+    "target": "class:src/platform/Windows_Addon.h:PdhQueryCloser",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/Windows_Addon.h",
+    "target": "class:src/platform/Windows_Addon.h:ComInitializer",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/Windows_Addon.h",
+    "target": "class:src/platform/Windows_Addon.h:HandleCloser",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/platform/Windows_Addon.h",
+    "target": "class:src/platform/Windows_Addon.h:PdhQueryCloser",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/platform/Windows_Addon.h",
+    "target": "class:src/platform/Windows_Addon.h:ComInitializer",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.h",
+    "target": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.h",
+    "target": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+    "target": "class:src/platform/Windows_Addon.h:ComInitializer",
+    "type": "depends_on",
+    "direction": "forward",
+    "weight": 0.6
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:Trim",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:ServiceCtrlHandler",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:createPlatform",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:createPlatform",
+    "type": "exports",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:run",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:runningUnderServiceControlManager",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getNetworkInterfaces",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getLoggedInUser",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getOsVersion",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getOsBuild",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:openSerialPort",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:writeSerial",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:readSerial",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getCpuUsagePercentImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getRamUsagePercentImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getFreeDiskSpaceGBImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getWindowsUpdateStateImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:updatePdhMetrics",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getDiskQueueLengthImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getNetworkRetransRateImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getSystemUptimeImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getGpuDriverInfoImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getGpuUsagePercentImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getProcessName",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:getHighRamProcessesImpl",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:registerServiceHandler",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:startService",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "file:src/platform/WindowsPlatform.cpp",
+    "target": "function:src/platform/WindowsPlatform.cpp:stopService",
+    "type": "contains",
+    "direction": "forward",
+    "weight": 1
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:getCpuUsagePercentImpl",
+    "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:getNetworkInterfaces",
+    "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:getLoggedInUser",
+    "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:getGpuDriverInfoImpl",
+    "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:getProcessName",
+    "target": "function:src/platform/WindowsPlatform.cpp:WideToUtf8",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:writeSerial",
+    "target": "function:src/platform/WindowsPlatform.cpp:openSerialPort",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:writeSerial",
+    "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:readSerial",
+    "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:openSerialPort",
+    "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:updatePdhMetrics",
+    "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:stopService",
+    "target": "function:src/platform/WindowsPlatform.cpp:logMessage",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:startService",
+    "target": "function:src/platform/WindowsPlatform.cpp:run",
+    "type": "related",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:run",
+    "target": "function:src/platform/WindowsPlatform.cpp:runningUnderServiceControlManager",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:run",
+    "target": "function:src/platform/WindowsPlatform.cpp:startService",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:registerServiceHandler",
+    "target": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+    "type": "related",
+    "direction": "forward",
+    "weight": 0.5
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+    "target": "function:src/platform/WindowsPlatform.cpp:registerServiceHandler",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:ServiceMain",
+    "target": "function:src/platform/WindowsPlatform.cpp:startService",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:ServiceCtrlHandler",
+    "target": "function:src/platform/WindowsPlatform.cpp:stopService",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:getHighRamProcessesImpl",
+    "target": "function:src/platform/WindowsPlatform.cpp:getProcessName",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/platform/WindowsPlatform.cpp:createPlatform",
+    "target": "class:src/platform/WindowsPlatform.h:WindowsPlatform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8,
+    "note": "Re-pointed from dropped edges to unresolved Platform virtual methods; represents calls to getOsVersion, getOsBuild, getCurrentSessionState, getNetworkInterfaces"
+  },
+  {
+    "source": "function:src/main.cpp:serialThread",
+    "target": "function:src/modules/3kcheck/3kcheck.cpp:GetCpuInfo",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8,
+    "note": "Re-pointed: original edge target referenced 3kcheck.h:GetCpuInfo but the actual function node is declared in 3kcheck.cpp"
+  },
+  {
+    "source": "function:src/main.cpp:main",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8,
+    "note": "Re-pointed from dropped edge to unresolved Platform::run method node"
+  },
+  {
+    "source": "function:src/main.cpp:checkSystemState",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8,
+    "note": "Re-pointed from dropped edges to unresolved Platform methods getNetworkInterfaces, getHostname, getLoggedInUser"
+  },
+  {
+    "source": "function:src/main.cpp:processIncomingCommand",
+    "target": "class:src/core/Platform.h:Platform",
+    "type": "calls",
+    "direction": "forward",
+    "weight": 0.8,
+    "note": "Re-pointed from dropped edge to unresolved Platform::showMessageDialog method node"
+  }
+]

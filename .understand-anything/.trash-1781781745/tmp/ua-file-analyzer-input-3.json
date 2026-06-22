@@ -1,0 +1,21 @@
+{
+  "projectRoot": "D:/michaels-node-win-app-github",
+  "batchFiles": [
+    {"path": "CMakeLists.txt", "language": "txt", "sizeLines": 394, "fileCategory": "docs"},
+    {"path": "README.md", "language": "markdown", "sizeLines": 406, "fileCategory": "docs"},
+    {"path": "build.bat", "language": "batch", "sizeLines": 86, "fileCategory": "script"},
+    {"path": "build.sh", "language": "shell", "sizeLines": 60, "fileCategory": "script"},
+    {"path": "release-notes.txt", "language": "txt", "sizeLines": 52, "fileCategory": "docs"},
+    {"path": "setup-remotes.ps1", "language": "powershell", "sizeLines": 6, "fileCategory": "script"},
+    {"path": "sign.bat", "language": "batch", "sizeLines": 2, "fileCategory": "script"}
+  ],
+  "batchImportData": {
+    "CMakeLists.txt": [],
+    "README.md": [],
+    "build.bat": [],
+    "build.sh": [],
+    "release-notes.txt": [],
+    "setup-remotes.ps1": [],
+    "sign.bat": []
+  }
+}

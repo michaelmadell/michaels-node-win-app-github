@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": "file:installer/install.ps1",
+      "type": "file",
+      "name": "install.ps1",
+      "filePath": "installer/install.ps1",
+      "summary": "Administrator-only PowerShell installer that cleanly removes any existing CoreStationService, copies the agent executable to C:\\ProgramData\\ahk, registers it as a Windows service with auto-restart failure recovery, and starts it.",
+      "tags": ["installer", "windows-service", "deployment", "powershell", "entry-point"],
+      "complexity": "moderate",
+      "languageNotes": "Uses sc.exe for service deletion and failure-action configuration since these are not exposed by native PowerShell cmdlets; polls Get-Service in a Stopwatch loop to await asynchronous service removal before reinstalling."
+    },
+    {
+      "id": "document:installer/release-notes.txt",
+      "type": "document",
+      "name": "release-notes.txt",
+      "filePath": "installer/release-notes.txt",
+      "summary": "Chronological release notes for CoreStation HX Agent (installer copy), documenting version history from 2025.4.2 through 20.26.5.1_GA including HX3000 CPU-based COM port detection, heartbeat messaging, session reporting robustness, and Linux build support.",
+      "tags": ["documentation", "release-notes", "changelog", "versioning"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:installer/remove.ps1",
+      "type": "file",
+      "name": "remove.ps1",
+      "filePath": "installer/remove.ps1",
+      "summary": "Administrator-only PowerShell uninstaller that stops and deletes the CoreStationService via sc.exe, verifies removal by polling Get-Service, and moves the leftover executable from C:\\ProgramData\\ahk to the temp directory.",
+      "tags": ["uninstaller", "windows-service", "deployment", "powershell", "entry-point"],
+      "complexity": "moderate",
+      "languageNotes": "Mirrors install.ps1's polling pattern for asynchronous service state changes; uses Move-Item rather than delete to preserve the executable in %TEMP% after removal."
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:installer/release-notes.txt",
+      "target": "file:installer/install.ps1",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:installer/release-notes.txt",
+      "target": "file:installer/remove.ps1",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

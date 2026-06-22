@@ -1,0 +1,99 @@
+[
+  {
+    "order": 1,
+    "title": "Project Overview",
+    "description": "README.md is the map for the whole repository: it lays out the file layout (src/, debian/, installer/), explains how to build and install on both Linux (debuild/.deb + systemd) and Windows (MSVC build, service install, code signing), and documents the session-state and serial debug codes the agent emits. Start here to understand that CoreStationHXAgent is a small, cross-platform C++17 host agent whose job is to talk to CoreStation HX hardware over a serial link and report system health.",
+    "nodeIds": ["document:README.md"]
+  },
+  {
+    "order": 2,
+    "title": "Application Entry Point",
+    "description": "src/main.cpp is the highest-scoring code entry point in the project and the busiest file by fan-out (20 outgoing references) - it owns the serial and heartbeat threads, performs Intel AMT COM-port detection/reassignment via the Windows registry, and relays SystemState snapshots to the CoreStation HX CMC. Reading main() and its helper functions (serialThread, heartbeatThread, reassignComPort, checkSystemState) gives you the agent's entire runtime story in one file before you dive into any subsystem.",
+    "nodeIds": ["file:src/main.cpp", "file:src/version.h"],
+    "languageLesson": "main.cpp deliberately keeps OS-specific work behind the Platform interface rather than sprinkling #ifdef _WIN32 throughout the file - notice it never calls Win32 APIs directly, only Platform:: methods."
+  },
+  {
+    "order": 3,
+    "title": "The Platform Abstraction",
+    "description": "file:src/core/Platform.h has the highest fan-in of any node in the graph (6 incoming references) - it is the contract every other module is built against. It declares the abstract interface for networking, serial I/O, system metrics, GPU info, and dialogs, while SystemState.h defines the plain-data NetworkInterface/SystemState structs that flow through that interface. This is the architectural keystone: main.cpp and every feature module talk to 'Platform', never to Windows or Linux APIs directly.",
+    "nodeIds": ["file:src/core/Platform.h", "file:src/core/SystemState.h"],
+    "languageLesson": "C++ abstract base classes with pure virtual methods give you compile-time-enforced interfaces, similar to a Java interface or Go interface - WindowsPlatform and LinuxPlatform each provide a concrete implementation, and main.cpp is written entirely against the abstraction."
+  },
+  {
+    "order": 4,
+    "title": "Windows Platform Implementation",
+    "description": "WindowsPlatform.cpp is the single largest file in the project by fan-out (34 outgoing references) - it implements every Platform method for Windows: SCM service lifecycle, serial I/O via CreateFileA/HANDLE, network/adapter enumeration through IP Helper API, WMI-based GPU queries, and PDH performance counters. WindowsPlatform.h declares the class, and Windows_Addon.h supplies small RAII helpers (HandleCloser, PdhQueryCloser, ComInitializer) that keep this large file's resource management safe despite its size.",
+    "nodeIds": ["file:src/platform/WindowsPlatform.h", "file:src/platform/WindowsPlatform.cpp", "file:src/platform/Windows_Addon.h"],
+    "languageLesson": "RAII (Resource Acquisition Is Initialization) wraps raw Win32 handles in destructors that auto-close them, so a HANDLE or PDH_HQUERY is freed even if an exception or early return skips the normal cleanup path."
+  },
+  {
+    "order": 5,
+    "title": "Linux Platform Implementation",
+    "description": "src/platform/LinuxPlatform.cpp is the mirror image of WindowsPlatform.cpp - the same Platform interface, but implemented with termios serial I/O, /proc and /sys for system metrics, D-Bus for session monitoring, and syslog for logging. Comparing this file to Step 4 is the clearest way to see the payoff of the abstraction layer: identical method signatures, completely different OS mechanics underneath, and main.cpp never has to know which one is running.",
+    "nodeIds": ["file:src/platform/LinuxPlatform.cpp"]
+  },
+  {
+    "order": 6,
+    "title": "Serial Communication Module",
+    "description": "SerialManager is the module main.cpp leans on most directly for talking to the CoreStation HX hardware - it has 8 outgoing references covering open/close/read/write/reconnect logic for both the Windows CreateFileA/HANDLE backend and the POSIX termios backend, plus message framing and retry-delay reconnection. This is the feature module layer in action: a self-contained, cross-platform module consumed by main.cpp's serialThread rather than wired directly into Platform.",
+    "nodeIds": ["file:src/modules/serial/SerialManager.h", "file:src/modules/serial/SerialManager.cpp"]
+  },
+  {
+    "order": 7,
+    "title": "Metrics Collection and Caching",
+    "description": "MetricsCollector orchestrates periodic gathering of performance, GPU, process, and Windows Update metrics by calling into the Platform interface from Step 3 - it depends on both Platform and MetricCache, illustrating how feature modules compose the abstraction layer rather than duplicating it. MetricCache.h is a generic, thread-safe TTL cache template: expensive metrics (like GPU driver queries) are only recomputed after their configured time-to-live expires, with per-metric durations defined in a CacheDurations namespace.",
+    "nodeIds": ["file:src/modules/metrics/MetricsCollector.h", "file:src/modules/metrics/MetricsCollector.cpp", "file:src/modules/metrics/MetricCache.h"],
+    "languageLesson": "MetricCache is a C++ class template parameterized over the value type, letting one generic implementation cache an int, a string, or a struct - similar in spirit to a TypeScript generic or a Java/C# generic class."
+  },
+  {
+    "order": 8,
+    "title": "HX2K vs HX3K CPU Detection",
+    "description": "The 3kcheck module solves a very specific hardware problem the README's own changelog calls out: distinguishing HX2K-class CPUs (Core Ultra 165H/165U/285H) from HX3K-class hardware so the agent selects the correct serial COM port. It uses the __cpuid intrinsic to read CPU vendor/brand strings directly, replacing an earlier and less reliable NIC-based detection approach mentioned in release-notes.txt.",
+    "nodeIds": ["file:src/modules/3kcheck/3kcheck.h", "file:src/modules/3kcheck/3kcheck.cpp"]
+  },
+  {
+    "order": 9,
+    "title": "Windows Service, Session, Tray, and Registry Modules",
+    "description": "Four more feature modules round out the Windows side of the agent: ServiceManager handles the full Service Control Manager lifecycle (install/uninstall/start/stop/status) so the agent can run itself as a Windows service; SessionMonitor watches WTS session-change notifications (logon/lock/RDP) on a dedicated thread; TrayApp shows a system tray icon updated via a named-pipe listener from the main agent process; and Regedit wraps the small set of Windows Registry Read/Write/Create/Delete operations used elsewhere (notably by main.cpp's AMT COM-port logic). Together these explain most of what main.cpp orchestrates on Windows beyond serial communication.",
+    "nodeIds": [
+      "file:src/modules/service/ServiceManager.h",
+      "file:src/modules/session/SessionMonitor.h",
+      "file:src/modules/tray/TrayApp.h",
+      "file:src/modules/regedits/Regedit.h"
+    ]
+  },
+  {
+    "order": 10,
+    "title": "Build System",
+    "description": "CMakeLists.txt is the build's source of truth - it has 3 incoming references (from build.bat, build.sh, and the Debian rules file) because everything routes through it. It defines the C++17 target with platform-specific sources, parses src/version.h to embed version metadata, generates git_info.h with the current branch/hash/build time, links Windows system libraries (iphlpapi, ws2_32, wtsapi32) or Linux dbus-1, and configures CPack for WIX (Windows installer) and DEB (Linux package) output. build.bat drives the Windows MSVC build end-to-end, while build.sh independently cross-compiles a static Windows .exe using MinGW-w64 - useful for building on Linux CI without a Windows machine.",
+    "nodeIds": ["config:CMakeLists.txt", "file:build.bat", "file:build.sh"],
+    "languageLesson": "CMake's generator-expression-driven cross-platform target definitions let one CMakeLists.txt branch between Windows and Linux source lists and link flags, instead of maintaining two separate build files."
+  },
+  {
+    "order": 11,
+    "title": "Windows Service Installation",
+    "description": "installer/install.ps1 and installer/remove.ps1 are the administrator-only PowerShell scripts that turn the executable built in Step 10 into a running Windows service. install.ps1 removes any existing CoreStationService, copies the binary to C:\\ProgramData\\ahk, registers it with auto-restart failure recovery, and starts it; remove.ps1 reverses that cleanly, polling Get-Service to confirm removal before relocating the leftover executable. This is the Windows half of the deployment story the README documents in its 'day-to-day use' section.",
+    "nodeIds": ["file:installer/install.ps1", "file:installer/remove.ps1"],
+    "languageLesson": "PowerShell scripts that modify services typically require an elevated session - sc.exe and Get-Service/New-Service cmdlets fail silently or throw access-denied errors without Administrator rights, which is why both scripts assume elevation."
+  },
+  {
+    "order": 12,
+    "title": "Linux systemd Service",
+    "description": "CoreStationHXAgent.service is the systemd unit with the second-highest fan-in in the entire graph (4 incoming references from postinst, prerm, postrm, and the Debian control file) - nearly every part of the Linux packaging pipeline touches it. It runs the agent binary as a simple service, restarting on failure and starting at the multi-user boot target, giving Linux the same always-on guarantee that ServiceManager (Step 9) provides on Windows.",
+    "nodeIds": ["service:CoreStationHXAgent.service"],
+    "languageLesson": "systemd unit files use declarative sections ([Unit], [Service], [Install]) rather than imperative init scripts - Restart=on-failure and WantedBy=multi-user.target are the two directives doing the heavy lifting here."
+  },
+  {
+    "order": 13,
+    "title": "Debian Packaging Pipeline",
+    "description": "The debian/ directory is the full toolchain that turns the build output into an installable .deb package: control declares metadata and dependencies (cmake, dh-cmake, debhelper for building; network-manager, libdbus-1-3 at runtime), rules drives the actual build via debhelper's dh command with CMake support, and postinst/prerm/postrm hook into the systemd service from Step 12 at install and removal time. This is the Linux equivalent of Step 11's PowerShell installer scripts, automated through Debian's standard packaging conventions instead of hand-written scripts.",
+    "nodeIds": ["config:debian/control", "pipeline:debian/rules", "service:debian/postinst", "service:debian/prerm", "service:debian/postrm"],
+    "languageLesson": "Debian's debhelper framework (the dh command in rules) auto-generates most of the packaging boilerplate from conventions and a handful of control files, so a minimal rules file can still produce a fully compliant .deb."
+  },
+  {
+    "order": 14,
+    "title": "Release History",
+    "description": "release-notes.txt closes the loop back to README.md from Step 1: it's the chronological changelog spanning version 2025.4.2 through 20.26.5.1_GA, documenting exactly the features you just toured - session-state reporting (Step 9's SessionMonitor), heartbeat messages (Step 2's main.cpp), Linux build support (Step 5's LinuxPlatform), EV code signing, serial COM port reassignment (Step 2's AMT logic), and the HX3000 CPU-based detection that became Step 8's 3kcheck module. Reading it after the architecture tour turns a flat list of version bumps into a map of when each subsystem was introduced.",
+    "nodeIds": ["document:release-notes.txt", "document:installer/release-notes.txt"]
+  }
+]

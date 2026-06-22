@@ -1,0 +1,2710 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 4,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/platform/LinuxPlatform.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 684,
+      "nonEmptyLines": 563,
+      "callGraph": [
+        {
+          "caller": "executeCommand",
+          "callee": "popen",
+          "lineNumber": 48
+        },
+        {
+          "caller": "executeCommand",
+          "callee": "c_str",
+          "lineNumber": 48
+        },
+        {
+          "caller": "executeCommand",
+          "callee": "fgets",
+          "lineNumber": 51
+        },
+        {
+          "caller": "executeCommand",
+          "callee": "get",
+          "lineNumber": 51
+        },
+        {
+          "caller": "executeCommand",
+          "callee": "erase",
+          "lineNumber": 55
+        },
+        {
+          "caller": "executeCommand",
+          "callee": "find_last_not_of",
+          "lineNumber": 55
+        },
+        {
+          "caller": "getCpuTimes",
+          "callee": "std::getline",
+          "lineNumber": 64
+        },
+        {
+          "caller": "getCpuTimes",
+          "callee": "substr",
+          "lineNumber": 65
+        },
+        {
+          "caller": "getCpuTimes",
+          "callee": "substr",
+          "lineNumber": 67
+        },
+        {
+          "caller": "getTcpValue",
+          "callee": "std::to_string",
+          "lineNumber": 76
+        },
+        {
+          "caller": "getTcpValue",
+          "callee": "executeCommand",
+          "lineNumber": 77
+        },
+        {
+          "caller": "getTcpValue",
+          "callee": "empty",
+          "lineNumber": 81
+        },
+        {
+          "caller": "getTcpValue",
+          "callee": "std::stoull",
+          "lineNumber": 82
+        },
+        {
+          "caller": "getTcpValue",
+          "callee": "syslog",
+          "lineNumber": 86
+        },
+        {
+          "caller": "getTcpValue",
+          "callee": "what",
+          "lineNumber": 86
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_error_init",
+          "lineNumber": 144
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_bus_get",
+          "lineNumber": 145
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_error_is_set",
+          "lineNumber": 146
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "syslog",
+          "lineNumber": 147
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_error_free",
+          "lineNumber": 148
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_bus_add_match",
+          "lineNumber": 154
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_bus_add_match",
+          "lineNumber": 155
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "syslog",
+          "lineNumber": 157
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_connection_read_write_dispatch",
+          "lineNumber": 160
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_connection_pop_message",
+          "lineNumber": 161
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_message_is_signal",
+          "lineNumber": 165
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "g_session_callback",
+          "lineNumber": 166
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_message_is_signal",
+          "lineNumber": 167
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "g_session_callback",
+          "lineNumber": 168
+        },
+        {
+          "caller": "dbusThread",
+          "callee": "dbus_message_unref",
+          "lineNumber": 171
+        },
+        {
+          "caller": "LinuxPlatform",
+          "callee": "getCpuTimes",
+          "lineNumber": 183
+        },
+        {
+          "caller": "LinuxPlatform",
+          "callee": "updatePdhMetrics",
+          "lineNumber": 184
+        },
+        {
+          "caller": "createPlatform",
+          "callee": "std::make_unique<LinuxPlatform>",
+          "lineNumber": 240
+        },
+        {
+          "caller": "run",
+          "callee": "openlog",
+          "lineNumber": 254
+        },
+        {
+          "caller": "run",
+          "callee": "signal",
+          "lineNumber": 256
+        },
+        {
+          "caller": "run",
+          "callee": "signal",
+          "lineNumber": 257
+        },
+        {
+          "caller": "run",
+          "callee": "std::thread",
+          "lineNumber": 259
+        },
+        {
+          "caller": "run",
+          "callee": "detach",
+          "lineNumber": 260
+        },
+        {
+          "caller": "run",
+          "callee": "on_start",
+          "lineNumber": 263
+        },
+        {
+          "caller": "run",
+          "callee": "load",
+          "lineNumber": 266
+        },
+        {
+          "caller": "run",
+          "callee": "sleep",
+          "lineNumber": 267
+        },
+        {
+          "caller": "run",
+          "callee": "logMessage",
+          "lineNumber": 270
+        },
+        {
+          "caller": "run",
+          "callee": "power_cb",
+          "lineNumber": 272
+        },
+        {
+          "caller": "run",
+          "callee": "on_stop",
+          "lineNumber": 276
+        },
+        {
+          "caller": "run",
+          "callee": "closelog",
+          "lineNumber": 279
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "open",
+          "lineNumber": 284
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "c_str",
+          "lineNumber": 284
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "logMessage",
+          "lineNumber": 286
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "tcgetattr",
+          "lineNumber": 291
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "logMessage",
+          "lineNumber": 292
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "cfsetospeed",
+          "lineNumber": 297
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "cfsetispeed",
+          "lineNumber": 298
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "tcsetattr",
+          "lineNumber": 318
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "logMessage",
+          "lineNumber": 319
+        },
+        {
+          "caller": "closeSerialPort",
+          "callee": "close",
+          "lineNumber": 328
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "logMessage",
+          "lineNumber": 336
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "logMessage",
+          "lineNumber": 341
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "write",
+          "lineNumber": 343
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "c_str",
+          "lineNumber": 343
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "length",
+          "lineNumber": 343
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "logMessage",
+          "lineNumber": 347
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "std::string",
+          "lineNumber": 347
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "strerror",
+          "lineNumber": 347
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "logMessage",
+          "lineNumber": 352
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "std::to_string",
+          "lineNumber": 352
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "length",
+          "lineNumber": 354
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "getifaddrs",
+          "lineNumber": 361
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "logMessage",
+          "lineNumber": 362
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "find",
+          "lineNumber": 375
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "end",
+          "lineNumber": 375
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "getDhcpStatus",
+          "lineNumber": 381
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "std::setw",
+          "lineNumber": 389
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "std::setfill",
+          "lineNumber": 389
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "str",
+          "lineNumber": 393
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "getnameinfo",
+          "lineNumber": 396
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "getnameinfo",
+          "lineNumber": 400
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "rfind",
+          "lineNumber": 401
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "std::string",
+          "lineNumber": 401
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "freeifaddrs",
+          "lineNumber": 407
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "push_back",
+          "lineNumber": 411
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "std::getline",
+          "lineNumber": 419
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "rfind",
+          "lineNumber": 420
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "substr",
+          "lineNumber": 421
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "erase",
+          "lineNumber": 422
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "std::remove",
+          "lineNumber": 422
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "begin",
+          "lineNumber": 422
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "end",
+          "lineNumber": 422
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "end",
+          "lineNumber": 422
+        },
+        {
+          "caller": "getOsBuild",
+          "callee": "uname",
+          "lineNumber": 431
+        },
+        {
+          "caller": "getOsBuild",
+          "callee": "std::string",
+          "lineNumber": 432
+        },
+        {
+          "caller": "readSerial",
+          "callee": "read",
+          "lineNumber": 440
+        },
+        {
+          "caller": "readSerial",
+          "callee": "append",
+          "lineNumber": 442
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "std::setw",
+          "lineNumber": 463
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "std::setfill",
+          "lineNumber": 463
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "std::setw",
+          "lineNumber": 464
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "std::setfill",
+          "lineNumber": 464
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "std::setw",
+          "lineNumber": 465
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "std::setfill",
+          "lineNumber": 465
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "str",
+          "lineNumber": 466
+        },
+        {
+          "caller": "getCpuUsagePercent",
+          "callee": "getCpuTimes",
+          "lineNumber": 473
+        },
+        {
+          "caller": "getCpuUsagePercent",
+          "callee": "static_cast<int>",
+          "lineNumber": 483
+        },
+        {
+          "caller": "getCpuUsagePercent",
+          "callee": "std::round",
+          "lineNumber": 483
+        },
+        {
+          "caller": "getCpuUsagePercent",
+          "callee": "std::max",
+          "lineNumber": 484
+        },
+        {
+          "caller": "getCpuUsagePercent",
+          "callee": "std::min",
+          "lineNumber": 484
+        },
+        {
+          "caller": "getRamUsagePercent",
+          "callee": "std::getline",
+          "lineNumber": 494
+        },
+        {
+          "caller": "getRamUsagePercent",
+          "callee": "static_cast<int>",
+          "lineNumber": 510
+        },
+        {
+          "caller": "getRamUsagePercent",
+          "callee": "std::round",
+          "lineNumber": 510
+        },
+        {
+          "caller": "getRamUsagePercent",
+          "callee": "std::max",
+          "lineNumber": 511
+        },
+        {
+          "caller": "getRamUsagePercent",
+          "callee": "std::min",
+          "lineNumber": 511
+        },
+        {
+          "caller": "getFreeDiskSpaceGB",
+          "callee": "empty",
+          "lineNumber": 519
+        },
+        {
+          "caller": "getFreeDiskSpaceGB",
+          "callee": "size",
+          "lineNumber": 519
+        },
+        {
+          "caller": "getFreeDiskSpaceGB",
+          "callee": "statvfs",
+          "lineNumber": 521
+        },
+        {
+          "caller": "getFreeDiskSpaceGB",
+          "callee": "c_str",
+          "lineNumber": 521
+        },
+        {
+          "caller": "getFreeDiskSpaceGB",
+          "callee": "std::setprecision",
+          "lineNumber": 531
+        },
+        {
+          "caller": "getFreeDiskSpaceGB",
+          "callee": "str",
+          "lineNumber": 532
+        },
+        {
+          "caller": "updatePdhMetrics",
+          "callee": "getTcpValue",
+          "lineNumber": 541
+        },
+        {
+          "caller": "updatePdhMetrics",
+          "callee": "getTcpValue",
+          "lineNumber": 542
+        },
+        {
+          "caller": "getNetworkRetransRate",
+          "callee": "getTcpValue",
+          "lineNumber": 546
+        },
+        {
+          "caller": "getNetworkRetransRate",
+          "callee": "getTcpValue",
+          "lineNumber": 547
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "executeCommand",
+          "lineNumber": 562
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "empty",
+          "lineNumber": 563
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "executeCommand",
+          "lineNumber": 568
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "empty",
+          "lineNumber": 569
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "executeCommand",
+          "lineNumber": 571
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "empty",
+          "lineNumber": 572
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "executeCommand",
+          "lineNumber": 579
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "empty",
+          "lineNumber": 580
+        },
+        {
+          "caller": "getGpuUsagePercent",
+          "callee": "executeCommand",
+          "lineNumber": 590
+        },
+        {
+          "caller": "getGpuUsagePercent",
+          "callee": "empty",
+          "lineNumber": 594
+        },
+        {
+          "caller": "getGpuUsagePercent",
+          "callee": "std::stof",
+          "lineNumber": 596
+        },
+        {
+          "caller": "getGpuUsagePercent",
+          "callee": "logMessage",
+          "lineNumber": 604
+        },
+        {
+          "caller": "getHighRamProcesses",
+          "callee": "executeCommand",
+          "lineNumber": 609
+        },
+        {
+          "caller": "getHighRamProcesses",
+          "callee": "empty",
+          "lineNumber": 611
+        },
+        {
+          "caller": "getHighRamProcesses",
+          "callee": "std::replace",
+          "lineNumber": 616
+        },
+        {
+          "caller": "getHighRamProcesses",
+          "callee": "begin",
+          "lineNumber": 616
+        },
+        {
+          "caller": "getHighRamProcesses",
+          "callee": "end",
+          "lineNumber": 616
+        },
+        {
+          "caller": "showMessageDialog",
+          "callee": "logMessage",
+          "lineNumber": 622
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "popen",
+          "lineNumber": 630
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "fgets",
+          "lineNumber": 632
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "std::stoi",
+          "lineNumber": 634
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "logMessage",
+          "lineNumber": 636
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "std::string",
+          "lineNumber": 636
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "what",
+          "lineNumber": 636
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "logMessage",
+          "lineNumber": 638
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "std::string",
+          "lineNumber": 638
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "what",
+          "lineNumber": 638
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "pclose",
+          "lineNumber": 641
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "std::to_string",
+          "lineNumber": 645
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "good",
+          "lineNumber": 649
+        },
+        {
+          "caller": "logMessage",
+          "callee": "syslog",
+          "lineNumber": 657
+        },
+        {
+          "caller": "logMessage",
+          "callee": "c_str",
+          "lineNumber": 657
+        },
+        {
+          "caller": "getHostname",
+          "callee": "::gethostname",
+          "lineNumber": 663
+        },
+        {
+          "caller": "getHostname",
+          "callee": "std::string",
+          "lineNumber": 664
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "popen",
+          "lineNumber": 672
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "fgets",
+          "lineNumber": 675
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "std::string",
+          "lineNumber": 676
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "erase",
+          "lineNumber": 677
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "find_last_not_of",
+          "lineNumber": 677
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "pclose",
+          "lineNumber": 680
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "empty",
+          "lineNumber": 681
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/platform/Windows_Addon.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 52,
+      "nonEmptyLines": 46,
+      "functions": [
+        {
+          "name": "operator()",
+          "startLine": 9,
+          "endLine": 13,
+          "params": [
+            "h"
+          ]
+        },
+        {
+          "name": "operator()",
+          "startLine": 23,
+          "endLine": 27,
+          "params": [
+            "h"
+          ]
+        },
+        {
+          "name": "ComInitializer",
+          "startLine": 37,
+          "endLine": 39,
+          "params": []
+        },
+        {
+          "name": "~ComInitializer",
+          "startLine": 40,
+          "endLine": 44,
+          "params": []
+        },
+        {
+          "name": "Succeeded",
+          "startLine": 45,
+          "endLine": 45,
+          "params": []
+        },
+        {
+          "name": "GetHResult",
+          "startLine": 46,
+          "endLine": 46,
+          "params": []
+        },
+        {
+          "name": "ComInitializer",
+          "startLine": 47,
+          "endLine": 47,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "HandleCloser",
+          "startLine": 8,
+          "endLine": 14,
+          "methods": [
+            "operator()"
+          ],
+          "properties": []
+        },
+        {
+          "name": "PdhQueryCloser",
+          "startLine": 22,
+          "endLine": 28,
+          "methods": [
+            "operator()"
+          ],
+          "properties": []
+        },
+        {
+          "name": "ComInitializer",
+          "startLine": 35,
+          "endLine": 52,
+          "methods": [
+            "ComInitializer",
+            "~ComInitializer",
+            "Succeeded",
+            "GetHResult",
+            "ComInitializer"
+          ],
+          "properties": [
+            "hr_"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "operator()",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "HandleCloser",
+          "line": 8,
+          "isDefault": false
+        },
+        {
+          "name": "operator()",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "PdhQueryCloser",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "ComInitializer",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "~ComInitializer",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "Succeeded",
+          "line": 45,
+          "isDefault": false
+        },
+        {
+          "name": "GetHResult",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "ComInitializer",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "ComInitializer",
+          "line": 35,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "operator()",
+          "callee": "CloseHandle",
+          "lineNumber": 11
+        },
+        {
+          "caller": "operator()",
+          "callee": "PdhCloseQuery",
+          "lineNumber": 25
+        },
+        {
+          "caller": "ComInitializer",
+          "callee": "CoInitializeEx",
+          "lineNumber": 38
+        },
+        {
+          "caller": "~ComInitializer",
+          "callee": "SUCCEEDED",
+          "lineNumber": 41
+        },
+        {
+          "caller": "~ComInitializer",
+          "callee": "CoUninitialize",
+          "lineNumber": 42
+        },
+        {
+          "caller": "Succeeded",
+          "callee": "SUCCEEDED",
+          "lineNumber": 45
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 10,
+        "functionCount": 7,
+        "classCount": 3
+      }
+    },
+    {
+      "path": "src/platform/WindowsPlatform.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 1190,
+      "nonEmptyLines": 986,
+      "callGraph": [
+        {
+          "caller": "WideToUtf8",
+          "callee": "empty",
+          "lineNumber": 68
+        },
+        {
+          "caller": "WideToUtf8",
+          "callee": "std::string",
+          "lineNumber": 69
+        },
+        {
+          "caller": "WideToUtf8",
+          "callee": "WideCharToMultiByte",
+          "lineNumber": 70
+        },
+        {
+          "caller": "WideToUtf8",
+          "callee": "size",
+          "lineNumber": 70
+        },
+        {
+          "caller": "WideToUtf8",
+          "callee": "WideCharToMultiByte",
+          "lineNumber": 72
+        },
+        {
+          "caller": "WideToUtf8",
+          "callee": "size",
+          "lineNumber": 72
+        },
+        {
+          "caller": "Trim",
+          "callee": "empty",
+          "lineNumber": 79
+        },
+        {
+          "caller": "Trim",
+          "callee": "std::string",
+          "lineNumber": 80
+        },
+        {
+          "caller": "Trim",
+          "callee": "find_first_not_of",
+          "lineNumber": 84
+        },
+        {
+          "caller": "Trim",
+          "callee": "std::string",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Trim",
+          "callee": "find_last_not_of",
+          "lineNumber": 89
+        },
+        {
+          "caller": "Trim",
+          "callee": "substr",
+          "lineNumber": 90
+        },
+        {
+          "caller": "ServiceMain",
+          "callee": "registerServiceHandler",
+          "lineNumber": 109
+        },
+        {
+          "caller": "ServiceMain",
+          "callee": "reportStatus",
+          "lineNumber": 110
+        },
+        {
+          "caller": "ServiceMain",
+          "callee": "startService",
+          "lineNumber": 111
+        },
+        {
+          "caller": "ServiceMain",
+          "callee": "reportStatus",
+          "lineNumber": 112
+        },
+        {
+          "caller": "ServiceMain",
+          "callee": "WaitForSingleObject",
+          "lineNumber": 113
+        },
+        {
+          "caller": "ServiceMain",
+          "callee": "getStopEvent",
+          "lineNumber": 113
+        },
+        {
+          "caller": "ServiceMain",
+          "callee": "reportStatus",
+          "lineNumber": 114
+        },
+        {
+          "caller": "ServiceCtrlHandler",
+          "callee": "stopService",
+          "lineNumber": 122
+        },
+        {
+          "caller": "ServiceCtrlHandler",
+          "callee": "ServiceControlToReason",
+          "lineNumber": 122
+        },
+        {
+          "caller": "createPlatform",
+          "callee": "std::make_unique<WindowsPlatform>",
+          "lineNumber": 129
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "UniqueHandle",
+          "lineNumber": 135
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "CreateEvent",
+          "lineNumber": 135
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "updateCpuTimes",
+          "lineNumber": 137
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "PdhOpenQuery",
+          "lineNumber": 140
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "UniquePdhQuery",
+          "lineNumber": 142
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "PdhAddCounterA",
+          "lineNumber": 146
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "get",
+          "lineNumber": 146
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "PdhAddCounterA",
+          "lineNumber": 148
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "get",
+          "lineNumber": 148
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "PdhAddCounterW",
+          "lineNumber": 150
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "get",
+          "lineNumber": 150
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "PdhCollectQueryData",
+          "lineNumber": 153
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "get",
+          "lineNumber": 153
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "logMessage",
+          "lineNumber": 157
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "Succeeded",
+          "lineNumber": 160
+        },
+        {
+          "caller": "WindowsPlatform",
+          "callee": "logMessage",
+          "lineNumber": 161
+        },
+        {
+          "caller": "~WindowsPlatform",
+          "callee": "stopSessionMonitor",
+          "lineNumber": 167
+        },
+        {
+          "caller": "run",
+          "callee": "UniqueHandle",
+          "lineNumber": 184
+        },
+        {
+          "caller": "run",
+          "callee": "CreateEvent",
+          "lineNumber": 184
+        },
+        {
+          "caller": "run",
+          "callee": "ResetEvent",
+          "lineNumber": 186
+        },
+        {
+          "caller": "run",
+          "callee": "get",
+          "lineNumber": 186
+        },
+        {
+          "caller": "run",
+          "callee": "hasSwitch",
+          "lineNumber": 189
+        },
+        {
+          "caller": "run",
+          "callee": "hasSwitchCmd",
+          "lineNumber": 190
+        },
+        {
+          "caller": "run",
+          "callee": "hasSwitchCmd",
+          "lineNumber": 191
+        },
+        {
+          "caller": "run",
+          "callee": "hasSwitch",
+          "lineNumber": 193
+        },
+        {
+          "caller": "run",
+          "callee": "hasSwitchCmd",
+          "lineNumber": 194
+        },
+        {
+          "caller": "run",
+          "callee": "hasSwitchCmd",
+          "lineNumber": 195
+        },
+        {
+          "caller": "run",
+          "callee": "runningUnderServiceControlManager",
+          "lineNumber": 196
+        },
+        {
+          "caller": "run",
+          "callee": "logMessage",
+          "lineNumber": 203
+        },
+        {
+          "caller": "run",
+          "callee": "str",
+          "lineNumber": 203
+        },
+        {
+          "caller": "run",
+          "callee": "StartServiceCtrlDispatcherW",
+          "lineNumber": 215
+        },
+        {
+          "caller": "run",
+          "callee": "GetLastError",
+          "lineNumber": 218
+        },
+        {
+          "caller": "run",
+          "callee": "logMessage",
+          "lineNumber": 223
+        },
+        {
+          "caller": "run",
+          "callee": "str",
+          "lineNumber": 223
+        },
+        {
+          "caller": "run",
+          "callee": "static_cast<int>",
+          "lineNumber": 224
+        },
+        {
+          "caller": "run",
+          "callee": "logMessage",
+          "lineNumber": 229
+        },
+        {
+          "caller": "run",
+          "callee": "str",
+          "lineNumber": 229
+        },
+        {
+          "caller": "run",
+          "callee": "logMessage",
+          "lineNumber": 232
+        },
+        {
+          "caller": "run",
+          "callee": "startSessionMonitor",
+          "lineNumber": 233
+        },
+        {
+          "caller": "run",
+          "callee": "startTrayApp",
+          "lineNumber": 235
+        },
+        {
+          "caller": "run",
+          "callee": "on_start_callback",
+          "lineNumber": 238
+        },
+        {
+          "caller": "run",
+          "callee": "get",
+          "lineNumber": 240
+        },
+        {
+          "caller": "run",
+          "callee": "on_stop_callback",
+          "lineNumber": 242
+        },
+        {
+          "caller": "run",
+          "callee": "stopTrayApp",
+          "lineNumber": 244
+        },
+        {
+          "caller": "hasSwitch",
+          "callee": "_stricmp",
+          "lineNumber": 253
+        },
+        {
+          "caller": "hasSwitchCmd",
+          "callee": "CommandLineToArgvW",
+          "lineNumber": 260
+        },
+        {
+          "caller": "hasSwitchCmd",
+          "callee": "GetCommandLineW",
+          "lineNumber": 260
+        },
+        {
+          "caller": "hasSwitchCmd",
+          "callee": "_wcsicmp",
+          "lineNumber": 263
+        },
+        {
+          "caller": "hasSwitchCmd",
+          "callee": "LocalFree",
+          "lineNumber": 263
+        },
+        {
+          "caller": "hasSwitchCmd",
+          "callee": "LocalFree",
+          "lineNumber": 265
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "GetCurrentProcessId",
+          "lineNumber": 271
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "CreateToolhelp32Snapshot",
+          "lineNumber": 272
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "Process32First",
+          "lineNumber": 279
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "Process32Next",
+          "lineNumber": 288
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "CloseHandle",
+          "lineNumber": 290
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "OpenProcess",
+          "lineNumber": 293
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "GetModuleBaseNameA",
+          "lineNumber": 297
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "CloseHandle",
+          "lineNumber": 299
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "CloseHandle",
+          "lineNumber": 302
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "tolower",
+          "lineNumber": 304
+        },
+        {
+          "caller": "runningUnderServiceControlManager",
+          "callee": "strcmp",
+          "lineNumber": 305
+        },
+        {
+          "caller": "startSessionMonitor",
+          "callee": "std::make_unique<SessionMonitor>",
+          "lineNumber": 309
+        },
+        {
+          "caller": "startSessionMonitor",
+          "callee": "Start",
+          "lineNumber": 310
+        },
+        {
+          "caller": "stopSessionMonitor",
+          "callee": "Stop",
+          "lineNumber": 315
+        },
+        {
+          "caller": "stopSessionMonitor",
+          "callee": "reset",
+          "lineNumber": 316
+        },
+        {
+          "caller": "getCurrentSessionState",
+          "callee": "GetCurrentSessionState",
+          "lineNumber": 323
+        },
+        {
+          "caller": "updateCpuTimes",
+          "callee": "GetSystemTimes",
+          "lineNumber": 330
+        },
+        {
+          "caller": "updateCpuTimes",
+          "callee": "FileTimeToInt64",
+          "lineNumber": 331
+        },
+        {
+          "caller": "updateCpuTimes",
+          "callee": "FileTimeToInt64",
+          "lineNumber": 332
+        },
+        {
+          "caller": "updateCpuTimes",
+          "callee": "FileTimeToInt64",
+          "lineNumber": 333
+        },
+        {
+          "caller": "startTrayApp",
+          "callee": "std::make_unique<TrayApp>",
+          "lineNumber": 342
+        },
+        {
+          "caller": "startTrayApp",
+          "callee": "Start",
+          "lineNumber": 343
+        },
+        {
+          "caller": "startTrayApp",
+          "callee": "logMessage",
+          "lineNumber": 344
+        },
+        {
+          "caller": "stopTrayApp",
+          "callee": "Stop",
+          "lineNumber": 354
+        },
+        {
+          "caller": "stopTrayApp",
+          "callee": "reset",
+          "lineNumber": 355
+        },
+        {
+          "caller": "stopTrayApp",
+          "callee": "logMessage",
+          "lineNumber": 356
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "GetAdaptersAddresses",
+          "lineNumber": 368
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "reinterpret_cast<IP_ADAPTER_ADDRESSES *>",
+          "lineNumber": 376
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "data",
+          "lineNumber": 376
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "GetAdaptersAddresses",
+          "lineNumber": 379
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "std::setw",
+          "lineNumber": 399
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "std::setfill",
+          "lineNumber": 399
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "static_cast<int>",
+          "lineNumber": 399
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "str",
+          "lineNumber": 401
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "compare",
+          "lineNumber": 403
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "compare",
+          "lineNumber": 404
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "compare",
+          "lineNumber": 405
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "WideToUtf8",
+          "lineNumber": 407
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "reinterpret_cast<sockaddr_in*>",
+          "lineNumber": 419
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "inet_ntop",
+          "lineNumber": 420
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "reinterpret_cast<sockaddr_in6*>",
+          "lineNumber": 425
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "inet_ntop",
+          "lineNumber": 426
+        },
+        {
+          "caller": "getNetworkInterfaces",
+          "callee": "push_back",
+          "lineNumber": 430
+        },
+        {
+          "caller": "getHostname",
+          "callee": "GetComputerNameA",
+          "lineNumber": 441
+        },
+        {
+          "caller": "getHostname",
+          "callee": "std::string",
+          "lineNumber": 443
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "WTSEnumerateSessionsW",
+          "lineNumber": 454
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "WTSQuerySessionInformationW",
+          "lineNumber": 462
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "WideToUtf8",
+          "lineNumber": 464
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "std::wstring",
+          "lineNumber": 464
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "WTSFreeMemory",
+          "lineNumber": 465
+        },
+        {
+          "caller": "getLoggedInUser",
+          "callee": "WTSFreeMemory",
+          "lineNumber": 470
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "::GetModuleHandleW",
+          "lineNumber": 478
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "::GetProcAddress",
+          "lineNumber": 481
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "fn",
+          "lineNumber": 486
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "RegOpenKeyExA",
+          "lineNumber": 490
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "str",
+          "lineNumber": 494
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "RegQueryValueExA",
+          "lineNumber": 499
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "RegCloseKey",
+          "lineNumber": 500
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "find",
+          "lineNumber": 508
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "replace",
+          "lineNumber": 510
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "RegQueryValueExA",
+          "lineNumber": 516
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "RegCloseKey",
+          "lineNumber": 517
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "std::string",
+          "lineNumber": 518
+        },
+        {
+          "caller": "getOsVersion",
+          "callee": "RegCloseKey",
+          "lineNumber": 521
+        },
+        {
+          "caller": "getOsBuild",
+          "callee": "::GetModuleHandleW",
+          "lineNumber": 527
+        },
+        {
+          "caller": "getOsBuild",
+          "callee": "::GetProcAddress",
+          "lineNumber": 530
+        },
+        {
+          "caller": "getOsBuild",
+          "callee": "fn",
+          "lineNumber": 536
+        },
+        {
+          "caller": "getOsBuild",
+          "callee": "str",
+          "lineNumber": 542
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "CreateFileA",
+          "lineNumber": 547
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "c_str",
+          "lineNumber": 548
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "GetLastError",
+          "lineNumber": 559
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "logMessage",
+          "lineNumber": 562
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "str",
+          "lineNumber": 562
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "reset",
+          "lineNumber": 566
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "get",
+          "lineNumber": 568
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "GetCommState",
+          "lineNumber": 576
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "get",
+          "lineNumber": 576
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "reset",
+          "lineNumber": 578
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "SetCommState",
+          "lineNumber": 587
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "get",
+          "lineNumber": 587
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "reset",
+          "lineNumber": 589
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "SetCommTimeouts",
+          "lineNumber": 601
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "get",
+          "lineNumber": 601
+        },
+        {
+          "caller": "openSerialPort",
+          "callee": "reset",
+          "lineNumber": 603
+        },
+        {
+          "caller": "closeSerialPort",
+          "callee": "reset",
+          "lineNumber": 612
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "get",
+          "lineNumber": 617
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "std::chrono::steady_clock::now",
+          "lineNumber": 618
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "count",
+          "lineNumber": 619
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "std::chrono::duration_cast<std::chrono::milliseconds>",
+          "lineNumber": 619
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "logMessage",
+          "lineNumber": 624
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "openSerialPort",
+          "lineNumber": 625
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "logMessage",
+          "lineNumber": 626
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "WriteFile",
+          "lineNumber": 633
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "get",
+          "lineNumber": 633
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "c_str",
+          "lineNumber": 633
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "length",
+          "lineNumber": 633
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "GetLastError",
+          "lineNumber": 634
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "logMessage",
+          "lineNumber": 635
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "std::to_string",
+          "lineNumber": 635
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "closeSerialPort",
+          "lineNumber": 636
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "length",
+          "lineNumber": 640
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "logMessage",
+          "lineNumber": 641
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "std::to_string",
+          "lineNumber": 641
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "std::to_string",
+          "lineNumber": 641
+        },
+        {
+          "caller": "writeSerial",
+          "callee": "length",
+          "lineNumber": 641
+        },
+        {
+          "caller": "readSerial",
+          "callee": "ReadFile",
+          "lineNumber": 655
+        },
+        {
+          "caller": "readSerial",
+          "callee": "get",
+          "lineNumber": 655
+        },
+        {
+          "caller": "readSerial",
+          "callee": "append",
+          "lineNumber": 657
+        },
+        {
+          "caller": "readSerial",
+          "callee": "GetLastError",
+          "lineNumber": 662
+        },
+        {
+          "caller": "readSerial",
+          "callee": "logMessage",
+          "lineNumber": 664
+        },
+        {
+          "caller": "readSerial",
+          "callee": "std::to_string",
+          "lineNumber": 664
+        },
+        {
+          "caller": "showMessageDialog",
+          "callee": "begin",
+          "lineNumber": 671
+        },
+        {
+          "caller": "showMessageDialog",
+          "callee": "end",
+          "lineNumber": 671
+        },
+        {
+          "caller": "showMessageDialog",
+          "callee": "begin",
+          "lineNumber": 672
+        },
+        {
+          "caller": "showMessageDialog",
+          "callee": "end",
+          "lineNumber": 672
+        },
+        {
+          "caller": "showMessageDialog",
+          "callee": "MessageBoxW",
+          "lineNumber": 674
+        },
+        {
+          "caller": "showMessageDialog",
+          "callee": "c_str",
+          "lineNumber": 676
+        },
+        {
+          "caller": "showMessageDialog",
+          "callee": "c_str",
+          "lineNumber": 677
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::string",
+          "lineNumber": 684
+        },
+        {
+          "caller": "logMessage",
+          "callee": "is_open",
+          "lineNumber": 691
+        },
+        {
+          "caller": "logMessage",
+          "callee": "tellg",
+          "lineNumber": 692
+        },
+        {
+          "caller": "logMessage",
+          "callee": "close",
+          "lineNumber": 693
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::wstring",
+          "lineNumber": 696
+        },
+        {
+          "caller": "logMessage",
+          "callee": "DeleteFileW",
+          "lineNumber": 697
+        },
+        {
+          "caller": "logMessage",
+          "callee": "c_str",
+          "lineNumber": 697
+        },
+        {
+          "caller": "logMessage",
+          "callee": "MoveFileW",
+          "lineNumber": 698
+        },
+        {
+          "caller": "logMessage",
+          "callee": "c_str",
+          "lineNumber": 698
+        },
+        {
+          "caller": "logMessage",
+          "callee": "GetFileAttributesW",
+          "lineNumber": 702
+        },
+        {
+          "caller": "logMessage",
+          "callee": "CreateDirectoryW",
+          "lineNumber": 705
+        },
+        {
+          "caller": "logMessage",
+          "callee": "is_open",
+          "lineNumber": 709
+        },
+        {
+          "caller": "logMessage",
+          "callee": "GetLocalTime",
+          "lineNumber": 712
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setfill",
+          "lineNumber": 715
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setw",
+          "lineNumber": 715
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setfill",
+          "lineNumber": 716
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setw",
+          "lineNumber": 716
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setfill",
+          "lineNumber": 717
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setw",
+          "lineNumber": 717
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setfill",
+          "lineNumber": 718
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setw",
+          "lineNumber": 718
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setfill",
+          "lineNumber": 719
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setw",
+          "lineNumber": 719
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setfill",
+          "lineNumber": 720
+        },
+        {
+          "caller": "logMessage",
+          "callee": "std::setw",
+          "lineNumber": 720
+        },
+        {
+          "caller": "logMessage",
+          "callee": "close",
+          "lineNumber": 722
+        },
+        {
+          "caller": "getCpuUsagePercent",
+          "callee": "get",
+          "lineNumber": 727
+        },
+        {
+          "caller": "getCpuUsagePercent",
+          "callee": "getCpuUsagePercentImpl",
+          "lineNumber": 727
+        },
+        {
+          "caller": "getCpuUsagePercentImpl",
+          "callee": "GetSystemTimes",
+          "lineNumber": 736
+        },
+        {
+          "caller": "getCpuUsagePercentImpl",
+          "callee": "FileTimeToInt64",
+          "lineNumber": 740
+        },
+        {
+          "caller": "getCpuUsagePercentImpl",
+          "callee": "FileTimeToInt64",
+          "lineNumber": 741
+        },
+        {
+          "caller": "getCpuUsagePercentImpl",
+          "callee": "FileTimeToInt64",
+          "lineNumber": 742
+        },
+        {
+          "caller": "getRamUsagePercent",
+          "callee": "get",
+          "lineNumber": 767
+        },
+        {
+          "caller": "getRamUsagePercent",
+          "callee": "getRamUsagePercentImpl",
+          "lineNumber": 767
+        },
+        {
+          "caller": "getRamUsagePercentImpl",
+          "callee": "GlobalMemoryStatusEx",
+          "lineNumber": 774
+        },
+        {
+          "caller": "getFreeDiskSpaceGB",
+          "callee": "get",
+          "lineNumber": 782
+        },
+        {
+          "caller": "getFreeDiskSpaceGB",
+          "callee": "getFreeDiskSpaceGBImpl",
+          "lineNumber": 782
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "empty",
+          "lineNumber": 791
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "size",
+          "lineNumber": 793
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "std::wstring",
+          "lineNumber": 794
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "begin",
+          "lineNumber": 794
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "end",
+          "lineNumber": 794
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "GetDiskFreeSpaceExW",
+          "lineNumber": 797
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "c_str",
+          "lineNumber": 798
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "std::setprecision",
+          "lineNumber": 806
+        },
+        {
+          "caller": "getFreeDiskSpaceGBImpl",
+          "callee": "str",
+          "lineNumber": 807
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "get",
+          "lineNumber": 813
+        },
+        {
+          "caller": "getWindowsUpdateState",
+          "callee": "getWindowsUpdateStateImpl",
+          "lineNumber": 813
+        },
+        {
+          "caller": "getWindowsUpdateStateImpl",
+          "callee": "RegOpenKeyExA",
+          "lineNumber": 821
+        },
+        {
+          "caller": "getWindowsUpdateStateImpl",
+          "callee": "RegCloseKey",
+          "lineNumber": 830
+        },
+        {
+          "caller": "getWindowsUpdateStateImpl",
+          "callee": "RegOpenKeyExA",
+          "lineNumber": 834
+        },
+        {
+          "caller": "getWindowsUpdateStateImpl",
+          "callee": "RegCloseKey",
+          "lineNumber": 843
+        },
+        {
+          "caller": "updatePdhMetrics",
+          "callee": "get",
+          "lineNumber": 853
+        },
+        {
+          "caller": "updatePdhMetrics",
+          "callee": "PdhCollectQueryData",
+          "lineNumber": 854
+        },
+        {
+          "caller": "updatePdhMetrics",
+          "callee": "get",
+          "lineNumber": 854
+        },
+        {
+          "caller": "updatePdhMetrics",
+          "callee": "updateCpuTimes",
+          "lineNumber": 856
+        },
+        {
+          "caller": "getDiskQueueLength",
+          "callee": "get",
+          "lineNumber": 860
+        },
+        {
+          "caller": "getDiskQueueLength",
+          "callee": "getDiskQueueLengthImpl",
+          "lineNumber": 860
+        },
+        {
+          "caller": "getDiskQueueLengthImpl",
+          "callee": "get",
+          "lineNumber": 865
+        },
+        {
+          "caller": "getDiskQueueLengthImpl",
+          "callee": "PdhGetFormattedCounterValue",
+          "lineNumber": 869
+        },
+        {
+          "caller": "getNetworkRetransRate",
+          "callee": "get",
+          "lineNumber": 876
+        },
+        {
+          "caller": "getNetworkRetransRate",
+          "callee": "getNetworkRetransRateImpl",
+          "lineNumber": 876
+        },
+        {
+          "caller": "getNetworkRetransRateImpl",
+          "callee": "get",
+          "lineNumber": 881
+        },
+        {
+          "caller": "getNetworkRetransRateImpl",
+          "callee": "PdhGetFormattedCounterValue",
+          "lineNumber": 885
+        },
+        {
+          "caller": "reportStatus",
+          "callee": "SetServiceStatus",
+          "lineNumber": 913
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "get",
+          "lineNumber": 917
+        },
+        {
+          "caller": "getSystemUptime",
+          "callee": "getSystemUptimeImpl",
+          "lineNumber": 917
+        },
+        {
+          "caller": "getSystemUptimeImpl",
+          "callee": "GetTickCount64",
+          "lineNumber": 923
+        },
+        {
+          "caller": "getSystemUptimeImpl",
+          "callee": "std::setw",
+          "lineNumber": 937
+        },
+        {
+          "caller": "getSystemUptimeImpl",
+          "callee": "std::setfill",
+          "lineNumber": 937
+        },
+        {
+          "caller": "getSystemUptimeImpl",
+          "callee": "std::setw",
+          "lineNumber": 938
+        },
+        {
+          "caller": "getSystemUptimeImpl",
+          "callee": "std::setfill",
+          "lineNumber": 938
+        },
+        {
+          "caller": "getSystemUptimeImpl",
+          "callee": "std::setw",
+          "lineNumber": 939
+        },
+        {
+          "caller": "getSystemUptimeImpl",
+          "callee": "std::setfill",
+          "lineNumber": 939
+        },
+        {
+          "caller": "getSystemUptimeImpl",
+          "callee": "str",
+          "lineNumber": 941
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "get",
+          "lineNumber": 945
+        },
+        {
+          "caller": "getGpuDriverInfo",
+          "callee": "getGpuDriverInfoImpl",
+          "lineNumber": 945
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "CoCreateInstance",
+          "lineNumber": 956
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "FAILED",
+          "lineNumber": 961
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "ConnectServer",
+          "lineNumber": 963
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "_bstr_t",
+          "lineNumber": 964
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "FAILED",
+          "lineNumber": 974
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "CoSetProxyBlanket",
+          "lineNumber": 976
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "FAILED",
+          "lineNumber": 987
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "ExecQuery",
+          "lineNumber": 989
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "_bstr_t",
+          "lineNumber": 990
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "_bstr_t",
+          "lineNumber": 991
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "FAILED",
+          "lineNumber": 997
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Next",
+          "lineNumber": 1000
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Get",
+          "lineNumber": 1005
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Get",
+          "lineNumber": 1006
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "WideToUtf8",
+          "lineNumber": 1009
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "WideToUtf8",
+          "lineNumber": 1010
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "find",
+          "lineNumber": 1012
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "find",
+          "lineNumber": 1013
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "find",
+          "lineNumber": 1014
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "find",
+          "lineNumber": 1015
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "VariantClear",
+          "lineNumber": 1017
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "VariantClear",
+          "lineNumber": 1018
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Release",
+          "lineNumber": 1019
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "VariantClear",
+          "lineNumber": 1024
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "VariantClear",
+          "lineNumber": 1025
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Release",
+          "lineNumber": 1026
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Release",
+          "lineNumber": 1031
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Release",
+          "lineNumber": 1032
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Release",
+          "lineNumber": 1033
+        },
+        {
+          "caller": "getGpuDriverInfoImpl",
+          "callee": "Release",
+          "lineNumber": 1034
+        },
+        {
+          "caller": "getGpuUsagePercent",
+          "callee": "get",
+          "lineNumber": 1040
+        },
+        {
+          "caller": "getGpuUsagePercent",
+          "callee": "getGpuUsagePercentImpl",
+          "lineNumber": 1040
+        },
+        {
+          "caller": "getGpuUsagePercentImpl",
+          "callee": "get",
+          "lineNumber": 1044
+        },
+        {
+          "caller": "getGpuUsagePercentImpl",
+          "callee": "PdhGetFormattedCounterArrayW",
+          "lineNumber": 1052
+        },
+        {
+          "caller": "getGpuUsagePercentImpl",
+          "callee": "data",
+          "lineNumber": 1059
+        },
+        {
+          "caller": "getGpuUsagePercentImpl",
+          "callee": "PdhGetFormattedCounterArrayW",
+          "lineNumber": 1061
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "QueryFullProcessImageNameW",
+          "lineNumber": 1076
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "find_last_of",
+          "lineNumber": 1078
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "WideToUtf8",
+          "lineNumber": 1080
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "substr",
+          "lineNumber": 1080
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "WideToUtf8",
+          "lineNumber": 1083
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "TEXT",
+          "lineNumber": 1086
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "GetModuleBaseName",
+          "lineNumber": 1089
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "WideToUtf8",
+          "lineNumber": 1090
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "std::wstring",
+          "lineNumber": 1090
+        },
+        {
+          "caller": "getProcessName",
+          "callee": "reinterpret_cast<const wchar_t*>",
+          "lineNumber": 1090
+        },
+        {
+          "caller": "getHighRamProcesses",
+          "callee": "get",
+          "lineNumber": 1097
+        },
+        {
+          "caller": "getHighRamProcesses",
+          "callee": "getHighRamProcessesImpl",
+          "lineNumber": 1097
+        },
+        {
+          "caller": "getHighRamProcessesImpl",
+          "callee": "EnumProcesses",
+          "lineNumber": 1110
+        },
+        {
+          "caller": "getHighRamProcessesImpl",
+          "callee": "OpenProcess",
+          "lineNumber": 1119
+        },
+        {
+          "caller": "getHighRamProcessesImpl",
+          "callee": "GetProcessMemoryInfo",
+          "lineNumber": 1129
+        },
+        {
+          "caller": "getHighRamProcessesImpl",
+          "callee": "getProcessName",
+          "lineNumber": 1131
+        },
+        {
+          "caller": "getHighRamProcessesImpl",
+          "callee": "CloseHandle",
+          "lineNumber": 1144
+        },
+        {
+          "caller": "getHighRamProcessesImpl",
+          "callee": "str",
+          "lineNumber": 1147
+        },
+        {
+          "caller": "getHighRamProcessesImpl",
+          "callee": "empty",
+          "lineNumber": 1148
+        },
+        {
+          "caller": "registerServiceHandler",
+          "callee": "RegisterServiceCtrlHandlerW",
+          "lineNumber": 1153
+        },
+        {
+          "caller": "registerServiceHandler",
+          "callee": "store",
+          "lineNumber": 1159
+        },
+        {
+          "caller": "registerServiceHandler",
+          "callee": "reportStatus",
+          "lineNumber": 1160
+        },
+        {
+          "caller": "getStopEvent",
+          "callee": "get",
+          "lineNumber": 1165
+        },
+        {
+          "caller": "startService",
+          "callee": "startSessionMonitor",
+          "lineNumber": 1170
+        },
+        {
+          "caller": "startService",
+          "callee": "on_start_callback",
+          "lineNumber": 1172
+        },
+        {
+          "caller": "stopService",
+          "callee": "exchange",
+          "lineNumber": 1177
+        },
+        {
+          "caller": "stopService",
+          "callee": "logMessage",
+          "lineNumber": 1178
+        },
+        {
+          "caller": "stopService",
+          "callee": "logMessage",
+          "lineNumber": 1182
+        },
+        {
+          "caller": "stopService",
+          "callee": "reportStatus",
+          "lineNumber": 1183
+        },
+        {
+          "caller": "stopService",
+          "callee": "stopSessionMonitor",
+          "lineNumber": 1184
+        },
+        {
+          "caller": "stopService",
+          "callee": "on_stop_callback",
+          "lineNumber": 1186
+        },
+        {
+          "caller": "stopService",
+          "callee": "SetEvent",
+          "lineNumber": 1187
+        },
+        {
+          "caller": "stopService",
+          "callee": "get",
+          "lineNumber": 1187
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/platform/WindowsPlatform.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 164,
+      "nonEmptyLines": 138,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

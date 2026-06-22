@@ -1,0 +1,100 @@
+[
+  {
+    "id": "layer:entry-point",
+    "name": "Entry Point",
+    "description": "Application bootstrap that wires up the platform abstraction, manages the serial/heartbeat threads, AMT COM port detection, and the agent's version metadata.",
+    "nodeIds": [
+      "file:src/main.cpp",
+      "file:src/version.h"
+    ]
+  },
+  {
+    "id": "layer:platform-abstraction",
+    "name": "Platform Abstraction",
+    "description": "The OS-agnostic interface (Platform, SystemState) that defines the contract for networking, serial I/O, and system metrics, decoupling the agent's core logic from concrete OS implementations.",
+    "nodeIds": [
+      "file:src/core/Platform.h",
+      "file:src/core/SystemState.h"
+    ]
+  },
+  {
+    "id": "layer:platform-implementation",
+    "name": "Platform Implementations",
+    "description": "Concrete Windows and Linux implementations of the Platform interface, including Windows service lifecycle, COM/WMI/PDH metric collection, registry access, and D-Bus/syslog integration on Linux.",
+    "nodeIds": [
+      "file:src/platform/LinuxPlatform.cpp",
+      "file:src/platform/WindowsPlatform.cpp",
+      "file:src/platform/WindowsPlatform.h",
+      "file:src/platform/Windows_Addon.h"
+    ]
+  },
+  {
+    "id": "layer:feature-modules",
+    "name": "Feature Modules",
+    "description": "Self-contained hardware and OS-integration modules consumed primarily from main.cpp: serial communication, metrics collection/caching, Windows service management, session monitoring, tray UI, registry editing, and HX2K/HX3K CPU detection.",
+    "nodeIds": [
+      "file:src/modules/metrics/MetricCache.h",
+      "file:src/modules/metrics/MetricsCollector.h",
+      "file:src/modules/metrics/MetricsCollector.cpp",
+      "file:src/modules/3kcheck/3kcheck.h",
+      "file:src/modules/3kcheck/3kcheck.cpp",
+      "file:src/modules/serial/SerialManager.cpp",
+      "file:src/modules/serial/SerialManager.h",
+      "file:src/modules/regedits/Regedit.cpp",
+      "file:src/modules/regedits/Regedit.h",
+      "file:src/modules/service/ServiceManager.cpp",
+      "file:src/modules/service/ServiceManager.h",
+      "file:src/modules/session/SessionMonitor.cpp",
+      "file:src/modules/session/SessionMonitor.h",
+      "file:src/modules/tray/TrayApp.cpp",
+      "file:src/modules/tray/TrayApp.h"
+    ]
+  },
+  {
+    "id": "layer:build-system",
+    "name": "Build System",
+    "description": "CMake build configuration, Windows/Linux build and signing scripts, Windows resource files, and repository setup utilities that compile and version the agent executable.",
+    "nodeIds": [
+      "config:CMakeLists.txt",
+      "file:build.bat",
+      "file:build.sh",
+      "file:sign.bat",
+      "file:setup-remotes.ps1",
+      "resource:app.rc",
+      "resource:app.res",
+      "config:.understand-anything/.understandignore"
+    ]
+  },
+  {
+    "id": "layer:deployment-packaging",
+    "name": "Deployment & Packaging",
+    "description": "Windows service installer/uninstaller scripts, the systemd unit, and the full Debian packaging toolchain (control, rules, postinst/postrm/prerm, compat files) that package and deploy the agent as a host service.",
+    "nodeIds": [
+      "service:CoreStationHXAgent.service",
+      "file:installer/install.ps1",
+      "file:installer/remove.ps1",
+      "document:debian/changelog",
+      "config:debian/clean",
+      "config:debian/compat",
+      "config:debian/control",
+      "document:debian/copyright",
+      "config:debian/dh-cmake.compat",
+      "config:debian/files",
+      "service:debian/postinst",
+      "service:debian/postrm",
+      "service:debian/prerm",
+      "pipeline:debian/rules",
+      "config:debian/source/format"
+    ]
+  },
+  {
+    "id": "layer:documentation",
+    "name": "Documentation",
+    "description": "Project README and release-notes/changelog files describing build, install, and usage instructions plus the chronological history of agent releases.",
+    "nodeIds": [
+      "document:README.md",
+      "document:release-notes.txt",
+      "document:installer/release-notes.txt"
+    ]
+  }
+]

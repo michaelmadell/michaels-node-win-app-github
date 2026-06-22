@@ -1,0 +1,759 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/core/Platform.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 55,
+      "nonEmptyLines": 45,
+      "functions": [
+        {
+          "name": "~Platform",
+          "startLine": 16,
+          "endLine": 16,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "Platform",
+          "startLine": 14,
+          "endLine": 52,
+          "methods": [
+            "~Platform",
+            "getNetworkInterfaces",
+            "getHostname",
+            "getCurrentSessionState",
+            "getLoggedInUser",
+            "getOsVersion",
+            "getOsBuild",
+            "openSerialPort",
+            "closeSerialPort",
+            "writeSerial",
+            "readSerial",
+            "logMessage",
+            "getCpuUsagePercent",
+            "getRamUsagePercent",
+            "getFreeDiskSpaceGB",
+            "getWindowsUpdateState",
+            "getDiskQueueLength",
+            "getNetworkRetransRate",
+            "getSystemUptime",
+            "updatePdhMetrics",
+            "getGpuDriverInfo",
+            "getGpuUsagePercent",
+            "getHighRamProcesses",
+            "showMessageDialog",
+            "run"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "~Platform",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "getNetworkInterfaces",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "getHostname",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "getCurrentSessionState",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "getLoggedInUser",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "getOsVersion",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "getOsBuild",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "openSerialPort",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "closeSerialPort",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "writeSerial",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "readSerial",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "logMessage",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "getCpuUsagePercent",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "getRamUsagePercent",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "getFreeDiskSpaceGB",
+          "line": 33,
+          "isDefault": false
+        },
+        {
+          "name": "getWindowsUpdateState",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "getDiskQueueLength",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "getNetworkRetransRate",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "getSystemUptime",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "updatePdhMetrics",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "getGpuDriverInfo",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "getGpuUsagePercent",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "getHighRamProcesses",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "showMessageDialog",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "run",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "Platform",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 26,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/core/SystemState.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 47,
+      "nonEmptyLines": 41,
+      "functions": [
+        {
+          "name": "operator!=",
+          "startLine": 15,
+          "endLine": 18,
+          "params": [
+            "other"
+          ]
+        },
+        {
+          "name": "operator==",
+          "startLine": 20,
+          "endLine": 23,
+          "params": [
+            "other"
+          ]
+        },
+        {
+          "name": "operator!=",
+          "startLine": 43,
+          "endLine": 46,
+          "params": [
+            "other"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "NetworkInterface",
+          "startLine": 7,
+          "endLine": 24,
+          "methods": [
+            "operator!=",
+            "operator=="
+          ],
+          "properties": [
+            "name",
+            "ipv4",
+            "ipv6",
+            "dhcp",
+            "linkStatus",
+            "macAddress"
+          ]
+        },
+        {
+          "name": "SystemState",
+          "startLine": 26,
+          "endLine": 47,
+          "methods": [
+            "operator!="
+          ],
+          "properties": [
+            "networkInterfaces",
+            "hostname",
+            "powerState",
+            "sessionState",
+            "username",
+            "cpuUsagePercent",
+            "ramUsagePercent",
+            "freeDiskSpaceGB",
+            "windowsUpdateState",
+            "diskQueueLength",
+            "networkRetransRate",
+            "systemUptime",
+            "gpuDriverInfo",
+            "gpuUsagePercent",
+            "highRamProcesses"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "operator!=",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "operator==",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "NetworkInterface",
+          "line": 7,
+          "isDefault": false
+        },
+        {
+          "name": "operator!=",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "SystemState",
+          "line": 26,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "operator!=",
+          "callee": "std::tie",
+          "lineNumber": 16
+        },
+        {
+          "caller": "operator!=",
+          "callee": "std::tie",
+          "lineNumber": 17
+        },
+        {
+          "caller": "operator==",
+          "callee": "std::tie",
+          "lineNumber": 21
+        },
+        {
+          "caller": "operator==",
+          "callee": "std::tie",
+          "lineNumber": 22
+        },
+        {
+          "caller": "operator!=",
+          "callee": "std::tie",
+          "lineNumber": 44
+        },
+        {
+          "caller": "operator!=",
+          "callee": "std::tie",
+          "lineNumber": 45
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 3,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "src/modules/metrics/MetricCache.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 104,
+      "nonEmptyLines": 90,
+      "callGraph": [
+        {
+          "caller": "MetricCache",
+          "callee": "std::chrono::seconds",
+          "lineNumber": 21
+        },
+        {
+          "caller": "MetricCache",
+          "callee": "std::chrono::steady_clock::time_point::min",
+          "lineNumber": 22
+        },
+        {
+          "caller": "get",
+          "callee": "std::chrono::steady_clock::now",
+          "lineNumber": 34
+        },
+        {
+          "caller": "get",
+          "callee": "computeFunc",
+          "lineNumber": 38
+        },
+        {
+          "caller": "isValid",
+          "callee": "std::chrono::steady_clock::now",
+          "lineNumber": 59
+        },
+        {
+          "caller": "getTtlSeconds",
+          "callee": "static_cast<int>",
+          "lineNumber": 68
+        },
+        {
+          "caller": "getTtlSeconds",
+          "callee": "count",
+          "lineNumber": 68
+        },
+        {
+          "caller": "getTtlSeconds",
+          "callee": "std::chrono::duration_cast<std::chrono::seconds>",
+          "lineNumber": 68
+        },
+        {
+          "caller": "setTtl",
+          "callee": "std::chrono::seconds",
+          "lineNumber": 76
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/metrics/MetricsCollector.cpp",
+      "language": "cpp",
+      "fileCategory": "code",
+      "totalLines": 127,
+      "nonEmptyLines": 98,
+      "functions": [
+        {
+          "name": "MetricsCollector",
+          "startLine": 6,
+          "endLine": 8,
+          "params": [
+            "platform"
+          ]
+        },
+        {
+          "name": "~MetricsCollector",
+          "startLine": 10,
+          "endLine": 11,
+          "params": []
+        },
+        {
+          "name": "UpdateCounters",
+          "startLine": 13,
+          "endLine": 17,
+          "params": []
+        },
+        {
+          "name": "CollectAll",
+          "startLine": 19,
+          "endLine": 28,
+          "params": []
+        },
+        {
+          "name": "CollectPerformance",
+          "startLine": 30,
+          "endLine": 51,
+          "params": []
+        },
+        {
+          "name": "CollectGpu",
+          "startLine": 53,
+          "endLine": 64,
+          "params": []
+        },
+        {
+          "name": "CollectProcesses",
+          "startLine": 66,
+          "endLine": 76,
+          "params": []
+        },
+        {
+          "name": "CheckUpdates",
+          "startLine": 78,
+          "endLine": 88,
+          "params": []
+        },
+        {
+          "name": "InvalidateCache",
+          "startLine": 90,
+          "endLine": 93,
+          "params": []
+        },
+        {
+          "name": "SetCachingEnabled",
+          "startLine": 95,
+          "endLine": 97,
+          "params": [
+            "enabled"
+          ]
+        },
+        {
+          "name": "GetFormattedMetrics",
+          "startLine": 99,
+          "endLine": 127,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "MetricsCollector",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "~MetricsCollector",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "UpdateCounters",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "CollectAll",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "CollectPerformance",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "CollectGpu",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "CollectProcesses",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "CheckUpdates",
+          "line": 78,
+          "isDefault": false
+        },
+        {
+          "name": "InvalidateCache",
+          "line": 90,
+          "isDefault": false
+        },
+        {
+          "name": "SetCachingEnabled",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "GetFormattedMetrics",
+          "line": 99,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "UpdateCounters",
+          "callee": "updatePdhMetrics",
+          "lineNumber": 15
+        },
+        {
+          "caller": "CollectAll",
+          "callee": "CollectPerformance",
+          "lineNumber": 22
+        },
+        {
+          "caller": "CollectAll",
+          "callee": "CollectGpu",
+          "lineNumber": 23
+        },
+        {
+          "caller": "CollectAll",
+          "callee": "CollectProcesses",
+          "lineNumber": 24
+        },
+        {
+          "caller": "CollectAll",
+          "callee": "CheckUpdates",
+          "lineNumber": 25
+        },
+        {
+          "caller": "CollectPerformance",
+          "callee": "getCpuUsagePercent",
+          "lineNumber": 37
+        },
+        {
+          "caller": "CollectPerformance",
+          "callee": "getRamUsagePercent",
+          "lineNumber": 38
+        },
+        {
+          "caller": "CollectPerformance",
+          "callee": "getDiskQueueLength",
+          "lineNumber": 39
+        },
+        {
+          "caller": "CollectPerformance",
+          "callee": "getNetworkRetransRate",
+          "lineNumber": 40
+        },
+        {
+          "caller": "CollectPerformance",
+          "callee": "getSystemUptime",
+          "lineNumber": 41
+        },
+        {
+          "caller": "CollectPerformance",
+          "callee": "getFreeDiskSpaceGB",
+          "lineNumber": 45
+        },
+        {
+          "caller": "CollectPerformance",
+          "callee": "getFreeDiskSpaceGB",
+          "lineNumber": 47
+        },
+        {
+          "caller": "CollectGpu",
+          "callee": "getGpuDriverInfo",
+          "lineNumber": 60
+        },
+        {
+          "caller": "CollectGpu",
+          "callee": "getGpuUsagePercent",
+          "lineNumber": 61
+        },
+        {
+          "caller": "CollectProcesses",
+          "callee": "getHighRamProcesses",
+          "lineNumber": 73
+        },
+        {
+          "caller": "CheckUpdates",
+          "callee": "getWindowsUpdateState",
+          "lineNumber": 85
+        },
+        {
+          "caller": "GetFormattedMetrics",
+          "callee": "CollectAll",
+          "lineNumber": 104
+        },
+        {
+          "caller": "GetFormattedMetrics",
+          "callee": "std::setprecision",
+          "lineNumber": 110
+        },
+        {
+          "caller": "GetFormattedMetrics",
+          "callee": "std::setprecision",
+          "lineNumber": 112
+        },
+        {
+          "caller": "GetFormattedMetrics",
+          "callee": "std::setprecision",
+          "lineNumber": 119
+        },
+        {
+          "caller": "GetFormattedMetrics",
+          "callee": "str",
+          "lineNumber": 126
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 11,
+        "functionCount": 11,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/modules/metrics/MetricsCollector.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 136,
+      "nonEmptyLines": 117,
+      "functions": [
+        {
+          "name": "MetricsCollector",
+          "startLine": 130,
+          "endLine": 130,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "Platform",
+          "startLine": 10,
+          "endLine": 10,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "MetricsCollector",
+          "startLine": 19,
+          "endLine": 136,
+          "methods": [
+            "UpdateCounters",
+            "CollectAll",
+            "CollectPerformance",
+            "CollectGpu",
+            "CollectProcesses",
+            "CheckUpdates",
+            "InvalidateCache",
+            "SetCachingEnabled",
+            "GetFormattedMetrics",
+            "MetricsCollector"
+          ],
+          "properties": [
+            "platform_",
+            "cachingEnabled_"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Platform",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "UpdateCounters",
+          "line": 78,
+          "isDefault": false
+        },
+        {
+          "name": "CollectAll",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "CollectPerformance",
+          "line": 90,
+          "isDefault": false
+        },
+        {
+          "name": "CollectGpu",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "CollectProcesses",
+          "line": 102,
+          "isDefault": false
+        },
+        {
+          "name": "CheckUpdates",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "InvalidateCache",
+          "line": 115,
+          "isDefault": false
+        },
+        {
+          "name": "SetCachingEnabled",
+          "line": 121,
+          "isDefault": false
+        },
+        {
+          "name": "GetFormattedMetrics",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "MetricsCollector",
+          "line": 130,
+          "isDefault": false
+        },
+        {
+          "name": "MetricsCollector",
+          "line": 19,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 12,
+        "functionCount": 1,
+        "classCount": 2
+      }
+    }
+  ]
+}
