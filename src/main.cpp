@@ -310,53 +310,60 @@ void serialThread() {
     });
 
     if (!serialManager->Open(portName, 115200)) {
-        std::cerr << "[DEBUG] FATAL: serialManager->Open() returned false. Thread is exiting." << std::endl;
+        std::cerr << "[DEBUG] Failed to open serial port, will retry in background: " << portName << std::endl;
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);
 #ifdef _WIN32
         OutputDebugStringW(L"[FATAL] Failed to Open Serial Port.\n");
 #endif
-        return; //TODO: Re-implement retry logic here properly
-    }
-
-    std::cout << "[DEBUG] Serial Port opened successfully." << std::endl;
-    platform->logMessage("Serial Port opened successfully");
-
-    // Send initial system info
-    std::stringstream versionStream;
-    versionStream << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_RELEASE << "." << VERSION_BUILD;
-    if (std::string(VERSION_EXTRAVERSION) == "rc") {
-        versionStream << "_" << VERSION_EXTRAVERSION << VERSION_RC_NO;
     }
     else {
-        versionStream << "_" << VERSION_EXTRAVERSION;
+        std::cout << "[DEBUG] Serial Port opened successfully." << std::endl;
+        platform->logMessage("Serial Port opened successfully");
     }
 
-    std::cout << "[DEBUG] Sending initial messages..." << std::endl;
-    sendLineToBmc("appVersion, " + versionStream.str());
-    sendLineToBmc("winVersion, " + platform->getOsVersion());
-    sendLineToBmc("osBuild, " + platform->getOsBuild());
-
-    std::string initialSessionState = platform->getCurrentSessionState();
-    sendLineToBmc("sessionState, " + initialSessionState);  // Initial state
-
-    // Send initial username
-    {
-        std::lock_guard<std::mutex> lock(stateMutex);
-        currentState.username = platform->getLoggedInUser();
-        sendLineToBmc("username, " + currentState.username);
-
-        // Send initial network state
-        currentState.networkInterfaces = platform->getNetworkInterfaces();
-        for (const auto& iface : currentState.networkInterfaces) {
-            std::stringstream ss;
-            ss << "network, " << iface.macAddress << ", " << iface.linkStatus
-                << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
-                << iface.dhcp << ", " << iface.name;
-            sendLineToBmc(ss.str());
+    auto sendInitialInfo = [&]() {
+        std::stringstream versionStream;
+        versionStream << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_RELEASE << "." << VERSION_BUILD;
+        if (std::string(VERSION_EXTRAVERSION) == "rc") {
+            versionStream << "_" << VERSION_EXTRAVERSION << VERSION_RC_NO;
         }
-    }
+        else {
+            versionStream << "_" << VERSION_EXTRAVERSION;
+        }
 
-    std::cout << "[DEBUG] Initial messages sent." << std::endl;
+        std::cout << "[DEBUG] Sending initial messages..." << std::endl;
+        sendLineToBmc("appVersion, " + versionStream.str());
+        sendLineToBmc("winVersion, " + platform->getOsVersion());
+        sendLineToBmc("osBuild, " + platform->getOsBuild());
+
+        std::string initialSessionState = platform->getCurrentSessionState();
+        sendLineToBmc("sessionState, " + initialSessionState);  // Initial state
+
+        // Send initial username
+        {
+            std::lock_guard<std::mutex> lock(stateMutex);
+            currentState.username = platform->getLoggedInUser();
+            sendLineToBmc("username, " + currentState.username);
+
+            // Send initial network state
+            currentState.networkInterfaces = platform->getNetworkInterfaces();
+            for (const auto& iface : currentState.networkInterfaces) {
+                std::stringstream ss;
+                ss << "network, " << iface.macAddress << ", " << iface.linkStatus
+                    << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
+                    << iface.dhcp << ", " << iface.name;
+                sendLineToBmc(ss.str());
+            }
+        }
+
+        std::cout << "[DEBUG] Initial messages sent." << std::endl;
+    };
+
+    bool initialInfoSent = false;
+    if (serialManager->IsOpen()) {
+        sendInitialInfo();
+        initialInfoSent = true;
+    }
 
     // Periodic check timer for network and hostname
     auto lastNetworkCheck = std::chrono::steady_clock::now();
@@ -369,6 +376,11 @@ void serialThread() {
         // Try to reconnect if disconnected
         if (!serialManager->IsOpen()) {
             serialManager->TryReconnect();
+        }
+
+        if (!initialInfoSent && serialManager->IsOpen()) {
+            sendInitialInfo();
+            initialInfoSent = true;
         }
 
         // Periodic network and hostname check
