@@ -2,5 +2,5 @@
 git remote add Github https://github.com/michaelmadell/michaels-node-win-app-github.git
 git remote add all git@bitbucket.org:ahkengteam/michaels-node-win-app.git
 git remote set-url --add --push all git@bitbucket.org:ahkengteam/michaels-node-win-app.git
-git remote set-url --add --push all https://github.com/michaelmadell/michaels-node-win-app-github.git
+git remote set-url --add --push all git@github.com:michaelmadell/michaels-node-win-app-github.git
 git remote -v
