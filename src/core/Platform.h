@@ -39,6 +39,7 @@ class Platform{
     virtual float getNetworkRetransRate() = 0;
     virtual std::string getSystemUptime() = 0;
     virtual void updatePdhMetrics() = 0;
+    virtual void invalidateMetricCaches() {}
 
     virtual std::string getGpuDriverInfo() = 0;
     virtual float getGpuUsagePercent() = 0;

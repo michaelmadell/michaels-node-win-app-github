@@ -789,9 +789,18 @@ void WindowsPlatform::showMessageDialog(const std::string& title, const std::str
     MessageBoxW(NULL, wMessage.c_str(), wTitle.c_str(), MB_OK | MB_ICONINFORMATION);
 }
 
+static bool IsErrorOrWarning(const std::string& message) {
+    std::string upper = message;
+    std::transform(upper.begin(), upper.end(), upper.begin(),
+        [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    return upper.find("ERROR") != std::string::npos ||
+           upper.find("WARNING") != std::string::npos ||
+           upper.find("FATAL") != std::string::npos;
+}
+
 void WindowsPlatform::logMessage(const std::string &message)
 {
-    if (std::string(VERSION_EXTRAVERSION) != "rc") {
+    if (std::string(VERSION_EXTRAVERSION) != "rc" && !IsErrorOrWarning(message)) {
         return;
     }
 
@@ -955,6 +964,19 @@ std::string WindowsPlatform::getWindowsUpdateStateImpl() {
     }
 
     return "Up to Date or Unknown";
+}
+
+void WindowsPlatform::invalidateMetricCaches() {
+    cpuCache_.invalidate();
+    ramCache_.invalidate();
+    diskSpaceCache_.invalidate();
+    windowsUpdateCache_.invalidate();
+    diskQueueCache_.invalidate();
+    netRetransCache_.invalidate();
+    uptimeCache_.invalidate();
+    gpuDriverCache_.invalidate();
+    gpuUsageCache_.invalidate();
+    highRamProcsCache_.invalidate();
 }
 
 void WindowsPlatform::updatePdhMetrics() {

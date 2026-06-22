@@ -76,8 +76,8 @@ void SessionMonitor::ThreadProc() {
         std::lock_guard<std::mutex> lock(windowMutex_);
         window_ = window;
         windowReady_ = true;
-        windowReadyCv_.notify_all();
     }
+    windowReadyCv_.notify_all();
 
     if (!window) {
         if (platform_) {
@@ -92,6 +92,10 @@ void SessionMonitor::ThreadProc() {
             platform_->logMessage("ERROR: WTSRegisterSessionNotification failed, error: " + std::to_string(err));
         }
         DestroyWindow(window);
+        {
+            std::lock_guard<std::mutex> lock(windowMutex_);
+            window_ = nullptr;
+        }
         return;
     }
 

@@ -1,5 +1,4 @@
-#!/usr/bin/bash
-
+#!/usr/bin/env bash
 OUTPUT_DIR="./build"
 OUTPUT_EXE_FILE="$OUTPUT_DIR/CoreStationHXAgent.exe"
 HEADER_FILE="git_info.h"
@@ -46,6 +45,8 @@ x86_64-w64-mingw32-g++-posix -O2 -DNDEBUG -static \
     -D_WIN32_WINNT=0x0601 \
     src/main.cpp \
     src/Platform/WindowsPlatform.cpp \
+    src/modules/serial/SerialManager.cpp \
+    src/modules/3kcheck/3kcheck.cpp \
     app.res \
     -o "$OUTPUT_EXE_FILE" \
     -lws2_32 -liphlpapi -lwtsapi32 -lsetupapi -lpdh -lwbemuuid -lole32 -loleaut32 -lpsapi -ladvapi32 -luser32 -lgdi32 -lshell32 -lcomctl32 -lwinmm
@@ -54,6 +55,12 @@ if [ $? -ne 0 ]; then
     echo "Compilation failed!"
     exit 1
 fi
+
+echo "Build completed successfully. Output file: $OUTPUT_EXE_FILE"
+echo "File size: $(stat -c%s "$OUTPUT_EXE_FILE") bytes"
+echo "Copying release notes and exe..."
+cp -f "$OUTPUT_EXE_FILE" "installer/"
+cp -f "release-notes.txt" "installer/"
 
 echo "Finished!"
 exit 0

@@ -56,6 +56,19 @@ Focussed on bringing debian build up-to-date
 - First implemenetation of HX3000 Support - Checks For presence of 2 E610s and 2 I226s, if statisfied, uses COM1
 - Added AAEON MAC to MAC Filter
 
+20.26.6.1_rc2
+-------------
+- Fixed serial port handle state bugs: closed/failed handle states were inconsistent between open/read/write paths, occasionally bypassing reconnect logic
+- Serial port auto-reconnect now retries the originally configured port/baud rate instead of being hardcoded to COM3
+- Fixed SessionMonitor race that could deadlock service stop if stopSessionMonitor() ran before the monitor window finished creating
+- Fixed Regedit::Write performing the registry create/open call up to 7 times per write, ignoring the requested value type, and leaking a handle on success
+- Fixed Regedit::Read being unable to return the value it read (output parameter was passed by value)
+- GA builds now log ERROR/WARNING/FATAL messages instead of suppressing all logging
+- Wired up ServiceManager's service control handler (was a no-op stub) and MetricsCollector's cache invalidation/disable controls (previously no-ops)
+- Fixed TrayApp tooltip truncation using byte size instead of character count, and hardened named pipe thread against a missing stop event
+- build.sh now links SerialManager.cpp and 3kcheck.cpp, fixing undefined reference link errors
+
+
 20.26.5.1_GA
 ------------
 - Implemented support for HX3000 Nodes via a CPU Check - Sends 4x Network details and uses COM1 if HX3K

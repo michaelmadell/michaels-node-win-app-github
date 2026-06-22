@@ -9,6 +9,9 @@
 
 TrayApp::TrayApp(WindowsPlatform* platform) : platform_(platform) {
     stopEvent_ = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (!stopEvent_) {
+        Log("Failed to create stop event");
+    }
 }
 
 TrayApp::~TrayApp() {
