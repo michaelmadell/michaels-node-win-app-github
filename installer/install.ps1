@@ -23,7 +23,7 @@ param (
     [string]$ServiceName = "CoreStationService",
 
     [Parameter()]
-    [string]$ExePath = "$PSScriptRoot\nodeWinApp.exe"
+    [string]$ExePath = "$PSScriptRoot\CoreStationHXAgent.exe"
 )
 
 # 1. Verify the script is running with Administrator privileges
@@ -67,16 +67,16 @@ try {
         Write-Host "Existing service removed successfully."
     }
 
-    $existingApp = Get-ChildItem -Path "C:\ProgramData\ahk\nodeWinApp.exe" -ErrorAction SilentlyContinue
+    $existingApp = Get-ChildItem -Path "C:\ProgramData\ahk\CoreStationHXAgent.exe" -ErrorAction SilentlyContinue
     if ($null -ne $existingApp) {
-        Write-Host "An existing executable was found at 'C:\ProgramData\ahk\nodeWinApp.exe'. Removing it first."
-        Remove-Item -Path "C:\ProgramData\ahk\nodeWinApp.exe" -Force
+        Write-Host "An existing executable was found at 'C:\ProgramData\ahk\CoreStationHXAgent.exe'. Removing it first."
+        Remove-Item -Path "C:\ProgramData\ahk\CoreStationHXAgent.exe" -Force
         Write-Host "Existing executable removed successfully."
     }
 
-    Copy-Item -Path $ExePath -Destination "C:\ProgramData\ahk"
+    Copy-Item -Path $ExePath -Destination "C:\Program Files (x86)\CoreStation HX Agent"
 
-    $NewExePath = "C:\ProgramData\ahk\nodeWinApp.exe"
+    $NewExePath = "C:\Program Files (x86)\CoreStation HX Agent\CoreStationHXAgent.exe"
 
     # 4. Create the new service
     Write-Host "Creating new service from executable: '$NewExePath'..."

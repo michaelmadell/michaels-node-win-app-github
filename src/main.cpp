@@ -63,11 +63,10 @@ std::atomic<bool> g_stop_request_sent{false};
 void sendLineToBmc(const std::string& output_string) {
     if (!serialManager) return;
 
-    // --- ADD THIS LINE ---
     std::cout << "[SENDING] " << output_string << std::endl;
 
     platform->logMessage(output_string);
-    serialManager->Write(output_string + "\r\n\0");
+    serialManager->Write(output_string + "\r\n\0"); // TODO: Work out if the NUL byte can be removed without breaking the BMC parser
 }
 
 void notifyStopRequested(const std::string& stopReason) {
@@ -316,7 +315,7 @@ void serialThread() {
 #ifdef _WIN32
         OutputDebugStringW(L"[FATAL] Failed to Open Serial Port.\n");
 #endif
-        return;
+        return; //TODO: Re-implement retry logic here properly
     }
 
     std::cout << "[DEBUG] Serial Port opened successfully." << std::endl;

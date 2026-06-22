@@ -45,7 +45,7 @@ echo "Building EXE file..."
 x86_64-w64-mingw32-g++-posix -O2 -DNDEBUG -static \
     -D_WIN32_WINNT=0x0601 \
     src/main.cpp \
-    src/WindowsPlatform.cpp \
+    src/Platform/WindowsPlatform.cpp \
     app.res \
     -o "$OUTPUT_EXE_FILE" \
     -lws2_32 -liphlpapi -lwtsapi32 -lsetupapi -lpdh -lwbemuuid -lole32 -loleaut32 -lpsapi -ladvapi32 -luser32 -lgdi32 -lshell32 -lcomctl32 -lwinmm

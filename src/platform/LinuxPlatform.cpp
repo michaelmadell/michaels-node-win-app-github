@@ -285,7 +285,7 @@ int LinuxPlatform::run(
         sleep(1);
     }
 
-    logMessage("Termination signal recieved. Shutting Down.");
+    logMessage("Termination signal received. Shutting Down.");
     if (power_cb) {
         power_cb("controlShutdown");
     }
