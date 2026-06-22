@@ -14,6 +14,7 @@
 #include <thread>
 #include <stdexcept>
 #include <cmath>
+#include <chrono>
 #include <cctype>
 
 // Linux Headers
@@ -665,8 +666,22 @@ std::string LinuxPlatform::getWindowsUpdateState() {
     return "Up to Date";
 }
 
+static int SyslogPriorityFor(const std::string& message) {
+    std::string upper = message;
+    std::transform(upper.begin(), upper.end(), upper.begin(),
+        [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+
+    if (upper.find("FATAL") != std::string::npos || upper.find("ERROR") != std::string::npos) {
+        return LOG_ERR;
+    }
+    if (upper.find("WARNING") != std::string::npos) {
+        return LOG_WARNING;
+    }
+    return LOG_INFO;
+}
+
 void LinuxPlatform::logMessage(const std::string& message) {
-    syslog(LOG_INFO, "%s", message.c_str());
+    syslog(SyslogPriorityFor(message), "%s", message.c_str());
 }
 
 std::string LinuxPlatform::getHostname() {
