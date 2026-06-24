@@ -75,6 +75,17 @@ set /a FILE_SIZE_KB=FILE_SIZE/1024
 
 set "END_TIME=%TIME%"
 
+echo ===========================================================================
+echo Do you want to sign the executable? (Y/N)
+set /p SIGN_CHOICE=
+if /I "%SIGN_CHOICE%"=="Y" (
+    echo Signing the executable...
+    sign "%OUTPUT_EXE_FILE%"
+    echo Signing completed.
+) else (
+    echo Skipping signing.
+)
+
 echo    Output: %OUTPUT_EXE_FILE% (!FILE_SIZE_KB! KB)
 echo.
 echo ============================================================================
