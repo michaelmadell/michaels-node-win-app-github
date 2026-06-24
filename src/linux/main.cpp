@@ -27,7 +27,7 @@ void sendLineToBmc(const std::string& output_string) {
     std::cout << "[SENDING] " << output_string << std::endl;
 
     platform->logMessage(output_string);
-    serialManager->Write(output_string + "\r\n\0");
+    serialManager->Write(output_string + "\r\n");
 }
 
 void notifyStopRequested(const std::string& stopReason) {
@@ -122,7 +122,7 @@ void processIncomingCommand(const std::string& command) {
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
 
-    std::string portName = SERIAL_PORT;
+    std::string portName;
     CPUInfo cpuInfo = GetCpuInfo();
     std::cout << "[DEBUG] CPUInfo: " << cpuInfo.manufacturer << " " << cpuInfo.model << " " << cpuInfo.clockspeed << std::endl;
     if (IsHX2KCPU(&cpuInfo)) {
