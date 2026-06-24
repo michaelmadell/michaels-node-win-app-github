@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-for /f %%i in ('powershell -command "[int](Get-Date -UFormat %%s)"') do set START_EPOCH=%%i
+set "START_TIME=%TIME%"
 
 echo ============================================================================
 echo CoreStationHXAgent - CMake Build
@@ -73,13 +73,14 @@ if exist "release-notes.txt" (
 for %%F in ("%OUTPUT_EXE_FILE%") do set FILE_SIZE=%%~zF
 set /a FILE_SIZE_KB=FILE_SIZE/1024
 
-for /f %%i in ('powershell -command "[int](Get-Date -UFormat %%s)"') do set END_EPOCH=%%i
-set /a ELAPSED_S=END_EPOCH-START_EPOCH
+set "END_TIME=%TIME%"
 
 echo    Output: %OUTPUT_EXE_FILE% (!FILE_SIZE_KB! KB)
 echo.
 echo ============================================================================
-echo BUILD SUCCESSFUL (completed in !ELAPSED_S! seconds)
+echo BUILD SUCCESSFUL
+echo    Started: %START_TIME%
+echo    Ended:   %END_TIME%
 echo ============================================================================
 echo.
 
