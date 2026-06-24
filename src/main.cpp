@@ -66,7 +66,7 @@ void sendLineToBmc(const std::string& output_string) {
     std::cout << "[SENDING] " << output_string << std::endl;
 
     platform->logMessage(output_string);
-    serialManager->Write(output_string + "\r\n\0"); // TODO: Work out if the NUL byte can be removed without breaking the BMC parser
+    serialManager->Write(output_string + "\r\n");
 }
 
 void notifyStopRequested(const std::string& stopReason) {

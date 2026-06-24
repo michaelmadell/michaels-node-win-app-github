@@ -13,6 +13,7 @@
 #include <thread>
 #include <chrono>
 #include <string>
+#include <vector>
 #include <iostream>
 
 #include "../../core/Platform.h"
@@ -91,6 +92,49 @@ AMTPortInfo GetAMTComPort() {
     return {L"", L""};
 }
 
+#ifdef _WIN32
+// Doubling an embedded ' is PowerShell's own escape for a literal quote
+// inside a single-quoted string, so this prevents instanceId from breaking
+// out of the -InstanceId argument no matter what it contains.
+static std::wstring EscapePowerShellSingleQuoted(const std::wstring& input) {
+    std::wstring result;
+    result.reserve(input.size());
+    for (wchar_t c : input) {
+        if (c == L'\'') {
+            result += L"''";
+        } else {
+            result += c;
+        }
+    }
+    return result;
+}
+
+// Launches powershell.exe directly via CreateProcessW (no cmd.exe / system()
+// in the path), so shell metacharacters in the script are never reinterpreted
+// by an intermediate shell.
+static bool RunPowerShellCommand(const std::wstring& script) {
+    std::wstring cmdLine = L"powershell.exe -NoProfile -NonInteractive -Command \"" + script + L"\"";
+
+    std::vector<wchar_t> buffer(cmdLine.begin(), cmdLine.end());
+    buffer.push_back(L'\0');
+
+    STARTUPINFOW si = {};
+    si.cb = sizeof(si);
+    PROCESS_INFORMATION pi = {};
+
+    if (!CreateProcessW(NULL, buffer.data(), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        return false;
+    }
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    DWORD exitCode = 1;
+    GetExitCodeProcess(pi.hProcess, &exitCode);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return exitCode == 0;
+}
+#endif
+
 bool disableAMTComPort() {
 #ifdef _WIN32
     std::wstring instanceId = GetAMTInstanceId();
@@ -99,10 +143,9 @@ bool disableAMTComPort() {
         return false;
     }
 
-    std::string pshDisableCmd = "powershell -Command \"Disable-PnpDevice -InstanceId '" + std::string(instanceId.begin(), instanceId.end()) + "' -Confirm:0\"";
-    int result = system(pshDisableCmd.c_str());
-    if (result != 0) {
-        std::cerr << "[ERROR] Failed to disable AMT Serial Port. Command: " << pshDisableCmd << std::endl;
+    std::wstring script = L"Disable-PnpDevice -InstanceId '" + EscapePowerShellSingleQuoted(instanceId) + L"' -Confirm:0";
+    if (!RunPowerShellCommand(script)) {
+        std::cerr << "[ERROR] Failed to disable AMT Serial Port." << std::endl;
         platform->logMessage("Failed to disable AMT Serial Port.");
         return false;
     }
@@ -120,10 +163,9 @@ bool enableAMTComPort() {
         return false;
     }
 
-    std::string pshEnableCmd = "powershell -Command \"Enable-PnpDevice -InstanceId '" + std::string(instanceId.begin(), instanceId.end()) + "' -Confirm:0\"";
-    int result = system(pshEnableCmd.c_str());
-    if (result != 0) {
-        std::cerr << "[ERROR] Failed to enable AMT Serial Port. Command: " << pshEnableCmd << std::endl;
+    std::wstring script = L"Enable-PnpDevice -InstanceId '" + EscapePowerShellSingleQuoted(instanceId) + L"' -Confirm:0";
+    if (!RunPowerShellCommand(script)) {
+        std::cerr << "[ERROR] Failed to enable AMT Serial Port." << std::endl;
         platform->logMessage("Failed to enable AMT Serial Port.");
         return false;
     }
