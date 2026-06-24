@@ -43,10 +43,12 @@ x86_64-w64-mingw32-windres app.rc -O coff -o app.res
 echo "Building EXE file..."
 x86_64-w64-mingw32-g++-posix -O2 -DNDEBUG -static \
     -D_WIN32_WINNT=0x0601 \
+    -DENABLE_SERIAL_BRIDGE_PIPE \
     src/main.cpp \
     src/Platform/WindowsPlatform.cpp \
     src/modules/serial/SerialManager.cpp \
     src/modules/3kcheck/3kcheck.cpp \
+    src/modules/serialpipe/SerialBridgePipe.cpp \
     app.res \
     -o "$OUTPUT_EXE_FILE" \
     -lws2_32 -liphlpapi -lwtsapi32 -lsetupapi -lpdh -lwbemuuid -lole32 -loleaut32 -lpsapi -ladvapi32 -luser32 -lgdi32 -lshell32 -lcomctl32 -lwinmm
