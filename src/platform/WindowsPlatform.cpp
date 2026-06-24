@@ -756,6 +756,17 @@ bool WindowsPlatform::forwardSerialBridgeMessage(const std::string& data) {
     return false;
 }
 
+void WindowsPlatform::setSerialBridgeHandler(SerialBridgeHandler handler) {
+    serial_bridge_handler_ = std::move(handler);
+}
+
+bool WindowsPlatform::forwardSerialBridgeMessage(const std::string& data) {
+    if (serial_bridge_handler_) {
+        return serial_bridge_handler_(data);
+    }
+    return writeSerial(data);
+}
+
 void WindowsPlatform::showMessageDialog(const std::string& title, const std::string& message) {
     std::wstring wTitle(title.begin(), title.end());
     std::wstring wMessage(message.begin(), message.end());

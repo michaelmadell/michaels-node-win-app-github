@@ -58,6 +58,9 @@ michaels-node-win-app
      │   ├─ session
      │   │   ├─ SessionMonitor.cpp      - Functions for handling session states
      │   │   └─ SessionMonitor.h        - Header for session handler
+     │   ├─ serialpipe
+     │   │   ├─ SerialBridgePipe.cpp    - Authenticated named-pipe to serial bridge
+     │   │   └─ SerialBridgePipe.h      - Header for serial bridge pipe
      │   └─ tray
      │       ├─ TrayApp.cpp             - Tray application functions
      │       └─ TrayApp.h               - Tray Application header
@@ -66,6 +69,8 @@ michaels-node-win-app
          ├─ WindowsPlatform.cpp         - Windows specific functions
          ├─ WindowsPlatform.h           - Header for windows specific functions
          └─ WinHandles.h                - RAII wrappers for Windows handles
+tools/
+   └─ serial_bridge_client.py       - Test client for the serial bridge pipe (see Serial bridge pipe section)
 ```
 
 ## Architecture ##
@@ -149,7 +154,7 @@ This project was developed on a Win 11 Pro CoreStation Node
 
 
 ### Debug output
-Only RC builds write serial output to `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`
+RC builds write all log output to `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`. GA builds only write messages tagged `ERROR`, `WARNING`, or `FATAL` to the same file -- routine/verbose messages are suppressed.
 
 ### Tray helper (interactive mode)
 - When the app runs interactively (StartServiceCtrlDispatcher fails), a tray icon is created using the Windows notification area.
@@ -172,6 +177,18 @@ Only RC builds write serial output to `C:\ProgramData\ahk\node-win-app.log` via 
   $writer.Dispose(); $pipe.Dispose()
   ```
 - Tooltip format: `Host: <hostname> | IP: <ip> | Up: <uptime>`.
+
+### Serial bridge pipe
+- A second named pipe, `\\.\pipe\corestation_serial_bridge`, lets a local application forward raw bytes straight to the serial port the agent is connected to (COM1/COM3 depending on CPU model).
+- The pipe is created with a security descriptor (`D:(A;;GA;;;BA)`) restricting connection to **BUILTIN\Administrators** -- any other caller's `CreateFile` fails with access denied before a single byte is exchanged. There is no app-level secret/token.
+- Whatever bytes are written to the pipe are forwarded **as-is** (no framing, no newline added) to the live `SerialManager` connection used by the main serial worker thread -- not a separate/unopened connection.
+- Started/stopped alongside the session monitor in both interactive and service mode. Controlled by the `BUILD_SERIAL_BRIDGE_PIPE` CMake option (default `ON`, Windows only).
+- Test client: `tools/serial_bridge_client.py` (stdlib only, run from an elevated prompt):
+  ```powershell
+  python tools\serial_bridge_client.py "hello world"
+  python tools\serial_bridge_client.py --hex 41420D0A
+  python tools\serial_bridge_client.py --interactive
+  ```
 
 
 ### To build
@@ -357,6 +374,8 @@ To enable pre-commit checks I created this file
 ### Future development
 
 The tray helper app (`TrayApp.cpp/h`) is implemented and communicates with the service via a named pipe (`\\.\pipe\corestation_tray`). See the **Tray helper** section above for usage details.
+
+The serial bridge pipe (`SerialBridgePipe.cpp/h`) lets another local admin-elevated app forward raw bytes to the serial port via `\\.\pipe\corestation_serial_bridge`. See the **Serial bridge pipe** section above for usage details.
 
 The first development version (tag `2025.4.1-adhoc1`) was a pure tray app before it was converted to a Windows service.
 

@@ -67,6 +67,9 @@ Focussed on bringing debian build up-to-date
 - Wired up ServiceManager's service control handler (was a no-op stub) and MetricsCollector's cache invalidation/disable controls (previously no-ops)
 - Fixed TrayApp tooltip truncation using byte size instead of character count, and hardened named pipe thread against a missing stop event
 - build.sh now links SerialManager.cpp and 3kcheck.cpp, fixing undefined reference link errors
+- Fixed serial worker thread exiting permanently if the serial port wasn't present at startup, instead of retrying as documented
+- Brought LinuxPlatform serial handling in line with the above fixes (fd leak on termios setup failure, hardcoded baud rate, missing reconnect logic, syslog severity)
+- Added authenticated named-pipe bridge (\\.\pipe\corestation_serial_bridge) letting a local admin-elevated app forward raw bytes to the serial port; ACL-restricted to BUILTIN\Administrators
 
 
 20.26.5.1_GA

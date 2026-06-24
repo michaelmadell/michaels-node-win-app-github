@@ -92,6 +92,7 @@ private:
     static constexpr int SERIAL_RETRY_DELAY_MS = 5000;
     std::string lastSerialPortName_;
     int lastSerialBaudRate_ = 115200;
+    SerialBridgeHandler serial_bridge_handler_;
 
     // Callbacks
     VoidCallback on_start_callback;
