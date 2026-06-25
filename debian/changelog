@@ -1,3 +1,10 @@
+corestationhxagent (2026.6.1) jammy; urgency=medium
+
+  * Packaging: bump debhelper compat to 13, Standards-Version to 4.6.2.
+  * Packaging: add Homepage field.
+
+ -- Michael Madell <michael.madell@amulethotkey.com>  Thu, 25 Jun 2026 00:00:00 +0000
+
 corestationhxagent (2026.5.1) jammy; urgency=medium
 
   * Sync with Windows build 20.26.5.1_rc3.

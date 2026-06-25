@@ -2,12 +2,13 @@ Source: corestationhxagent
 Section: utils
 Priority: optional
 Maintainer: Michael Madell <michael.madell@amulethotkey.com>
-Build-Depends: debhelper (>= 11), cmake, dh-cmake, pkg-config, libdbus-1-dev
-Standards-Version: 4.1.3
+Build-Depends: debhelper (>= 13), cmake, dh-cmake, pkg-config, libdbus-1-dev
+Standards-Version: 4.6.2
+Homepage: https://amulethotkey.com
 
 Package: corestationhxagent
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, network-manager, libdbus-1-3
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, network-manager, libdbus-1-3, intel-gpu-tools
 Description: CoreStation HX Agent
  This agent monitors system status and reports it over a serial connection.
  It is designed to run as a background service.
