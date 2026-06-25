@@ -16,6 +16,7 @@
 // Forward declarations for modules
 class TrayApp;
 class SessionMonitor;
+class SerialBridgePipe;
 
 /**
  * @brief Windows-specific platform implementation
@@ -38,6 +39,9 @@ public:
     std::string getOsBuild() override;
     
     void logMessage(const std::string& message) override;
+
+    void setSerialBridgeHandler(SerialBridgeHandler handler) override;
+    bool forwardSerialBridgeMessage(const std::string& data) override;
 
     int getCpuUsagePercent() override;
     int getRamUsagePercent() override;
@@ -121,6 +125,11 @@ private:
     std::unique_ptr<SessionMonitor> session_monitor_;
 #endif
 
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    std::unique_ptr<SerialBridgePipe> serial_bridge_pipe_;
+#endif
+    SerialBridgeHandler serial_bridge_handler_;
+
     // Thread safety
     std::mutex platformMutex_;
 
@@ -157,6 +166,8 @@ private:
     void stopTrayApp();
     void startSessionMonitor();
     void stopSessionMonitor();
+    void startSerialBridgePipe();
+    void stopSerialBridgePipe();
 
     // Spawn a tray helper process in the active user session (called when
     // running as a Session 0 service where direct tray creation is invisible).

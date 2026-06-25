@@ -306,6 +306,10 @@ void serialThread() {
         }
     );
 
+    platform->setSerialBridgeHandler([](const std::string& data) {
+        return serialManager && serialManager->Write(data);
+    });
+
     if (!serialManager->Open(portName, 115200)) {
         std::cerr << "[DEBUG] FATAL: serialManager->Open() returned false. Thread is exiting." << std::endl;
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);

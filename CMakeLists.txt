@@ -12,6 +12,7 @@ option(BUILD_METRICS "Build with metric support" OFF)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
 option(BUILD_TRAY_APP "Build with system tray application (Windows only)" ON)
 option(BUILD_REGEDIT "Build with registry editing components (Windows only)" OFF)
+option(BUILD_SERIAL_BRIDGE_PIPE "Build with named-pipe bridge for external apps to forward bytes to the serial port (Windows only)" OFF)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
@@ -175,6 +176,12 @@ if(WIN32)
             src/modules/regedits/Regedit.cpp
         )
     endif()
+
+    if(BUILD_SERIAL_BRIDGE_PIPE)
+        list(APPEND MODULE_SOURCES
+            src/modules/serialpipe/SerialBridgePipe.cpp
+        )
+    endif()
 elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES
         src/platform/LinuxPlatform.cpp
@@ -208,6 +215,10 @@ if(WIN32)
     if(BUILD_REGEDIT)
         list(APPEND HEADER_FILES src/modules/regedits/Regedit.h)
         endif()
+
+    if(BUILD_SERIAL_BRIDGE_PIPE)
+        list(APPEND HEADER_FILES src/modules/serialpipe/SerialBridgePipe.h)
+    endif()
 endif()
 
 # Create Executable
@@ -252,6 +263,10 @@ endif()
 
 if(BUILD_REGEDIT AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_REGEDIT)
+endif()
+
+if(BUILD_SERIAL_BRIDGE_PIPE AND WIN32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SERIAL_BRIDGE_PIPE)
 endif()
 
 # Compiler Flags

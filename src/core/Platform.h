@@ -10,6 +10,7 @@ using PowerStateCallback = std::function<void(const std::string&)>;
 using SessionStateCallback = std::function<void(const std::string&)>;
 using VoidCallback = std::function<void()>;
 using StringCallback = std::function<void(const std::string&)>;
+using SerialBridgeHandler = std::function<bool(const std::string&)>;
 
 class Platform{
     public:
@@ -23,6 +24,12 @@ class Platform{
     virtual std::string getOsBuild() = 0;
 
     virtual void logMessage(const std::string& message) = 0;
+
+    // Lets main.cpp's SerialManager (the actual owner of the serial
+    // connection) register a write handler, so external bridges like
+    // SerialBridgePipe reach the connection actually in use.
+    virtual void setSerialBridgeHandler(SerialBridgeHandler handler) { (void)handler; }
+    virtual bool forwardSerialBridgeMessage(const std::string& data) { (void)data; return false; }
 
     virtual int getCpuUsagePercent() = 0;
     virtual int getRamUsagePercent() = 0;

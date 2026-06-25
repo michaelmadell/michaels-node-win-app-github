@@ -37,6 +37,10 @@
 
 #include "../modules/session/SessionMonitor.h"
 
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+#include "../modules/serialpipe/SerialBridgePipe.h"
+#endif
+
 #include <userenv.h>
 #pragma comment(lib, "userenv.lib")
 
@@ -168,6 +172,7 @@ WindowsPlatform::WindowsPlatform()
 WindowsPlatform::~WindowsPlatform()
 {
     stopSessionMonitor();
+    stopSerialBridgePipe();
 }
 
 int WindowsPlatform::run(
@@ -234,6 +239,7 @@ int WindowsPlatform::run(
 
     logMessage("Running in interactive mode.");
     startSessionMonitor();
+    startSerialBridgePipe();
 #ifdef ENABLE_TRAY_APP
     startTrayApp();
 #endif
@@ -246,6 +252,7 @@ int WindowsPlatform::run(
 #ifdef ENABLE_TRAY_APP
     stopTrayApp();
 #endif
+    stopSerialBridgePipe();
     return 0;
 }
 
@@ -377,6 +384,24 @@ void WindowsPlatform::stopSessionMonitor() {
     if (session_monitor_) {
         session_monitor_->Stop();
         session_monitor_.reset();
+    }
+#endif
+}
+
+void WindowsPlatform::startSerialBridgePipe() {
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    if (!serial_bridge_pipe_) {
+        serial_bridge_pipe_ = std::make_unique<SerialBridgePipe>(this);
+        serial_bridge_pipe_->Start();
+    }
+#endif
+}
+
+void WindowsPlatform::stopSerialBridgePipe() {
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    if (serial_bridge_pipe_) {
+        serial_bridge_pipe_->Stop();
+        serial_bridge_pipe_.reset();
     }
 #endif
 }
@@ -718,6 +743,17 @@ std::string WindowsPlatform::getOsBuild()
     version << rovi.dwMajorVersion << "." << rovi.dwMinorVersion << "." << rovi.dwBuildNumber;
     
     return version.str();
+}
+
+void WindowsPlatform::setSerialBridgeHandler(SerialBridgeHandler handler) {
+    serial_bridge_handler_ = std::move(handler);
+}
+
+bool WindowsPlatform::forwardSerialBridgeMessage(const std::string& data) {
+    if (serial_bridge_handler_) {
+        return serial_bridge_handler_(data);
+    }
+    return false;
 }
 
 void WindowsPlatform::showMessageDialog(const std::string& title, const std::string& message) {
@@ -1242,6 +1278,7 @@ HANDLE WindowsPlatform::getStopEvent()
 void WindowsPlatform::startService()
 {
     startSessionMonitor();
+    startSerialBridgePipe();
 #ifdef ENABLE_TRAY_APP
     startTrayApp();
 #endif
@@ -1259,6 +1296,7 @@ void WindowsPlatform::stopService(const std::string& stopReason)
     logMessage("Service stop requested: " + stopReason);
     reportStatus(SERVICE_STOP_PENDING, NO_ERROR, 15000);
     stopSessionMonitor();
+    stopSerialBridgePipe();
 #ifdef ENABLE_TRAY_APP
     stopTrayApp();
 #endif
