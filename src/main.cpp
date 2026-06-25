@@ -210,7 +210,25 @@ void processIncomingCommand(const std::string& command) {
         std::string message = command.substr(prefix.size());
         platform->logMessage("Received C2A Command: " + message);
         std::cout << "[RX] Received C2A Command: " << message << std::endl;
-        platform->showMessageDialog("Command from BMC", message);
+
+        // Sample c2a command dispatch. Add new commands here; anything that
+        // doesn't match a known command falls back to the original behavior
+        // of showing it as a message dialog.
+        if (message == "ping") {
+            sendLineToBmc("pong");
+        }
+        else if (message == "status") {
+            sendLineToBmc("status, cpu=" + std::to_string(platform->getCpuUsagePercent()) + "%, "
+                + "ram=" + std::to_string(platform->getRamUsagePercent()) + "%, "
+                + "uptime=" + platform->getSystemUptime());
+        }
+        else if (message == "shutdown") {
+            platform->logMessage("Received shutdown command from BMC. Initiating shutdown.");
+            platform->shutdownSystem();
+        }
+        else {
+            platform->showMessageDialog("Command from BMC", message);
+        }
     }
     else {
         platform->logMessage("Received: " + command);
