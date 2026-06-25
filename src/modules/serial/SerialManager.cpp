@@ -81,13 +81,15 @@ bool SerialManager::Open(const std::string& portName, int baudrate) {
 #else
     int fd = open(portName.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
-        std::cerr << "Error opening serial port " << portName << std::endl;
+        std::cerr << "Error opening serial port " << portName
+            << ": " << strerror(errno) << " (errno " << errno << ")" << std::endl;
         return false;
     }
 
     struct termios tty;
     if (tcgetattr(fd, &tty) != 0) {
-        std::cerr << "Error getting termios attributes" << std::endl;
+        std::cerr << "Error getting termios attributes for " << portName
+            << ": " << strerror(errno) << " (errno " << errno << ")" << std::endl;
         close(fd);
         return false;
     }
@@ -110,7 +112,8 @@ bool SerialManager::Open(const std::string& portName, int baudrate) {
     tty.c_cc[VTIME] = 0;
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        std::cerr << "Error setting termios attributes" << std::endl;
+        std::cerr << "Error setting termios attributes for " << portName
+            << ": " << strerror(errno) << " (errno " << errno << ")" << std::endl;
         close(fd);
         return false;
     }
