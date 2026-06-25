@@ -338,7 +338,7 @@ if(WIN32)
 else()
     set(CPACK_GENERATOR "DEB")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Your Name <youremail@example.com>")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "network-manager, libdbus-1-3")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "network-manager, libdbus-1-3, intel-gpu-tools")
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 endif()
 

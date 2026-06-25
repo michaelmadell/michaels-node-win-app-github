@@ -14,6 +14,7 @@
 #include <thread>
 #include <stdexcept>
 #include <cmath>
+#include <cctype>
 
 // Linux Headers
 #include <atomic>
@@ -443,8 +444,46 @@ std::string LinuxPlatform::getFreeDiskSpaceGB(const std::string& drivePath) {
 }
 
 float LinuxPlatform::getDiskQueueLength() {
-    // Placeholder implementation
-    return 0.0f;
+    // Sum the "in_flight" (field 12) column of /proc/diskstats across whole-disk
+    // block devices only (skip partitions and loop/ram devices) as an analog to
+    // Windows' "Avg. Disk Queue Length" counter.
+    std::ifstream file("/proc/diskstats");
+    std::string line;
+    float total_in_flight = 0.0f;
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string major, minor, devName;
+        unsigned long long fields[10] = {0};
+
+        ss >> major >> minor >> devName;
+        for (int i = 0; i < 10; i++) {
+            if (!(ss >> fields[i])) break;
+        }
+
+        if (devName.rfind("loop", 0) == 0 || devName.rfind("ram", 0) == 0) {
+            continue;
+        }
+
+        // Skip partitions: sdXN, vdXN, hdXN have a trailing digit after the
+        // letters; nvme/mmcblk whole-disks already end in a digit, so only
+        // skip those with a partition suffix ("p<N>" or "n<N>p<N>").
+        bool isPartition = false;
+        if (devName.rfind("nvme", 0) == 0 || devName.rfind("mmcblk", 0) == 0) {
+            isPartition = (devName.find('p', devName.find_first_of("0123456789")) != std::string::npos);
+        } else {
+            isPartition = !devName.empty() && std::isdigit(static_cast<unsigned char>(devName.back()));
+        }
+        if (isPartition) {
+            continue;
+        }
+
+        // fields[8] is in_flight (the 12th whitespace-separated field overall:
+        // major, minor, name, then 9 read/write stat fields before in_flight).
+        total_in_flight += (float)fields[8];
+    }
+
+    return total_in_flight;
 }
 
 void LinuxPlatform::updatePdhMetrics() {
@@ -509,9 +548,35 @@ float LinuxPlatform::getGpuUsagePercent() {
         }
     }
 
-    // 2. Fallback for Intel Integrated Graphics (guaranteed present, but usage is complex to track)
-    // Returning 0.0f is a safe way to prevent crashes when the information is unavailable through simple means.
-    logMessage("GPU usage (percent) requested. Returning 0.0f as integrated Intel graphics usage is not tracked via generic commands.");
+    // 2. AMD: amdgpu exposes a direct busy-percent sysfs attribute.
+    std::string amdgpu_module = executeCommand("lsmod | grep amdgpu");
+    if (!amdgpu_module.empty()) {
+        std::string busy = executeCommand(
+            "cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | head -n 1");
+        if (!busy.empty()) {
+            try {
+                return std::stof(busy);
+            } catch (...) {
+                return 0.0f;
+            }
+        }
+    }
+
+    // 3. Intel integrated graphics: query via intel_gpu_top (igt-gpu-tools, a required
+    // package for the .deb build). Capture one JSON sample and read the Render/3D engine
+    // busy percentage.
+    std::string intel_busy = executeCommand(
+        "timeout 2 intel_gpu_top -J -s 1000 -o - 2>/dev/null "
+        "| grep -A3 '\"Render/3D' | grep -m1 '\"busy\"' | grep -oE '[0-9]+\\.?[0-9]*'");
+    if (!intel_busy.empty()) {
+        try {
+            return std::stof(intel_busy);
+        } catch (...) {
+            return 0.0f;
+        }
+    }
+
+    logMessage("GPU usage (percent) requested. Returning 0.0f: no NVIDIA/AMD/Intel usage source available.");
     return 0.0f;
 }
 std::string LinuxPlatform::getHighRamProcesses() {
