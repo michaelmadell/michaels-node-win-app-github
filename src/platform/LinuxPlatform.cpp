@@ -677,6 +677,26 @@ std::string LinuxPlatform::getHostname() {
 }
 
 std::string LinuxPlatform::getLoggedInUser() {
+    // `who` filters on tty/pts naming, but graphical sessions (X via a
+    // display manager, Wayland seats) often show up with a tty field like
+    // ":0" instead of "tty*"/"pts/*", so the filter misses them and this
+    // always returned "none" on graphical logins. loginctl reports the
+    // session owner regardless of session type, so prefer that.
+    std::string sessionId = executeCommand(
+        "loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}' | head -n 1"
+    );
+    sessionId.erase(sessionId.find_last_not_of("\n\r \t") + 1);
+
+    if (!sessionId.empty()) {
+        std::string name = executeCommand(
+            "loginctl show-session " + sessionId + " -p Name --value 2>/dev/null"
+        );
+        name.erase(name.find_last_not_of("\n\r \t") + 1);
+        if (!name.empty()) {
+            return name;
+        }
+    }
+
     const char* cmd = "who | awk '$2~/^tty|pts/ {print $1}' | sort -u | head -n 1";
     char buffer[128] = {0};
     std::string result = "none";
