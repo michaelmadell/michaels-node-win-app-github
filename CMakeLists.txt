@@ -330,7 +330,7 @@ endif()
 set(CPACK_PACKAGE_NAME "corestationhxagent")
 set(CPACK_PACKAGE_VENDOR "Amulet Hotkey Ltd")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CoreStation Host Agent for serial monitoring")
-set(CPACK_PACKAGE_VERSION ${APP_VERSION_STRING})
+set(CPACK_PACKAGE_VERSION "20.26.6.1")
 
 if(WIN32)
     set(CPACK_GENERATOR "WIX")
