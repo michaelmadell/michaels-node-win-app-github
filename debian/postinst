@@ -4,10 +4,13 @@ set -e
 
 case "$1" in
     configure)
-        echo "    /---\/---\/---\    "
-        echo "    |   ||   ||   |    "
-        echo "    \---/\---/\---/    "
-        echo "   Amulet Hotkey Ltd   "
+        # apt captures maintainer-script stdout for its own progress
+        # display, so plain echo never reaches the terminal under
+        # `apt install`. Debian policy recommends stderr for this output.
+        echo "    /---\/---\/---\    " >&2
+        echo "    |   ||   ||   |    " >&2
+        echo "    \---/\---/\---/    " >&2
+        echo "   Amulet Hotkey Ltd   " >&2
 
         # Pick up unit file changes shipped in this version before
         # enabling/restarting, otherwise systemd keeps using its cached copy.
@@ -15,14 +18,14 @@ case "$1" in
             systemctl daemon-reload >/dev/null 2>&1 || true
         fi
 
-        echo "Enabling CoreStationHXAgent Service..."
+        echo "Enabling CoreStationHXAgent Service..." >&2
 
         if [ -x "/usr/bin/deb-systemd-helper" ]; then
             deb-systemd-helper unmask CoreStationHXAgent.service >/dev/null || true
             deb-systemd-helper enable CoreStationHXAgent.service || true
         fi
 
-        echo "Starting CoreStationHXAgent Service..."
+        echo "Starting CoreStationHXAgent Service..." >&2
 
         if [ -x "/usr/bin/deb-systemd-invoke" ]; then
             deb-systemd-invoke restart CoreStationHXAgent.service >/dev/null || true
@@ -30,7 +33,7 @@ case "$1" in
             systemctl restart CoreStationHXAgent.service >/dev/null 2>&1 || true
         fi
 
-        echo "--- postinst script finished ---"
+        echo "--- postinst script finished ---" >&2
     ;;
 esac
 
