@@ -125,15 +125,20 @@ void dbusThread() {
         return;
     }
 
-    const char* match_rule = "type='signal',interface='org.freedesktop.login1.Session',member='Unlock'";
-    const char* match_rule2 = "type='signal',interface='org.freedesktop.login1.Session',member='Lock'";
+    // Lock/Unlock signals are only emitted by logind when something calls
+    // back into logind itself (e.g. loginctl lock-session). Many desktop
+    // screen lockers (GNOME, KDE, light-locker, etc.) lock the screen
+    // locally without notifying logind, so the Lock signal is unreliable.
+    // The LockedHint property on the session object is kept in sync by
+    // logind regardless of how the screen got locked/unlocked, so watch
+    // PropertiesChanged for it instead.
+    const char* match_rule = "type='signal',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='org.freedesktop.login1.Session'";
     const char* match_rule3 = "type='signal',interface='org.freedesktop.login1.Manager',member='SessionNew'";
     const char* match_rule4 = "type='signal',interface='org.freedesktop.login1.Manager',member='SessionRemoved'";
     dbus_bus_add_match(conn, match_rule, &err);
-    dbus_bus_add_match(conn, match_rule2, &err);
     dbus_bus_add_match(conn, match_rule3, &err);
     dbus_bus_add_match(conn, match_rule4, &err);
-    
+
     syslog(LOG_INFO, "D-Bus thread started and listening for session signals.");
 
     while (!g_terminate.load()) {
@@ -141,10 +146,42 @@ void dbusThread() {
         DBusMessage* msg = dbus_connection_pop_message(conn);
         if (msg == NULL) continue;
 
-        if (dbus_message_is_signal(msg, "org.freedesktop.login1.Session", "Lock")) {
-            if (g_session_callback) g_session_callback("7");
-        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Session", "Unlock")) {
-            if (g_session_callback) g_session_callback("8");
+        if (dbus_message_is_signal(msg, "org.freedesktop.DBus.Properties", "PropertiesChanged")) {
+            DBusMessageIter args;
+            if (dbus_message_iter_init(msg, &args) &&
+                dbus_message_iter_get_arg_type(&args) == DBUS_TYPE_STRING) {
+                const char* changedInterface = nullptr;
+                dbus_message_iter_get_basic(&args, &changedInterface);
+
+                if (changedInterface && strcmp(changedInterface, "org.freedesktop.login1.Session") == 0 &&
+                    dbus_message_iter_next(&args) &&
+                    dbus_message_iter_get_arg_type(&args) == DBUS_TYPE_ARRAY) {
+                    DBusMessageIter dictIter;
+                    dbus_message_iter_recurse(&args, &dictIter);
+
+                    while (dbus_message_iter_get_arg_type(&dictIter) == DBUS_TYPE_DICT_ENTRY) {
+                        DBusMessageIter entryIter;
+                        dbus_message_iter_recurse(&dictIter, &entryIter);
+
+                        const char* propName = nullptr;
+                        dbus_message_iter_get_basic(&entryIter, &propName);
+
+                        if (propName && strcmp(propName, "LockedHint") == 0 &&
+                            dbus_message_iter_next(&entryIter) &&
+                            dbus_message_iter_get_arg_type(&entryIter) == DBUS_TYPE_VARIANT) {
+                            DBusMessageIter variantIter;
+                            dbus_message_iter_recurse(&entryIter, &variantIter);
+
+                            if (dbus_message_iter_get_arg_type(&variantIter) == DBUS_TYPE_BOOLEAN) {
+                                dbus_bool_t lockedHint = FALSE;
+                                dbus_message_iter_get_basic(&variantIter, &lockedHint);
+                                if (g_session_callback) g_session_callback(lockedHint ? "7" : "8");
+                            }
+                        }
+                        dbus_message_iter_next(&dictIter);
+                    }
+                }
+            }
         } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "SessionNew")) {
             if (g_session_callback) g_session_callback("5");
         } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "SessionRemoved")) {
