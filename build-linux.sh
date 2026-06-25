@@ -15,14 +15,36 @@ BUILD_DIR="build"
 CONFIG="Release"
 OUTPUT_EXE_FILE="$BUILD_DIR/bin/CoreStationHXAgent"
 
+if ! command -v cmake >/dev/null 2>&1; then
+    echo "ERROR: cmake not found. Installing..."
+    sudo apt install cmake -y
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to install cmake. Please install it manually."
+        exit 1
+    fi
+fi
+
 echo "[1/4] Selecting compiler..."
 CC="${CC:-gcc}"
 CXX="${CXX:-g++}"
 if ! command -v "$CXX" >/dev/null 2>&1; then
-    echo "ERROR: $CXX not found. Install build-essential (sudo apt install build-essential cmake libdbus-1-dev)"
-    exit 1
+    echo "ERROR: $CXX not found. Installing..."
+    sudo apt install build-essential -y
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to install $CXX. Please install it manually."
+        exit 1
+    fi
 fi
 echo "    Using $($CXX --version | head -n1)"
+
+if ! command -v dbus-1 >/dev/null 2>&1; then
+    echo "ERROR: dbus-1 not found. Installing..."
+    sudo apt install libdbus-1-dev -y
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to install libdbus-1-dev. Please install it manually."
+        exit 1
+    fi
+fi
 
 echo "[2/4] Configuring CMake (build dir: $BUILD_DIR)..."
 cmake -S . -B "$BUILD_DIR" \
