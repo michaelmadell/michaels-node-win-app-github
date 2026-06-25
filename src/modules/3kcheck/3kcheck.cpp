@@ -1,13 +1,29 @@
-#ifdef _WIN32
-
 #include "3kcheck.h"
-#include <intrin.h>
 #include <string>
 #include <array>
 #include <vector>
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+
+#if defined(_WIN32)
+  #include <intrin.h>
+  inline void QueryCPUID(int regs[4], int leaf) {
+    __cpuid(regs, leaf);
+  }
+#elif defined(__linux__)
+  #include <cpuid.h>
+  inline void QueryCPUID(int regs[4], int leaf) {
+    unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
+    __cpuid(leaf, eax, ebx, ecx, edx);
+    regs[0] = eax;
+    regs[1] = ebx;
+    regs[2] = ecx;
+    regs[3] = edx;
+  }
+#else
+  #error "Unsupported Platform"
+#endif
 
 namespace {
 
@@ -41,7 +57,7 @@ CPUInfo GetCpuInfo() {
     std::array<int, 4> regs = {};
 
     // Vendor string comes from CPUID leaf 0: EBX, EDX, ECX.
-    __cpuid(regs.data(), 0);
+    QueryCPUID(regs.data(), 0);
     std::array<char, 13> vendor = {};
     std::memcpy(vendor.data(), &regs[1], sizeof(int));
     std::memcpy(vendor.data() + 4, &regs[3], sizeof(int));
@@ -49,14 +65,14 @@ CPUInfo GetCpuInfo() {
     info.manufacturer = trim(std::string(vendor.data()));
 
     // Brand string is spread across leaves 0x80000002..0x80000004.
-    __cpuid(regs.data(), 0x80000000);
+    QueryCPUID(regs.data(), 0x80000000);
     const unsigned int maxExtendedLeaf = static_cast<unsigned int>(regs[0]);
     if (maxExtendedLeaf >= 0x80000004) {
         std::array<char, 49> brand = {};
         char* writePtr = brand.data();
 
         for (int leaf = 0x80000002; leaf <= 0x80000004; ++leaf) {
-            __cpuid(regs.data(), leaf);
+            QueryCPUID(regs.data(), leaf);
             std::memcpy(writePtr, regs.data(), sizeof(regs));
             writePtr += sizeof(regs);
         }
@@ -81,14 +97,12 @@ bool IsHX2KCPU(CPUInfo* info) {
         cpuInfo = GetCpuInfo();
     }
 
-    bool isHx2k = true;
+    bool isHx2k = false;
 
     for (const std::string& hx2kCpu : hx2kCpus) {
         if (cpuInfo.model.find(hx2kCpu) != std::string::npos) {
             isHx2k = true;
             break;
-        } else { 
-            isHx2k = false;
         }
     }
 
@@ -98,6 +112,3 @@ bool IsHX2KCPU(CPUInfo* info) {
 
     return isHx2k;
 }
-
-
-#endif
