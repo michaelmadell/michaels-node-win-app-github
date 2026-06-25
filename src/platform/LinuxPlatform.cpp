@@ -682,19 +682,20 @@ std::string LinuxPlatform::getLoggedInUser() {
     // ":0" instead of "tty*"/"pts/*", so the filter misses them and this
     // always returned "none" on graphical logins. loginctl reports the
     // session owner regardless of session type, so prefer that.
-    std::string sessionId = executeCommand(
-        "loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}' | head -n 1"
+    //
+    // After logout the display manager spawns a fresh greeter session
+    // (Class=greeter, owned by gdm/lightdm/sddm etc). Just taking the
+    // first session in the list picked up that service account instead
+    // of "none", so filter to Class=user sessions only.
+    std::string name = executeCommand(
+        "for s in $(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}'); do "
+        "c=$(loginctl show-session \"$s\" -p Class --value 2>/dev/null); "
+        "if [ \"$c\" = \"user\" ]; then loginctl show-session \"$s\" -p Name --value 2>/dev/null; break; fi; "
+        "done"
     );
-    sessionId.erase(sessionId.find_last_not_of("\n\r \t") + 1);
-
-    if (!sessionId.empty()) {
-        std::string name = executeCommand(
-            "loginctl show-session " + sessionId + " -p Name --value 2>/dev/null"
-        );
-        name.erase(name.find_last_not_of("\n\r \t") + 1);
-        if (!name.empty()) {
-            return name;
-        }
+    name.erase(name.find_last_not_of("\n\r \t") + 1);
+    if (!name.empty()) {
+        return name;
     }
 
     const char* cmd = "who | awk '$2~/^tty|pts/ {print $1}' | sort -u | head -n 1";
