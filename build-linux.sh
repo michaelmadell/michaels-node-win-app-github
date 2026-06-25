@@ -37,8 +37,17 @@ if ! command -v "$CXX" >/dev/null 2>&1; then
 fi
 echo "    Using $($CXX --version | head -n1)"
 
-if ! command -v dbus-1 >/dev/null 2>&1; then
-    echo "ERROR: dbus-1 not found. Installing..."
+if ! command -v pkg-config >/dev/null 2>&1; then
+    echo "ERROR: pkg-config not found. Installing..."
+    sudo apt install pkg-config -y
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to install pkg-config. Please install it manually."
+        exit 1
+    fi
+fi
+
+if ! pkg-config --exists dbus-1 2>/dev/null; then
+    echo "ERROR: dbus-1 dev package not found. Installing..."
     sudo apt install libdbus-1-dev -y
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to install libdbus-1-dev. Please install it manually."
