@@ -2,15 +2,26 @@
 # A "noisy" version for debugging
 set -e
 
+_say() {
+    # apt's fancy progress UI runs dpkg behind its own pty and captures
+    # both stdout and stderr to redraw its progress pane, so neither
+    # plain echo nor `>&2` reliably reaches the terminal under `apt
+    # install`. /dev/tty is the actual controlling terminal, separate
+    # from that pty, so write there directly; fall back to stderr for
+    # non-interactive installs that have no controlling tty.
+    if [ -w /dev/tty ] 2>/dev/null; then
+        echo "$1" > /dev/tty 2>/dev/null || echo "$1" >&2
+    else
+        echo "$1" >&2
+    fi
+}
+
 case "$1" in
     configure)
-        # apt captures maintainer-script stdout for its own progress
-        # display, so plain echo never reaches the terminal under
-        # `apt install`. Debian policy recommends stderr for this output.
-        echo "    /---\/---\/---\    " >&2
-        echo "    |   ||   ||   |    " >&2
-        echo "    \---/\---/\---/    " >&2
-        echo "   Amulet Hotkey Ltd   " >&2
+        _say "    /---\/---\/---\    "
+        _say "    |   ||   ||   |    "
+        _say "    \---/\---/\---/    "
+        _say "   Amulet Hotkey Ltd   "
 
         # Pick up unit file changes shipped in this version before
         # enabling/restarting, otherwise systemd keeps using its cached copy.
@@ -18,14 +29,14 @@ case "$1" in
             systemctl daemon-reload >/dev/null 2>&1 || true
         fi
 
-        echo "Enabling CoreStationHXAgent Service..." >&2
+        _say "Enabling CoreStationHXAgent Service..."
 
         if [ -x "/usr/bin/deb-systemd-helper" ]; then
             deb-systemd-helper unmask CoreStationHXAgent.service >/dev/null || true
             deb-systemd-helper enable CoreStationHXAgent.service || true
         fi
 
-        echo "Starting CoreStationHXAgent Service..." >&2
+        _say "Starting CoreStationHXAgent Service..."
 
         if [ -x "/usr/bin/deb-systemd-invoke" ]; then
             deb-systemd-invoke restart CoreStationHXAgent.service >/dev/null || true
@@ -33,7 +44,7 @@ case "$1" in
             systemctl restart CoreStationHXAgent.service >/dev/null 2>&1 || true
         fi
 
-        echo "--- postinst script finished ---" >&2
+        _say "--- postinst script finished ---"
     ;;
 esac
 
