@@ -10,7 +10,7 @@ Regedit::Regedit(WindowsPlatform* platform) : platform_(platform) {
 Regedit::~Regedit() {
 }
 
-bool Regedit::Read(std::string path, std::string value) {
+bool Regedit::Read(std::string path, std::string& value) {
 	HKEY hKey;
 
 	std::string subKey, valueName;
@@ -26,7 +26,7 @@ bool Regedit::Read(std::string path, std::string value) {
 		return false;
 	}
 	char buffer[512];
-	DWORD bufferSize = sizeof(buffer);
+	DWORD bufferSize = sizeof(buffer) - 1;
 	DWORD type;
 	LONG result = RegQueryValueExA(hKey, valueName.c_str(), NULL, &type, (LPBYTE)buffer, &bufferSize);
 	RegCloseKey(hKey);
@@ -34,11 +34,13 @@ bool Regedit::Read(std::string path, std::string value) {
 		platform_->logMessage("ERROR: Failed to read registry value or value is not a string");
 		return false;
 	}
-	platform_->logMessage("Registry Read Success: " + std::string(buffer));
+	buffer[bufferSize] = '\0';
+	value = buffer;
+	platform_->logMessage("Registry Read Success: " + value);
 	return true;
 }
 
-bool Regedit::Write(std::string path, std::string value, DWORD /*type*/) {
+bool Regedit::Write(std::string path, std::string value, DWORD type) {
 	HKEY hKey;
 	std::string subKey, valueName;
 	size_t lastBackslash = path.find_last_of('\\');
@@ -79,7 +81,8 @@ bool Regedit::Write(std::string path, std::string value, DWORD /*type*/) {
 		return false;
 	}
 
-	LONG result = RegSetValueExA(hKey, valueName.c_str(), 0, REG_SZ, (const BYTE*)value.c_str(), (DWORD)(value.size() + 1));
+	const DWORD regType = type ? type : REG_SZ;
+	LONG result = RegSetValueExA(hKey, valueName.c_str(), 0, regType, (const BYTE*)value.c_str(), (DWORD)(value.size() + 1));
 	RegCloseKey(hKey);
 	if (result != ERROR_SUCCESS) {
 		platform_->logMessage("ERROR: Failed to write registry value");
