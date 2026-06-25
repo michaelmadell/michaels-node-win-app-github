@@ -54,6 +54,8 @@ public:
 
     void showMessageDialog(const std::string& title, const std::string& message) override;
 
+    void shutdownSystem() override;
+
     int run(
         int argc, char* argv[],
         VoidCallback on_start,

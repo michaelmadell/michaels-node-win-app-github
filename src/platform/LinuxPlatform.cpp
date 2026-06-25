@@ -234,6 +234,7 @@ public:
     
     // --- Utility Methods (Need Stubs or Implementation) ---
     void showMessageDialog(const std::string& title, const std::string& message) override;
+    void shutdownSystem() override;
 
     int run(
         int argc, char* argv[],
@@ -733,6 +734,11 @@ std::string LinuxPlatform::getCurrentSessionState() {
     }
 
     return "5";
+}
+
+void LinuxPlatform::shutdownSystem() {
+    logMessage("Shutdown requested via LinuxPlatform::shutdownSystem().");
+    executeCommand("systemctl poweroff");
 }
 
 #endif

@@ -39,6 +39,8 @@ class Platform{
 
     virtual void showMessageDialog(const std::string& title, const std::string& message) = 0;
 
+    virtual void shutdownSystem() = 0;
+
     virtual int run(
         int argc, char* argv[], 
         VoidCallback on_start,

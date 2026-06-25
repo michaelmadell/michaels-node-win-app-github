@@ -1267,4 +1267,32 @@ void WindowsPlatform::stopService(const std::string& stopReason)
     SetEvent(g_stop_event.get());
 }
 
+void WindowsPlatform::shutdownSystem()
+{
+    HANDLE hToken;
+    TOKEN_PRIVILEGES tkp;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
+        logMessage("Failed to open process token for shutdown.");
+        return;
+    }
+
+    LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid);
+    tkp.PrivilegeCount = 1;
+    tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, (PTOKEN_PRIVILEGES)NULL, 0);
+    if (GetLastError() != ERROR_SUCCESS) {
+        logMessage("Failed to adjust token privileges for shutdown.");
+        CloseHandle(hToken);
+        return;
+    }
+
+    if (!ExitWindowsEx(EWX_SHUTDOWN | EWX_FORCE, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER)) {
+        logMessage("Failed to initiate system shutdown.");
+    }
+
+    CloseHandle(hToken);
+}
+
 #endif // _WIN32
