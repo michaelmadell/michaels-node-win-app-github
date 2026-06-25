@@ -39,6 +39,8 @@
 #include <atomic>
 #include <sstream>
 #include <string>
+#include <fstream>
+#include <vector>
 #include "platform/WindowsPlatform.h"
 
 std::unique_ptr<Platform> platform;
@@ -233,7 +235,48 @@ void serialThread() {
         portName = "COM1";
     }
 #else
-    const std::string portName = "/dev/ttyS2";
+    // HX2000 boards expose AMT SOL on ttyS2; HX3000 boards on ttyS0.
+    static const std::vector<std::string> hx2kCpus = {
+        "Intel(R) Core(TM) Ultra 7 165H",
+        "Intel(R) Core(TM) Ultra 7 165U",
+        "Intel(R) Core(TM) Ultra 9 285H"
+    };
+
+    std::string modelName;
+    {
+        std::ifstream cpuinfo("/proc/cpuinfo");
+        std::string line;
+        while (std::getline(cpuinfo, line)) {
+            if (line.rfind("model name", 0) == 0) {
+                size_t colon = line.find(':');
+                if (colon != std::string::npos) {
+                    modelName = line.substr(colon + 1);
+                    size_t start = modelName.find_first_not_of(" \t");
+                    modelName = (start != std::string::npos) ? modelName.substr(start) : "";
+                }
+                break;
+            }
+        }
+    }
+
+    bool isHx2k = false;
+    for (const auto& cpu : hx2kCpus) {
+        if (modelName.find(cpu) != std::string::npos) {
+            isHx2k = true;
+            break;
+        }
+    }
+
+    std::string portName;
+    if (isHx2k) {
+        std::cout << "[DEBUG] Detected HX2000 CPU. Setting port to /dev/ttyS2..." << std::endl;
+        platform->logMessage("Detected HX2000 CPU. Setting port to /dev/ttyS2...");
+        portName = "/dev/ttyS2";
+    } else {
+        std::cout << "[DEBUG] No HX2000 CPU detected. Using /dev/ttyS0..." << std::endl;
+        platform->logMessage("No HX2000 CPU detected. Using /dev/ttyS0...");
+        portName = "/dev/ttyS0";
+    }
 #endif
 
     std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
