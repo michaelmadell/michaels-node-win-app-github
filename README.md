@@ -190,6 +190,13 @@ RC builds write all log output to `C:\ProgramData\ahk\node-win-app.log` via `Log
   python tools\serial_bridge_client.py --interactive
   ```
 
+### C2A command dispatch
+- BMC-to-Agent (C2A) commands arrive prefixed and are dispatched in `processIncomingCommand()` (`src/main.cpp`, `src/linux/main.cpp`):
+  - `ping` → replies `pong`
+  - `status` → replies with cpu/ram/uptime, e.g. `status, cpu=12%, ram=34%, uptime=2d 04h 13m 09s`
+  - `shutdown` (Windows only) → calls `platform->shutdownSystem()` to power off the node
+  - any other command → falls back to the original behavior of showing it as a message dialog
+
 
 ### To build
 - Update `version.h` with the desired release details and commit to git

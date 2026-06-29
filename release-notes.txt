@@ -70,6 +70,7 @@ Focussed on bringing debian build up-to-date
 - Fixed serial worker thread exiting permanently if the serial port wasn't present at startup, instead of retrying as documented
 - Brought LinuxPlatform serial handling in line with the above fixes (fd leak on termios setup failure, hardcoded baud rate, missing reconnect logic, syslog severity)
 - Added authenticated named-pipe bridge (\\.\pipe\corestation_serial_bridge) letting a local admin-elevated app forward raw bytes to the serial port; ACL-restricted to BUILTIN\Administrators
+- Added C2A command dispatch: BMC can now send `ping` (replies `pong`), `status` (replies with cpu/ram/uptime), and on Windows `shutdown` (initiates system shutdown); unrecognized commands still fall back to the message dialog
 
 
 20.26.5.1_GA
