@@ -724,9 +724,9 @@ std::string LinuxPlatform::getLoggedInUser() {
         result = std::string(buffer);
         result.erase(result.find_last_not_of("\n\r") + 1);
     }
+    pclose(pipe);
 
-    std::string user = executeCommand("loginctl show-session " + sessionId + " -p Name --value");
-    return user.empty() ? "none" : user;
+    return result.empty() ? "none" : result;
 }
 
 std::string LinuxPlatform::getCurrentSessionState() {

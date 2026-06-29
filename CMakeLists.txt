@@ -195,6 +195,9 @@ elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES
         src/platform/LinuxPlatform.cpp
     )
+    list(APPEND MODULE_SOURCES
+        src/modules/3kcheck/3kcheck.cpp
+    )
 endif()
 
 # Header files (for IDE organization)
@@ -346,6 +349,7 @@ elseif(UNIX AND NOT APPLE)
     if(EXISTS "${CMAKE_SOURCE_DIR}/CoreStationHXAgent.service")
         install(FILES CoreStationHXAgent.service
             DESTINATION /usr/lib/systemd/system
+            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
         )
     endif()
 endif()
@@ -361,6 +365,8 @@ if(WIN32)
     set(CPACK_WIX_UPGRADE_GUID "6c85b236-3029-4744-a467-2b56b128c6b1")
 else()
     set(CPACK_GENERATOR "DEB")
+    # Debian version strings forbid '_'; '~' is the conventional pre-release separator
+    string(REPLACE "_" "~" CPACK_PACKAGE_VERSION "${APP_VERSION_STRING}")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Madell <michael.madell@amulethotkey.com>")
     set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
         "${CMAKE_SOURCE_DIR}/debian/postinst"
