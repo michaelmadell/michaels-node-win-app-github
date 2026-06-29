@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project configuration
 project(CoreStationHXAgent
-    VERSION 20.26.5.2
+    VERSION 20.26.6.1
     DESCRIPTION "CoreStation Host Agent for serial monitoring"
     LANGUAGES CXX
 )
@@ -354,15 +354,20 @@ endif()
 set(CPACK_PACKAGE_NAME "corestationhxagent")
 set(CPACK_PACKAGE_VENDOR "Amulet Hotkey Ltd")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CoreStation Host Agent for serial monitoring")
-set(CPACK_PACKAGE_VERSION "20.26.6.1")
+set(CPACK_PACKAGE_VERSION "${APP_VERSION_STRING}")
 
 if(WIN32)
     set(CPACK_GENERATOR "WIX")
     set(CPACK_WIX_UPGRADE_GUID "6c85b236-3029-4744-a467-2b56b128c6b1")
 else()
     set(CPACK_GENERATOR "DEB")
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Your Name <youremail@example.com>")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "network-manager, libdbus-1-3, intel-gpu-tools")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Madell <michael.madell@amulethotkey.com>")
+    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+        "${CMAKE_SOURCE_DIR}/debian/postinst"
+        "${CMAKE_SOURCE_DIR}/debian/prerm"
+        "${CMAKE_SOURCE_DIR}/debian/postrm"
+    )
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "network-manager, intel-gpu-tools")
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 endif()
 
