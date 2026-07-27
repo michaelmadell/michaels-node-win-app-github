@@ -188,6 +188,7 @@ public:
     // --- Core Platform Methods (Already Implemented Down Below) ---
     std::vector<NetworkInterface> getNetworkInterfaces() override;
     std::string getHostname() override;
+    std::string getCurrentSessionState() override;
     std::string getLoggedInUser() override;
     std::string getOsVersion() override;
     std::string getOsBuild() override;
@@ -662,6 +663,27 @@ std::string LinuxPlatform::getHostname() {
     hostname[1023] = '\0';
     ::gethostname(hostname, 1023);
     return std::string(hostname);
+}
+
+std::string LinuxPlatform::getCurrentSessionState() {
+    std::string sessionId = executeCommand(
+        "loginctl list-sessions --no-legend 2>/dev/null | awk 'NR==1{print $1}'"
+    );
+
+    if (sessionId.empty()) {
+        return "unknown";
+    }
+    std::string locked = executeCommand(
+        "loginctl show-session " + sessionId + " -p LockedHint --value 2>/dev/null"
+    );
+
+    locked.erase(locked.find_last_not_of("\n\r \t") + 1);
+
+    if (locked == "yes") {
+        return "7"; // Locked
+    }
+
+    return "5";
 }
 
 std::string LinuxPlatform::getLoggedInUser() {

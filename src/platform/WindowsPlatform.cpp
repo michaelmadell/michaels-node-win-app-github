@@ -649,7 +649,7 @@ bool WindowsPlatform::readSerial(std::string &readData) {
         return false;
     }
 
-    if (hSerial == INVALID_HANDLE_VALUE) {
+    if (hSerial.get() == INVALID_HANDLE_VALUE) {
         return false;
     }
 
