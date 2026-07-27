@@ -103,3 +103,11 @@ build.sh-example
 
 .vs/
 .vscode/
+
+# Tools downloaded by generate-sbom scripts
+/tools/
+vulnerability-report.txt
+vulnerability-report.json
+
+# Debian build output
+*.deb
