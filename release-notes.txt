@@ -4,6 +4,78 @@
 CoreStation HX Agent Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+20.26.5.1_rc8
+-------------
+- fix missing tray app after reboot
+- fix double tray app after service restart
+- Made service show as "CoreStation HX Agent" In task manager
+
+
+20.26.5.1_rc7
+-------------
+- Made c2a Dialog show on user desktop
+
+
+20.25.5.1_rc6
+-------------
+- Made tray app exit and launch depending on session state, so that user can sign out then sign in and see the tray app
+
+
+20.26.5.1_rc5
+-------------
+- Added functional Tray application - Reports hostname, OS version, and LAN Addresses, not APIPA Addresses
+- Fixed missing handlers in old Tray app code
+- Set tray app launch to use the CreateProcessAsUser call so that the service can launch the tray on users session rather than system session //TODO: Add this to the c2a Handler
+- Set tray app icon to main icon for app
+
+
+20.26.5.1_rc4
+-------------
+Focussed on bringing debian build up-to-date
+- Updated changelog
+- added missing handler to linux build
+- Updated CMakeLists
+- Added partial DHCP/Static check
+- Fix debian build so it works again
+- Switch Linux build Serial from ttyUSB0 to ttyS2
+
+
+20.26.5.1_rc3
+-------------
+- Updated HX3000 check to use CPU Name, rather than NIC Presence, as not all HX3000s will have 4x NICs or E610s may be switched for something else
+
+
+20.26.5.1_rc2
+-------------
+- Fixed wrong HWID for E610
+- Made MAC Filtering use 3x pairs rather than 2 to make more vendor specific
+
+
+20.26.5.1_rc1
+-------------
+- First implemenetation of HX3000 Support - Checks For presence of 2 E610s and 2 I226s, if statisfied, uses COM1
+- Added AAEON MAC to MAC Filter
+
+20.26.6.1_rc2
+-------------
+- Fixed serial port handle state bugs: closed/failed handle states were inconsistent between open/read/write paths, occasionally bypassing reconnect logic
+- Serial port auto-reconnect now retries the originally configured port/baud rate instead of being hardcoded to COM3
+- Fixed SessionMonitor race that could deadlock service stop if stopSessionMonitor() ran before the monitor window finished creating
+- Fixed Regedit::Write performing the registry create/open call up to 7 times per write, ignoring the requested value type, and leaking a handle on success
+- Fixed Regedit::Read being unable to return the value it read (output parameter was passed by value)
+- GA builds now log ERROR/WARNING/FATAL messages instead of suppressing all logging
+- Wired up ServiceManager's service control handler (was a no-op stub) and MetricsCollector's cache invalidation/disable controls (previously no-ops)
+- Fixed TrayApp tooltip truncation using byte size instead of character count, and hardened named pipe thread against a missing stop event
+- build.sh now links SerialManager.cpp and 3kcheck.cpp, fixing undefined reference link errors
+- Fixed serial worker thread exiting permanently if the serial port wasn't present at startup, instead of retrying as documented
+- Brought LinuxPlatform serial handling in line with the above fixes (fd leak on termios setup failure, hardcoded baud rate, missing reconnect logic, syslog severity)
+- Added authenticated named-pipe bridge (\\.\pipe\corestation_serial_bridge) letting a local admin-elevated app forward raw bytes to the serial port; ACL-restricted to BUILTIN\Administrators
+- Added C2A command dispatch: BMC can now send `ping` (replies `pong`), `status` (replies with cpu/ram/uptime), and on Windows `shutdown` (initiates system shutdown); unrecognized commands still fall back to the message dialog
+
+
+20.26.5.1_GA
+------------
+- Implemented support for HX3000 Nodes via a CPU Check - Sends 4x Network details and uses COM1 if HX3K
 
 20.26.5.1_GA
 ------------

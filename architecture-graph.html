@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoreStationHXAgent — Architecture Graph</title>
+<style>
+  :root {
+    --bg: #1b1f27;
+    --panel: #242935;
+    --line: #4a5468;
+    --line-active: #5dd0ff;
+    --text: #e6e9ef;
+    --text-dim: #9aa4b6;
+    --entry: #e6533c;
+    --core: #f2b134;
+    --platform: #5dd0ff;
+    --cross: #6fcf6f;
+    --winonly: #c792ea;
+    --optional: #7a8499;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 18px 24px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  header p {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 10px 24px;
+    font-size: 12px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--line);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .layout {
+    display: flex;
+    height: calc(100vh - 108px);
+  }
+  #graph-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: auto;
+  }
+  #graph {
+    position: relative;
+    width: 1300px;
+    height: 760px;
+  }
+  svg.edges {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1300px;
+    height: 760px;
+    pointer-events: none;
+  }
+  .edge {
+    stroke: var(--line);
+    stroke-width: 1.6;
+    fill: none;
+    transition: stroke 0.15s, stroke-width 0.15s, opacity 0.15s;
+    opacity: 0.55;
+  }
+  .edge.optional { stroke-dasharray: 5 4; }
+  .edge.active {
+    stroke: var(--line-active);
+    stroke-width: 2.4;
+    opacity: 1;
+  }
+  .edge.dimmed { opacity: 0.12; }
+  marker#arrow path { fill: var(--line); }
+  marker#arrow-active path { fill: var(--line-active); }
+
+  .node {
+    position: absolute;
+    width: 168px;
+    min-height: 60px;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    background: var(--panel);
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+    user-select: none;
+  }
+  .node:hover, .node.selected {
+    border-color: var(--line-active);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  }
+  .node.dimmed { opacity: 0.35; }
+  .node .tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+  .node .name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .node .file {
+    font-size: 10.5px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-family: Consolas, "Courier New", monospace;
+  }
+  .node::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    border-radius: 8px 0 0 8px;
+  }
+  .node.entry::before    { background: var(--entry); }
+  .node.core::before     { background: var(--core); }
+  .node.platform::before { background: var(--platform); }
+  .node.cross::before    { background: var(--cross); }
+  .node.winonly::before  { background: var(--winonly); }
+
+  #panel {
+    flex: 0 0 360px;
+    border-left: 1px solid var(--line);
+    background: var(--panel);
+    padding: 20px;
+    overflow-y: auto;
+  }
+  #panel h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+  }
+  #panel .file {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  #panel p {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  #panel h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin: 18px 0 8px;
+  }
+  #panel ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  #panel ul li span.dir { color: var(--text-dim); font-size: 11px; }
+  #panel .placeholder {
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  #panel .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CoreStationHXAgent — Architecture Graph</h1>
+  <p>Click a box to read what it does and see what it talks to. Drag the canvas to pan if it overflows. Generated from the source tree under <code>src/</code>.</p>
+</header>
+
+<div class="legend">
+  <span><i class="swatch" style="background:var(--entry)"></i> Entry point</span>
+  <span><i class="swatch" style="background:var(--core)"></i> Core abstraction / data model</span>
+  <span><i class="swatch" style="background:var(--platform)"></i> Platform implementation</span>
+  <span><i class="swatch" style="background:var(--cross)"></i> Cross-platform module</span>
+  <span><i class="swatch" style="background:var(--winonly)"></i> Windows-only helper</span>
+  <span>┄┄ dashed edge = build-optional (CMake option OFF by default)</span>
+</div>
+
+<div class="layout">
+  <div id="graph-wrap">
+    <div id="graph">
+      <svg class="edges" id="edge-svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z"></path>
+          </marker>
+          <marker id="arrow-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z"></path>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+  <div id="panel">
+    <div class="placeholder">
+      Select any node to see a plain-language summary of what it does, the file it lives in, and its
+      direct connections (what it depends on, and what depends on it).
+      <br><br>
+      <strong>Quick tour:</strong>
+      <ul>
+        <li><b>main.cpp</b> — boots the service/tray/console modes and wires everything together</li>
+        <li><b>Platform</b> — the interface that lets the rest of the app ignore whether it's running on Windows or Linux</li>
+        <li><b>WindowsPlatform / LinuxPlatform</b> — the two concrete implementations of that interface</li>
+        <li><b>SerialManager</b> — talks to the BMC/MEC over the serial port, on either OS</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Node data: simplified description of what each piece does, in plain English.
+// Coordinates are layout positions (top-left corner) on the 1300x760 canvas.
+// ---------------------------------------------------------------------------
+const nodes = [
+  {
+    id: "main",
+    name: "main.cpp",
+    tag: "Entry point",
+    cls: "entry",
+    file: "src/main.cpp",
+    x: 566, y: 28,
+    desc: "Process entry point. Decides whether to run as a Windows service, an interactive console app, or a tray helper; creates the platform object, the serial connection to the BMC, and the metrics collector; then runs the main loop that polls system state and reports it down the serial link."
+  },
+  {
+    id: "platform",
+    name: "Platform",
+    tag: "Core · interface",
+    cls: "core",
+    file: "src/core/Platform.h",
+    x: 320, y: 168,
+    desc: "Abstract interface describing every OS-specific operation the app needs — network info, hostname, CPU/RAM/GPU usage, session state, logging, dialogs, and more. Everything else in the app talks to 'the platform' through this interface, so the same code runs on Windows and Linux."
+  },
+  {
+    id: "systemstate",
+    name: "SystemState",
+    tag: "Core · data model",
+    cls: "core",
+    file: "src/core/SystemState.h",
+    x: 880, y: 168,
+    desc: "Plain data structures (NetworkInterface, SystemState) that hold a snapshot of the machine's current status — IPs, DHCP/link state, CPU/RAM/GPU usage, uptime, logged-in user, and so on. This is the shape of the data that gets collected and sent over the serial link."
+  },
+  {
+    id: "winplatform",
+    name: "WindowsPlatform",
+    tag: "Platform impl",
+    cls: "platform",
+    file: "src/platform/WindowsPlatform.cpp / .h",
+    x: 220, y: 312,
+    desc: "Windows implementation of the Platform interface. Uses WMI/COM, IP Helper, PDH and the Windows Service APIs to gather network info, performance counters, GPU/session/user state, and to show dialogs and write logs. Also owns and starts the Windows-only helper modules (tray icon, session monitor, registry editor)."
+  },
+  {
+    id: "linuxplatform",
+    name: "LinuxPlatform",
+    tag: "Platform impl",
+    cls: "platform",
+    file: "src/platform/LinuxPlatform.cpp",
+    x: 760, y: 312,
+    desc: "Linux implementation of the Platform interface. Reads network/DHCP state via NetworkManager and /sys, uses /proc for CPU/RAM/uptime, and logs to stdout/syslog. Lets the same main.cpp and modules run unmodified on the Ubuntu-based CoreStation Node build."
+  },
+  {
+    id: "serialmanager",
+    name: "SerialManager",
+    tag: "Cross-platform module",
+    cls: "cross",
+    file: "src/modules/serial/SerialManager.cpp / .h",
+    x: 96, y: 456,
+    desc: "Owns the serial connection to the BMC/MEC (COM3 on Windows, /dev/ttyS2 on Linux). Opens/reads/writes the port with platform-appropriate APIs (Win32 CreateFile/Comm* vs. POSIX termios), buffers and splits incoming text into lines, and automatically retries the connection if it drops."
+  },
+  {
+    id: "metricscollector",
+    name: "MetricsCollector",
+    tag: "Cross-platform module",
+    cls: "cross",
+    file: "src/modules/metrics/MetricsCollector.cpp / .h",
+    x: 332, y: 456,
+    desc: "Central place that gathers all system metrics — CPU/RAM/disk/network/uptime/GPU/Windows Update state — by calling through the Platform interface, and packages them into PerformanceMetrics / GpuMetrics structs ready to be reported. Uses MetricCache so expensive lookups (like GPU info) aren't repeated every poll."
+  },
+  {
+    id: "amtportmanager",
+    name: "AMTPortManager",
+    tag: "Cross-platform module",
+    cls: "cross",
+    file: "src/modules/amt/AMTPortManager.cpp / .h",
+    x: 568, y: 456,
+    desc: "Finds, enables/disables and reassigns the Intel AMT/vPRO 'SOL' COM port, which Windows sometimes mis-assigns to the same COM number as the BMC's serial port. main.cpp uses this at startup to make sure the BMC always lands on a predictable COM port."
+  },
+  {
+    id: "3kcheck",
+    name: "3kcheck",
+    tag: "Cross-platform module",
+    cls: "cross",
+    file: "src/modules/3kcheck/3kcheck.cpp / .h",
+    x: 804, y: 456,
+    desc: "Small CPU-identification helper. Reads the CPU manufacturer/model/clock speed and reports whether the machine is running an 'HX2K'-class processor, which main.cpp uses to branch startup behaviour for that hardware family."
+  },
+  {
+    id: "trayapp",
+    name: "TrayApp",
+    tag: "Windows-only helper",
+    cls: "winonly",
+    file: "src/modules/tray/TrayApp.cpp / .h",
+    x: 60, y: 600,
+    desc: "Shows the system-tray icon and tooltip ('Host: ... | IP: ... | Up: ...') when the agent runs interactively. Listens on a named pipe (\\\\.\\pipe\\corestation_tray) for hostname/IP/uptime updates and refreshes itself from the platform every 30 seconds; provides the right-click context menu."
+  },
+  {
+    id: "sessionmonitor",
+    name: "SessionMonitor",
+    tag: "Windows-only helper",
+    cls: "winonly",
+    file: "src/modules/session/SessionMonitor.cpp / .h",
+    x: 256, y: 600,
+    desc: "Creates a hidden window that subscribes to WTS session-change notifications (console/RDP connect-disconnect, lock/unlock, logon/logoff) and reports each change back to WindowsPlatform via a callback, so the agent always knows the current session state."
+  },
+  {
+    id: "regedit",
+    name: "Regedit",
+    tag: "Windows-only helper · optional",
+    cls: "winonly",
+    file: "src/modules/regedits/Regedit.cpp / .h",
+    x: 452, y: 600,
+    desc: "Thin wrapper around the Win32 registry APIs (Read/Write/Create/Delete under HKEY_CURRENT_USER) with friendly error logging for each RegXxx return code. Only compiled in when the BUILD_REGEDIT CMake option is enabled (off by default)."
+  },
+  {
+    id: "metriccache",
+    name: "MetricCache<T>",
+    tag: "Windows-only helper",
+    cls: "winonly",
+    file: "src/modules/metrics/MetricCache.h",
+    x: 648, y: 600,
+    desc: "Tiny generic TTL cache template: remembers the last value returned by an expensive lookup function and only calls it again once the configured time-to-live has elapsed. Used to avoid hammering slow APIs (e.g. GPU driver info) on every metrics poll."
+  },
+  {
+    id: "winhandles",
+    name: "WinHandles",
+    tag: "Windows-only helper",
+    cls: "winonly",
+    file: "src/platform/WinHandles.h",
+    x: 844, y: 600,
+    desc: "RAII smart-pointer wrappers for raw Windows resources — HANDLEs, PDH query handles, and COM (CoInitializeEx/CoUninitialize) lifetimes — so they always get closed/released automatically, even on early-return error paths."
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Edges: { from, to, label, optional }
+// "from -> to" reads as "from depends on / uses / creates to".
+// ---------------------------------------------------------------------------
+const edges = [
+  { from: "main", to: "platform",         label: "uses interface" },
+  { from: "main", to: "winplatform",      label: "creates / casts to" },
+  { from: "main", to: "serialmanager",    label: "owns instance" },
+  { from: "main", to: "metricscollector", label: "owns instance" },
+  { from: "main", to: "amtportmanager",   label: "fixes COM port at startup" },
+  { from: "main", to: "3kcheck",          label: "detects CPU family" },
+
+  { from: "winplatform",   to: "platform", label: "implements" },
+  { from: "linuxplatform", to: "platform", label: "implements" },
+
+  { from: "platform",         to: "systemstate",     label: "describes" },
+  { from: "metricscollector", to: "systemstate",     label: "fills in" },
+  { from: "metricscollector", to: "platform",        label: "queries via" },
+  { from: "metricscollector", to: "metriccache",     label: "caches GPU/slow lookups" },
+  { from: "serialmanager",    to: "platform",        label: "uses StringCallback type" },
+
+  { from: "winplatform", to: "trayapp",        label: "starts / owns" },
+  { from: "winplatform", to: "sessionmonitor", label: "starts / owns" },
+  { from: "winplatform", to: "winhandles",     label: "wraps HANDLE/PDH/COM lifetimes" },
+  { from: "winplatform", to: "regedit",        label: "optional: BUILD_REGEDIT", optional: true },
+];
+
+const NODE_W = 168, NODE_H = 60;
+const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+
+const graph = document.getElementById("graph");
+const svg = document.getElementById("edge-svg");
+const panel = document.getElementById("panel");
+
+function center(n) {
+  return { x: n.x + NODE_W / 2, y: n.y + NODE_H / 2 };
+}
+
+// Build edge paths as gentle curves between node borders (not centers),
+// so arrows land on the box edge rather than overlapping the label.
+function edgePath(a, b) {
+  const ca = center(a), cb = center(b);
+  const dx = cb.x - ca.x, dy = cb.y - ca.y;
+  const dist = Math.max(Math.hypot(dx, dy), 1);
+  const ux = dx / dist, uy = dy / dist;
+
+  // Trim endpoints to the node borders (approx via bounding box clip).
+  function clip(c, other_ux, other_uy, w, h) {
+    const tx = (w / 2) / Math.max(Math.abs(other_ux), 1e-6);
+    const ty = (h / 2) / Math.max(Math.abs(other_uy), 1e-6);
+    const t = Math.min(tx, ty);
+    return { x: c.x + other_ux * t, y: c.y + other_uy * t };
+  }
+  const start = clip(ca, ux, uy, NODE_W, NODE_H);
+  const end   = clip(cb, -ux, -uy, NODE_W, NODE_H);
+
+  const mx = (start.x + end.x) / 2;
+  const my = (start.y + end.y) / 2;
+  // Slight curve perpendicular to the line for readability when lines overlap.
+  const nx = -uy, ny = ux;
+  const bow = 14;
+  const c1x = mx + nx * bow, c1y = my + ny * bow;
+
+  return `M ${start.x.toFixed(1)} ${start.y.toFixed(1)} Q ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${end.x.toFixed(1)} ${end.y.toFixed(1)}`;
+}
+
+// Render edges
+edges.forEach((e, i) => {
+  const a = byId[e.from], b = byId[e.to];
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", edgePath(a, b));
+  path.setAttribute("class", "edge" + (e.optional ? " optional" : ""));
+  path.setAttribute("marker-end", "url(#arrow)");
+  path.dataset.from = e.from;
+  path.dataset.to = e.to;
+  path.dataset.idx = i;
+  svg.appendChild(path);
+});
+
+// Render nodes
+nodes.forEach(n => {
+  const el = document.createElement("div");
+  el.className = "node " + n.cls;
+  el.style.left = n.x + "px";
+  el.style.top = n.y + "px";
+  el.dataset.id = n.id;
+  el.innerHTML =
+    `<div class="tag">${n.tag}</div>` +
+    `<div class="name">${n.name}</div>` +
+    `<div class="file">${n.file}</div>`;
+  el.addEventListener("click", () => selectNode(n.id));
+  el.addEventListener("mouseenter", () => highlight(n.id));
+  el.addEventListener("mouseleave", () => clearHighlight());
+  graph.appendChild(el);
+});
+
+function relatedEdges(id) {
+  return edges
+    .map((e, i) => ({ ...e, i }))
+    .filter(e => e.from === id || e.to === id);
+}
+
+function highlight(id) {
+  const related = relatedEdges(id);
+  const relatedIds = new Set([id]);
+  related.forEach(e => { relatedIds.add(e.from); relatedIds.add(e.to); });
+
+  document.querySelectorAll(".node").forEach(el => {
+    el.classList.toggle("dimmed", !relatedIds.has(el.dataset.id));
+  });
+  document.querySelectorAll(".edge").forEach(el => {
+    const isRelated = el.dataset.from === id || el.dataset.to === id;
+    el.classList.toggle("active", isRelated);
+    el.classList.toggle("dimmed", !isRelated);
+    el.setAttribute("marker-end", isRelated ? "url(#arrow-active)" : "url(#arrow)");
+  });
+}
+
+function clearHighlight() {
+  if (selectedId) { highlight(selectedId); return; }
+  document.querySelectorAll(".node").forEach(el => el.classList.remove("dimmed"));
+  document.querySelectorAll(".edge").forEach(el => {
+    el.classList.remove("active", "dimmed");
+    el.setAttribute("marker-end", "url(#arrow)");
+  });
+}
+
+let selectedId = null;
+
+function selectNode(id) {
+  selectedId = id;
+  document.querySelectorAll(".node").forEach(el =>
+    el.classList.toggle("selected", el.dataset.id === id));
+  highlight(id);
+  renderPanel(id);
+}
+
+function renderPanel(id) {
+  const n = byId[id];
+  const outgoing = edges.filter(e => e.from === id);
+  const incoming = edges.filter(e => e.to === id);
+
+  function listItems(list, otherKey, arrow) {
+    if (!list.length) return "<li><span class=\"dir\">— none —</span></li>";
+    return list.map(e => {
+      const other = byId[e[otherKey]];
+      return `<li>${arrow} <b>${other.name}</b> <span class="dir">— ${e.label}${e.optional ? " (optional)" : ""}</span></li>`;
+    }).join("");
+  }
+
+  panel.innerHTML =
+    `<span class="badge">${n.tag}</span>` +
+    `<h2>${n.name}</h2>` +
+    `<div class="file">${n.file}</div>` +
+    `<p>${n.desc}</p>` +
+    `<h3>Depends on / uses (${outgoing.length})</h3>` +
+    `<ul>${listItems(outgoing, "to", "→")}</ul>` +
+    `<h3>Used by (${incoming.length})</h3>` +
+    `<ul>${listItems(incoming, "from", "←")}</ul>`;
+}
+</script>
+</body>
+</html>

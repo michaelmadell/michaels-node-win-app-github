@@ -7,6 +7,7 @@
 node_modules/
 dist/
 build/
+build-mingw/
 .claude/
 .vscode/
 .vs/
@@ -103,3 +104,20 @@ build.sh-example
 
 .vs/
 .vscode/
+
+debian/files
+obj-x86_64-linux-gnu/
+debian/corestationhxagent.postrm.debhelper
+debian/corestationhxagent.substvars
+debian/debhelper-build-stamp
+debian/.debhelper
+debian/corestationhxagent
+PLAN.md
+linux-build-todo.md
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json
+
+installer/release-notes.txt
+installer/CoreStationHXAgent

@@ -1,0 +1,30 @@
+# Default: let git decide
+* text=auto
+
+# Debian maintainer scripts must be LF — CRLF breaks shebang on Linux
+debian/postinst text eol=lf
+debian/prerm     text eol=lf
+debian/postrm    text eol=lf
+debian/rules     text eol=lf
+debian/changelog text eol=lf
+debian/control   text eol=lf
+debian/copyright text eol=lf
+debian/compat    text eol=lf
+debian/clean     text eol=lf
+debian/dh-cmake.compat text eol=lf
+debian/source/format   text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Windows-only
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binaries
+*.exe    binary
+*.dll    binary
+*.deb    binary
+*.msi    binary
+*.wixobj binary

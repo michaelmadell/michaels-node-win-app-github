@@ -2,6 +2,7 @@
 #include "SessionMonitor.h"
 #include "../../platform/WindowsPlatform.h"
 #include <sstream>
+#include <chrono>
 
 SessionMonitor::SessionMonitor(WindowsPlatform* platform, SessionStateCallback callback)
     : platform_(platform), callback_(callback) {
@@ -13,7 +14,15 @@ SessionMonitor::~SessionMonitor() {
 
 void SessionMonitor::Start() {
     active_ = true;
+    windowReady_ = false;
     thread_ = std::thread([this]() { ThreadProc(); });
+
+    {
+        std::unique_lock<std::mutex> lock(windowMutex_);
+        windowReadyCv_.wait_for(lock, std::chrono::seconds(5),
+            [this]() { return windowReady_; });
+    }
+
     if (platform_) {
         platform_->logMessage("Session state monitor started");
     }
@@ -21,8 +30,14 @@ void SessionMonitor::Start() {
 
 void SessionMonitor::Stop() {
     active_ = false;
-    if (window_) {
-        PostMessage(window_, WM_CLOSE, 0, 0);
+
+    HWND window;
+    {
+        std::lock_guard<std::mutex> lock(windowMutex_);
+        window = window_;
+    }
+    if (window) {
+        PostMessage(window, WM_CLOSE, 0, 0);
     }
 
     if (thread_.joinable()) {
@@ -45,7 +60,7 @@ void SessionMonitor::ThreadProc() {
 
     RegisterClassExW(&wcex);
 
-    window_ = CreateWindowExW(
+    HWND window = CreateWindowExW(
         0,
         L"SessionMonitorWindow",
         L"Session Monitor",
@@ -57,19 +72,30 @@ void SessionMonitor::ThreadProc() {
         this
     );
 
-    if (!window_) {
+    {
+        std::lock_guard<std::mutex> lock(windowMutex_);
+        window_ = window;
+        windowReady_ = true;
+    }
+    windowReadyCv_.notify_all();
+
+    if (!window) {
         if (platform_) {
             platform_->logMessage("ERROR: Failed to create session monitor window");
         }
         return;
     }
 
-    if (!WTSRegisterSessionNotification(window_, NOTIFY_FOR_ALL_SESSIONS)) {
+    if (!WTSRegisterSessionNotification(window, NOTIFY_FOR_ALL_SESSIONS)) {
         DWORD err = GetLastError();
         if (platform_) {
             platform_->logMessage("ERROR: WTSRegisterSessionNotification failed, error: " + std::to_string(err));
         }
-        DestroyWindow(window_);
+        DestroyWindow(window);
+        {
+            std::lock_guard<std::mutex> lock(windowMutex_);
+            window_ = nullptr;
+        }
         return;
     }
 
@@ -83,9 +109,12 @@ void SessionMonitor::ThreadProc() {
         DispatchMessage(&msg);
     }
 
-    WTSUnRegisterSessionNotification(window_);
-    DestroyWindow(window_);
-    window_ = nullptr;
+    WTSUnRegisterSessionNotification(window);
+    DestroyWindow(window);
+    {
+        std::lock_guard<std::mutex> lock(windowMutex_);
+        window_ = nullptr;
+    }
 }
 
 LRESULT CALLBACK SessionMonitor::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -177,6 +206,11 @@ void SessionMonitor::HandleSessionChange(DWORD sessionChangeType, DWORD sessionI
     case WTS_SESSION_TERMINATE:
         eventName = "Session Terminate";
         stateValue = "11";
+        break;
+
+    case 15:
+        eventName = "Session Reconnect";
+        stateValue = "15";
         break;
 
     default:

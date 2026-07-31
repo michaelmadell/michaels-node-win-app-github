@@ -1,5 +1,15 @@
+corestationhxagent (2026.6.1) jammy; urgency=medium
+
+  * Packaging: bump debhelper compat to 13, Standards-Version to 4.6.2.
+  * Packaging: add Homepage field.
+
+ -- Michael Madell <michael.madell@amulethotkey.com>  Thu, 25 Jun 2026 00:00:00 +0000
+
 corestationhxagent (2026.5.1) jammy; urgency=medium
 
-  * Updated to align with latest windows build
+  * Updated to align with latest windows build.
+  * Sync with Windows build 20.26.5.1_rc3.
+  * Added robust HX2K/HX3K CPU detection.
+  * Improved MAC address filtering for AAEON devices.
 
  -- Michael Madell <michael.madell@amulethotkey.com>  Thu, 11 Jun 2026 13:02:00 +0100

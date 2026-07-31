@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project configuration
 project(CoreStationHXAgent
-    VERSION 20.26.5.1
+    VERSION 20.26.6.1
     DESCRIPTION "CoreStation Host Agent for serial monitoring"
     LANGUAGES CXX
 )
@@ -10,8 +10,9 @@ project(CoreStationHXAgent
 # Build options
 option(BUILD_METRICS "Build with metric support" OFF)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
-option(BUILD_TRAY_APP "Build with system tray application (Windows only)" OFF)
-option(BUILD_REGEDIT "Build with registry editing components (Windows only" ON)
+option(BUILD_TRAY_APP "Build with system tray application (Windows only)" ON)
+option(BUILD_REGEDIT "Build with registry editing components (Windows only)" OFF)
+option(BUILD_SERIAL_BRIDGE_PIPE "Build with named-pipe bridge for external apps to forward bytes to the serial port (Windows only)" OFF)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
@@ -135,20 +136,30 @@ namespace GitInfo {
 endif()
 
 # Core Sources
-set(CORE_SOURCES
+if (WIN32)
+  set(CORE_SOURCES
     src/main.cpp
-)
+  )
+elseif (UNIX AND NOT APPLE)
+  set(CORE_SOURCES
+    src/linux/main.cpp
+  )
+endif()
 
 # Module Sources
 set(MODULE_SOURCES
     src/modules/serial/SerialManager.cpp
-    src/modules/3kcheck/3kcheck.cpp
+    src/modules/amt/AMTPortManager.cpp
 )
 
 # Platform-specific sources
 if(WIN32)
     list(APPEND CORE_SOURCES
         src/platform/WindowsPlatform.cpp
+    )
+
+    list(APPEND MODULE_SOURCES
+        src/modules/3kcheck/3kcheck.cpp
     )
     
     if(BUILD_TRAY_APP)
@@ -174,9 +185,18 @@ if(WIN32)
             src/modules/regedits/Regedit.cpp
         )
     endif()
+
+    if(BUILD_SERIAL_BRIDGE_PIPE)
+        list(APPEND MODULE_SOURCES
+            src/modules/serialpipe/SerialBridgePipe.cpp
+        )
+    endif()
 elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES
         src/platform/LinuxPlatform.cpp
+    )
+    list(APPEND MODULE_SOURCES
+        src/modules/3kcheck/3kcheck.cpp
     )
 endif()
 
@@ -186,6 +206,7 @@ set(HEADER_FILES
     src/core/SystemState.h
     src/version.h
     src/modules/serial/SerialManager.h
+    src/modules/amt/AMTPortManager.h
 )
 
 if(BUILD_METRICS)
@@ -193,7 +214,7 @@ if(BUILD_METRICS)
 endif()
 
 if(WIN32)
-    list(APPEND HEADER_FILES src/platform/Windows_Addon.h)
+    list(APPEND HEADER_FILES src/platform/WinHandles.h)
     
     if(BUILD_TRAY_APP)
         list(APPEND HEADER_FILES src/modules/tray/TrayApp.h)
@@ -206,6 +227,10 @@ if(WIN32)
     if(BUILD_REGEDIT)
         list(APPEND HEADER_FILES src/modules/regedits/Regedit.h)
         endif()
+
+    if(BUILD_SERIAL_BRIDGE_PIPE)
+        list(APPEND HEADER_FILES src/modules/serialpipe/SerialBridgePipe.h)
+    endif()
 endif()
 
 # Create Executable
@@ -240,7 +265,7 @@ if(BUILD_METRICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_METRICS)
 endif()
 
-if(BUILD_SESSION_MONITOR)
+if(BUILD_SESSION_MONITOR AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SESSION_MONITOR)
 endif()
 
@@ -250,6 +275,10 @@ endif()
 
 if(BUILD_REGEDIT AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_REGEDIT)
+endif()
+
+if(BUILD_SERIAL_BRIDGE_PIPE AND WIN32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SERIAL_BRIDGE_PIPE)
 endif()
 
 # Compiler Flags
@@ -288,6 +317,11 @@ if(WIN32)
         comctl32
         winmm
         pdh
+        userenv
+        wbemuuid
+        ole32
+        oleaut32
+        psapi
     )
 elseif(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
@@ -314,7 +348,8 @@ elseif(UNIX AND NOT APPLE)
     
     if(EXISTS "${CMAKE_SOURCE_DIR}/CoreStationHXAgent.service")
         install(FILES CoreStationHXAgent.service
-            DESTINATION /lib/systemd/system
+            DESTINATION /usr/lib/systemd/system
+            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
         )
     endif()
 endif()
@@ -323,15 +358,22 @@ endif()
 set(CPACK_PACKAGE_NAME "corestationhxagent")
 set(CPACK_PACKAGE_VENDOR "Amulet Hotkey Ltd")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CoreStation Host Agent for serial monitoring")
-set(CPACK_PACKAGE_VERSION ${APP_VERSION_STRING})
+set(CPACK_PACKAGE_VERSION "${APP_VERSION_STRING}")
 
 if(WIN32)
     set(CPACK_GENERATOR "WIX")
     set(CPACK_WIX_UPGRADE_GUID "6c85b236-3029-4744-a467-2b56b128c6b1")
 else()
     set(CPACK_GENERATOR "DEB")
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Your Name <youremail@example.com>")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "network-manager, libdbus-1-3")
+    # Debian version strings forbid '_'; '~' is the conventional pre-release separator
+    string(REPLACE "_" "~" CPACK_PACKAGE_VERSION "${APP_VERSION_STRING}")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Madell <michael.madell@amulethotkey.com>")
+    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+        "${CMAKE_SOURCE_DIR}/debian/postinst"
+        "${CMAKE_SOURCE_DIR}/debian/prerm"
+        "${CMAKE_SOURCE_DIR}/debian/postrm"
+    )
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "network-manager, intel-gpu-tools")
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 endif()
 

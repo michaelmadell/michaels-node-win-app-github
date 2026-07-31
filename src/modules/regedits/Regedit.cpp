@@ -10,7 +10,7 @@ Regedit::Regedit(WindowsPlatform* platform) : platform_(platform) {
 Regedit::~Regedit() {
 }
 
-bool Regedit::Read(std::string path, std::string value) {
+bool Regedit::Read(std::string path, std::string& value) {
 	HKEY hKey;
 
 	std::string subKey, valueName;
@@ -26,7 +26,7 @@ bool Regedit::Read(std::string path, std::string value) {
 		return false;
 	}
 	char buffer[512];
-	DWORD bufferSize = sizeof(buffer);
+	DWORD bufferSize = sizeof(buffer) - 1;
 	DWORD type;
 	LONG result = RegQueryValueExA(hKey, valueName.c_str(), NULL, &type, (LPBYTE)buffer, &bufferSize);
 	RegCloseKey(hKey);
@@ -34,7 +34,9 @@ bool Regedit::Read(std::string path, std::string value) {
 		platform_->logMessage("ERROR: Failed to read registry value or value is not a string");
 		return false;
 	}
-	platform_->logMessage("Registry Read Success: " + std::string(buffer));
+	buffer[bufferSize] = '\0';
+	value = buffer;
+	platform_->logMessage("Registry Read Success: " + value);
 	return true;
 }
 
@@ -49,102 +51,46 @@ bool Regedit::Write(std::string path, std::string value, DWORD type) {
 	subKey = path.substr(0, lastBackslash);
 	valueName = path.substr(lastBackslash + 1);
 
-	// Removed incorrect LPSTR assignment. Use 'type' parameter directly for registry value type.
-
-	if (!type) {
-		if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_INVALID_FUNCTION) {
-			platform_->logMessage("ERROR: Invalid Function Call");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_FILE_NOT_FOUND) {
-			platform_->logMessage("ERROR: File Not Found");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_PATH_NOT_FOUND) {
-			platform_->logMessage("ERROR: Path Not Found");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_ACCESS_DENIED) {
-			platform_->logMessage("ERROR: Access Denied");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_CANTWRITE) {
-			platform_->logMessage("ERROR: Can't Write to Registry");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_KEY_DELETED) {
-			platform_->logMessage("ERROR: Illegal operation attempted on a registry key that has been marked for deletion.");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_NO_MORE_ITEMS) {
-			platform_->logMessage("ERROR: No more items can be added to the registry.");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS) {
-			platform_->logMessage("ERROR: Failed to create/open registry key");
-			return false;
-		}
-		LONG result = RegSetValueExA(hKey, valueName.c_str(), 0, REG_SZ, (const BYTE*)value.c_str(), (DWORD)(value.size() + 1));
-		RegCloseKey(hKey);
-		if (result != ERROR_SUCCESS) {
-			platform_->logMessage("ERROR: Failed to write registry value");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_CANTWRITE) {
-			platform_->logMessage("ERROR: Can't Write to Registry");
-			return false;
-		}
-
-		platform_->logMessage("Registry Write Success: " + value);
-		return true;
+	LONG createResult = RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL);
+	switch (createResult) {
+	case ERROR_SUCCESS:
+		break;
+	case ERROR_INVALID_FUNCTION:
+		platform_->logMessage("ERROR: Invalid Function Call");
+		return false;
+	case ERROR_FILE_NOT_FOUND:
+		platform_->logMessage("ERROR: File Not Found");
+		return false;
+	case ERROR_PATH_NOT_FOUND:
+		platform_->logMessage("ERROR: Path Not Found");
+		return false;
+	case ERROR_ACCESS_DENIED:
+		platform_->logMessage("ERROR: Access Denied");
+		return false;
+	case ERROR_CANTWRITE:
+		platform_->logMessage("ERROR: Can't Write to Registry");
+		return false;
+	case ERROR_KEY_DELETED:
+		platform_->logMessage("ERROR: Illegal operation attempted on a registry key that has been marked for deletion.");
+		return false;
+	case ERROR_NO_MORE_ITEMS:
+		platform_->logMessage("ERROR: No more items can be added to the registry.");
+		return false;
+	default:
+		platform_->logMessage("ERROR: Failed to create/open registry key");
+		return false;
 	}
-	else {
-		if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_INVALID_FUNCTION) {
-			platform_->logMessage("ERROR: Invalid Function Call");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_FILE_NOT_FOUND) {
-			platform_->logMessage("ERROR: File Not Found");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_PATH_NOT_FOUND) {
-			platform_->logMessage("ERROR: Path Not Found");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_ACCESS_DENIED) {
-			platform_->logMessage("ERROR: Access Denied");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_CANTWRITE) {
-			platform_->logMessage("ERROR: Can't Write to Registry");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_KEY_DELETED) {
-			platform_->logMessage("ERROR: Illegal operation attempted on a registry key that has been marked for deletion.");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_NO_MORE_ITEMS) {
-			platform_->logMessage("ERROR: No more items can be added to the registry.");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS) {
-			platform_->logMessage("ERROR: Failed to create/open registry key");
-			return false;
-		}
-		LONG result = RegSetValueExA(hKey, valueName.c_str(), 0, REG_SZ, (const BYTE*)value.c_str(), (DWORD)(value.size() + 1));
-		RegCloseKey(hKey);
-		if (result != ERROR_SUCCESS) {
-			platform_->logMessage("ERROR: Failed to write registry value");
-			return false;
-		}
-		else if (RegCreateKeyExA(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_CANTWRITE) {
-			platform_->logMessage("ERROR: Can't Write to Registry");
-			return false;
-		}
 
-		platform_->logMessage("Registry Write Success: " + value);
-		return true;
+	const DWORD regType = type ? type : REG_SZ;
+	LONG result = RegSetValueExA(hKey, valueName.c_str(), 0, regType, (const BYTE*)value.c_str(), (DWORD)(value.size() + 1));
+	RegCloseKey(hKey);
+	if (result != ERROR_SUCCESS) {
+		platform_->logMessage("ERROR: Failed to write registry value");
+		return false;
 	}
+
+	platform_->logMessage("Registry Write Success: " + value);
+	return true;
 }
 
 bool Regedit::Create(std::string path, std::string value, DWORD type) {

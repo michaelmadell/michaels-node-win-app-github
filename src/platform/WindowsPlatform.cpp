@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cctype>
-#include "Windows_Addon.h"
+#include "WinHandles.h"
 #include "../version.h"
 #include "../modules/metrics/MetricCache.h"
 
@@ -36,6 +36,13 @@
 #endif
 
 #include "../modules/session/SessionMonitor.h"
+
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+#include "../modules/serialpipe/SerialBridgePipe.h"
+#endif
+
+#include <userenv.h>
+#pragma comment(lib, "userenv.lib")
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -165,6 +172,7 @@ WindowsPlatform::WindowsPlatform()
 WindowsPlatform::~WindowsPlatform()
 {
     stopSessionMonitor();
+    stopSerialBridgePipe();
 }
 
 int WindowsPlatform::run(
@@ -231,6 +239,7 @@ int WindowsPlatform::run(
 
     logMessage("Running in interactive mode.");
     startSessionMonitor();
+    startSerialBridgePipe();
 #ifdef ENABLE_TRAY_APP
     startTrayApp();
 #endif
@@ -243,6 +252,7 @@ int WindowsPlatform::run(
 #ifdef ENABLE_TRAY_APP
     stopTrayApp();
 #endif
+    stopSerialBridgePipe();
     return 0;
 }
 
@@ -306,22 +316,103 @@ bool WindowsPlatform::runningUnderServiceControlManager()
 }
 
 void WindowsPlatform::startSessionMonitor() {
-    session_monitor_ = std::make_unique<SessionMonitor>(this, session_callback);
+#ifdef ENABLE_SESSION_MONITOR
+    auto wrappedCallback = [this](const std::string& state) {
+        // Forward to the application-level session callback first
+        if (session_callback) session_callback(state);
+
+#ifdef ENABLE_TRAY_APP
+        DWORD mySession = 0;
+        ProcessIdToSessionId(GetCurrentProcessId(), &mySession);
+        if (mySession != 0) return; // Only relevant when running as Session 0 service
+
+        // Logon / console-connect / RDP-connect: always kill any stale helper
+        // and spawn a fresh one. Delay 2s so the user desktop is ready.
+        if (state == "5" || state == "1" || state == "3") {
+            std::thread([this]() {
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                {
+                    std::lock_guard<std::mutex> lock(trayHelperMutex_);
+                    killTrayHelper();
+                }
+                spawnTrayHelper();
+                logMessage("[Tray] Helper respawned after session logon.");
+            }).detach();
+        }
+        // Unlock: only spawn if the helper is not already running (e.g. after
+        // reboot where the initial spawn failed because the shell wasn't ready).
+        else if (state == "8") {
+            bool needsSpawn = false;
+            {
+                std::lock_guard<std::mutex> lock(trayHelperMutex_);
+                if (hTrayHelperProcess_ == INVALID_HANDLE_VALUE) {
+                    needsSpawn = true;
+                } else {
+                    DWORD exitCode = 0;
+                    if (!GetExitCodeProcess(hTrayHelperProcess_, &exitCode) ||
+                        exitCode != STILL_ACTIVE) {
+                        CloseHandle(hTrayHelperProcess_);
+                        hTrayHelperProcess_ = INVALID_HANDLE_VALUE;
+                        needsSpawn = true;
+                    }
+                }
+            }
+            if (needsSpawn) {
+                std::thread([this]() {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    spawnTrayHelper();
+                    logMessage("[Tray] Helper spawned after session unlock.");
+                }).detach();
+            }
+        }
+        // Logoff / disconnect / terminate: kill the helper.
+        else if (state == "6" || state == "2" || state == "4" || state == "11") {
+            std::lock_guard<std::mutex> lock(trayHelperMutex_);
+            killTrayHelper();
+            logMessage("[Tray] Helper terminated after session logoff/disconnect.");
+        }
+#endif
+    };
+
+    session_monitor_ = std::make_unique<SessionMonitor>(this, wrappedCallback);
     session_monitor_->Start();
+#endif
 }
 
 void WindowsPlatform::stopSessionMonitor() {
+#ifdef ENABLE_SESSION_MONITOR
     if (session_monitor_) {
         session_monitor_->Stop();
         session_monitor_.reset();
     }
+#endif
+}
+
+void WindowsPlatform::startSerialBridgePipe() {
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    if (!serial_bridge_pipe_) {
+        serial_bridge_pipe_ = std::make_unique<SerialBridgePipe>(this);
+        serial_bridge_pipe_->Start();
+    }
+#endif
+}
+
+void WindowsPlatform::stopSerialBridgePipe() {
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    if (serial_bridge_pipe_) {
+        serial_bridge_pipe_->Stop();
+        serial_bridge_pipe_.reset();
+    }
+#endif
 }
 
 
 std::string WindowsPlatform::getCurrentSessionState() {
+#ifdef ENABLE_SESSION_MONITOR
     if (session_monitor_) {
         return session_monitor_->GetCurrentSessionState();
     }
+#endif
     return "0";
 }
 
@@ -337,25 +428,137 @@ void WindowsPlatform::updateCpuTimes() {
 void WindowsPlatform::startTrayApp()
 {
 #ifdef ENABLE_TRAY_APP
-    if (!tray_app_)
-    {
-        tray_app_ = std::make_unique<TrayApp>(this);
-        tray_app_->Start();
-        logMessage("Tray App Started.");
+    DWORD mySession = 0;
+    ProcessIdToSessionId(GetCurrentProcessId(), &mySession);
+
+    if (mySession == 0) {
+        // Session 0 (SYSTEM service) — tray must live in the user session
+        spawnTrayHelper();
+    } else {
+        // User session — create TrayApp directly in this process
+        if (!tray_app_) {
+            tray_app_ = std::make_unique<TrayApp>(this);
+            tray_app_->Start();
+            logMessage("Tray App Started.");
+        }
     }
 #endif
+}
+
+void WindowsPlatform::killTrayHelper()
+{
+    // Caller must hold trayHelperMutex_
+    if (hTrayHelperProcess_ != INVALID_HANDLE_VALUE) {
+        TerminateProcess(hTrayHelperProcess_, 0);
+        CloseHandle(hTrayHelperProcess_);
+        hTrayHelperProcess_ = INVALID_HANDLE_VALUE;
+    }
 }
 
 void WindowsPlatform::stopTrayApp()
 {
 #ifdef ENABLE_TRAY_APP
-    if (tray_app_)
-    {
+    if (tray_app_) {
         tray_app_->Stop();
         tray_app_.reset();
         logMessage("Tray App Stopped.");
     }
+    {
+        std::lock_guard<std::mutex> lock(trayHelperMutex_);
+        killTrayHelper();
+    }
+    logMessage("[Tray] Helper process terminated.");
 #endif
+}
+
+void WindowsPlatform::spawnTrayHelper()
+{
+    DWORD sessionId = WTSGetActiveConsoleSessionId();
+    if (sessionId == 0xFFFFFFFF) {
+        logMessage("[Tray] No active console session — cannot spawn tray helper.");
+        return;
+    }
+
+    HANDLE hToken = NULL;
+    if (!WTSQueryUserToken(sessionId, &hToken)) {
+        logMessage("[Tray] WTSQueryUserToken failed: " + std::to_string(GetLastError()));
+        return;
+    }
+
+    HANDLE hPrimary = NULL;
+    if (!DuplicateTokenEx(hToken, MAXIMUM_ALLOWED, NULL,
+                          SecurityImpersonation, TokenPrimary, &hPrimary)) {
+        logMessage("[Tray] DuplicateTokenEx failed: " + std::to_string(GetLastError()));
+        CloseHandle(hToken);
+        return;
+    }
+    CloseHandle(hToken);
+
+    LPVOID pEnv = NULL;
+    CreateEnvironmentBlock(&pEnv, hPrimary, FALSE);
+
+    wchar_t exePath[MAX_PATH] = {};
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    std::wstring cmdLine = L"\"" + std::wstring(exePath) + L"\" --tray-only --parent-pid " +
+                           std::to_wstring(GetCurrentProcessId());
+
+    STARTUPINFOW si = {};
+    si.cb = sizeof(si);
+    si.lpDesktop = const_cast<LPWSTR>(L"winsta0\\default");
+
+    PROCESS_INFORMATION pi = {};
+    BOOL ok = CreateProcessAsUserW(
+        hPrimary, NULL,
+        const_cast<LPWSTR>(cmdLine.c_str()),
+        NULL, NULL, FALSE,
+        CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT,
+        pEnv, NULL, &si, &pi);
+
+    if (pEnv) DestroyEnvironmentBlock(pEnv);
+    CloseHandle(hPrimary);
+
+    if (!ok) {
+        logMessage("[Tray] CreateProcessAsUser failed: " + std::to_string(GetLastError()));
+        return;
+    }
+
+    CloseHandle(pi.hThread);
+    {
+        std::lock_guard<std::mutex> lock(trayHelperMutex_);
+        if (hTrayHelperProcess_ != INVALID_HANDLE_VALUE) {
+            CloseHandle(hTrayHelperProcess_);
+        }
+        hTrayHelperProcess_ = pi.hProcess;
+    }
+    logMessage("[Tray] Helper spawned in session " + std::to_string(sessionId) +
+               ", PID=" + std::to_string(pi.dwProcessId));
+}
+
+int WindowsPlatform::runAsTrayHelper(DWORD parentPid)
+{
+    logMessage("[Tray] Running as tray helper, parentPid=" + std::to_string(parentPid));
+
+#ifdef ENABLE_TRAY_APP
+    // We are already in the user session — startTrayApp() takes the direct path
+    startTrayApp();
+
+    // Block until the service process exits
+    HANDLE hParent = (parentPid != 0)
+        ? OpenProcess(SYNCHRONIZE, FALSE, parentPid)
+        : NULL;
+
+    if (hParent) {
+        WaitForSingleObject(hParent, INFINITE);
+        CloseHandle(hParent);
+        logMessage("[Tray] Parent service exited — shutting down tray helper.");
+    } else {
+        // No parent handle available — wait on stop event
+        WaitForSingleObject(g_stop_event.get(), INFINITE);
+    }
+
+    stopTrayApp();
+#endif
+    return 0;
 }
 
 // Implementations for the core virtual methods
@@ -542,131 +745,13 @@ std::string WindowsPlatform::getOsBuild()
     return version.str();
 }
 
-bool WindowsPlatform::openSerialPort(const std::string &portName, int baudrate)
-{
-    HANDLE rawHandle = CreateFileA(
-        portName.c_str(),
-        GENERIC_READ | GENERIC_WRITE,
-        0,
-        NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        NULL
-    );
-
-    if (rawHandle == INVALID_HANDLE_VALUE) 
-    {
-        DWORD err = GetLastError();
-		std::ostringstream oss;
-		oss << "CreateFileA failed for " << portName << " with error " << err;
-        logMessage(oss.str());
-		return false;
-    }
-
-    hSerial.reset(rawHandle);
-
-    if (hSerial.get() == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
-
-    DCB dcbSerialParams = {0};
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-
-    if (!GetCommState(hSerial.get(), &dcbSerialParams))
-    {
-        hSerial.reset(INVALID_HANDLE_VALUE);
-        return false;
-    }
-
-    dcbSerialParams.BaudRate = CBR_115200; // You can use the 'baudrate' parameter
-    dcbSerialParams.ByteSize = 8;
-    dcbSerialParams.StopBits = ONESTOPBIT;
-    dcbSerialParams.Parity = NOPARITY;
-
-    if (!SetCommState(hSerial.get(), &dcbSerialParams))
-    {
-        hSerial.reset();
-        return false;
-    }
-
-    // Set timeouts
-    COMMTIMEOUTS timeouts = {0};
-    timeouts.ReadIntervalTimeout = 5;
-    timeouts.ReadTotalTimeoutConstant = 5;
-    timeouts.ReadTotalTimeoutMultiplier = 1;
-    timeouts.WriteTotalTimeoutConstant = 50;
-    timeouts.WriteTotalTimeoutMultiplier = 10;
-
-    if (!SetCommTimeouts(hSerial.get(), &timeouts))
-    {
-        hSerial.reset();
-        return false;
-    }
-
-    return true;
+void WindowsPlatform::setSerialBridgeHandler(SerialBridgeHandler handler) {
+    serial_bridge_handler_ = std::move(handler);
 }
 
-void WindowsPlatform::closeSerialPort()
-{
-    hSerial.reset(INVALID_HANDLE_VALUE);
-}
-
-bool WindowsPlatform::writeSerial(const std::string &data)
-{
-    if (hSerial.get() == INVALID_HANDLE_VALUE) {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - lastSerialAttempt_).count();
-
-        if (elapsed >= SERIAL_RETRY_DELAY_MS) {
-            lastSerialAttempt_ = now;
-            logMessage("Attempting to reconnect serial port...");
-            if (openSerialPort("COM3", 115200)) {
-                logMessage("Serial port reconnected successfully");
-            }
-        }
-        return false;
-    }
-
-    DWORD bytesWritten = 0;
-    if (!WriteFile(hSerial.get(), data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
-        DWORD err = GetLastError();
-        logMessage("WriteFile failed (Error " + std::to_string(err) + "), closing serial port");
-        closeSerialPort();
-        return false;
-    }
-
-    if (bytesWritten != data.length()) {
-        logMessage("Partial write detected (" + std::to_string(bytesWritten) + " of " + std::to_string(data.length()) + " bytes)");
-        return false;
-    }
-    return true;
-}
-
-bool WindowsPlatform::readSerial(std::string &readData) {
-    if (!hSerial) {
-        return false;
-    }
-
-    if (hSerial == INVALID_HANDLE_VALUE) {
-        return false;
-    }
-
-    char buffer[256];
-    DWORD bytesRead = 0;
-
-    if (ReadFile(hSerial.get(), buffer, sizeof(buffer) -1, &bytesRead, NULL)) {
-        if (bytesRead > 0) {
-            readData.append(buffer, bytesRead);
-            return true;
-        }
-    }
-    else {
-		DWORD err = GetLastError();
-        if (err != ERROR_IO_PENDING) {
-			logMessage("Error reading from serial port: " + std::to_string(err));
-        }
+bool WindowsPlatform::forwardSerialBridgeMessage(const std::string& data) {
+    if (serial_bridge_handler_) {
+        return serial_bridge_handler_(data);
     }
     return false;
 }
@@ -675,17 +760,47 @@ void WindowsPlatform::showMessageDialog(const std::string& title, const std::str
     std::wstring wTitle(title.begin(), title.end());
     std::wstring wMessage(message.begin(), message.end());
 
-    MessageBoxW(
-        NULL,
-        wMessage.c_str(),
-        wTitle.c_str(),
-        MB_OK | MB_ICONINFORMATION
-    );
+    DWORD mySession = 0;
+    ProcessIdToSessionId(GetCurrentProcessId(), &mySession);
+
+    if (mySession == 0) {
+        // Running as a Session 0 service — route the dialog to the active
+        // user session via WTSSendMessage so it appears on their desktop.
+        DWORD sessionId = WTSGetActiveConsoleSessionId();
+        if (sessionId != 0xFFFFFFFF) {
+            DWORD response = 0;
+            WTSSendMessageW(
+                WTS_CURRENT_SERVER_HANDLE,
+                sessionId,
+                const_cast<LPWSTR>(wTitle.c_str()),
+                static_cast<DWORD>(wTitle.size() * sizeof(wchar_t)),
+                const_cast<LPWSTR>(wMessage.c_str()),
+                static_cast<DWORD>(wMessage.size() * sizeof(wchar_t)),
+                MB_OK | MB_ICONINFORMATION,
+                0,
+                &response,
+                FALSE   // non-blocking — don't hold up the serial thread
+            );
+            return;
+        }
+    }
+
+    // Interactive / user-session fallback
+    MessageBoxW(NULL, wMessage.c_str(), wTitle.c_str(), MB_OK | MB_ICONINFORMATION);
+}
+
+static bool IsErrorOrWarning(const std::string& message) {
+    std::string upper = message;
+    std::transform(upper.begin(), upper.end(), upper.begin(),
+        [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    return upper.find("ERROR") != std::string::npos ||
+           upper.find("WARNING") != std::string::npos ||
+           upper.find("FATAL") != std::string::npos;
 }
 
 void WindowsPlatform::logMessage(const std::string &message)
 {
-    if (std::string(VERSION_EXTRAVERSION) != "rc") {
+    if (std::string(VERSION_EXTRAVERSION) != "rc" && !IsErrorOrWarning(message)) {
         return;
     }
 
@@ -849,6 +964,19 @@ std::string WindowsPlatform::getWindowsUpdateStateImpl() {
     }
 
     return "Up to Date or Unknown";
+}
+
+void WindowsPlatform::invalidateMetricCaches() {
+    cpuCache_.invalidate();
+    ramCache_.invalidate();
+    diskSpaceCache_.invalidate();
+    windowsUpdateCache_.invalidate();
+    diskQueueCache_.invalidate();
+    netRetransCache_.invalidate();
+    uptimeCache_.invalidate();
+    gpuDriverCache_.invalidate();
+    gpuUsageCache_.invalidate();
+    highRamProcsCache_.invalidate();
 }
 
 void WindowsPlatform::updatePdhMetrics() {
@@ -1172,6 +1300,10 @@ HANDLE WindowsPlatform::getStopEvent()
 void WindowsPlatform::startService()
 {
     startSessionMonitor();
+    startSerialBridgePipe();
+#ifdef ENABLE_TRAY_APP
+    startTrayApp();
+#endif
     if (on_start_callback)
         on_start_callback();
 }
@@ -1186,9 +1318,41 @@ void WindowsPlatform::stopService(const std::string& stopReason)
     logMessage("Service stop requested: " + stopReason);
     reportStatus(SERVICE_STOP_PENDING, NO_ERROR, 15000);
     stopSessionMonitor();
+    stopSerialBridgePipe();
+#ifdef ENABLE_TRAY_APP
+    stopTrayApp();
+#endif
     if (on_stop_callback)
         on_stop_callback(stopReason);
     SetEvent(g_stop_event.get());
+}
+
+void WindowsPlatform::shutdownSystem()
+{
+    HANDLE hToken;
+    TOKEN_PRIVILEGES tkp;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
+        logMessage("Failed to open process token for shutdown.");
+        return;
+    }
+
+    LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid);
+    tkp.PrivilegeCount = 1;
+    tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, (PTOKEN_PRIVILEGES)NULL, 0);
+    if (GetLastError() != ERROR_SUCCESS) {
+        logMessage("Failed to adjust token privileges for shutdown.");
+        CloseHandle(hToken);
+        return;
+    }
+
+    if (!ExitWindowsEx(EWX_SHUTDOWN | EWX_FORCE, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER)) {
+        logMessage("Failed to initiate system shutdown.");
+    }
+
+    CloseHandle(hToken);
 }
 
 #endif // _WIN32

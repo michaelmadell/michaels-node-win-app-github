@@ -1,5 +1,5 @@
 #ifdef __linux__
-#include "Platform.h"
+#include "../core/Platform.h"
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -14,13 +14,13 @@
 #include <thread>
 #include <stdexcept>
 #include <cmath>
+#include <chrono>
+#include <cctype>
 
 // Linux Headers
 #include <atomic>
 #include <csignal>
 #include <unistd.h>
-#include <termios.h> // For serial port configuration
-#include <fcntl.h>   // For file control options
 #include <sys/stat.h>
 #include <syslog.h>
 #include <dbus/dbus.h>
@@ -89,49 +89,26 @@ unsigned long long getTcpValue(int index) {
 }
 
 std::string getDhcpStatus(const std::string& interfaceName) {
-    // std::string connectionName;
-    // char buffer[256];
+    try {
+        std::string addrCmd = "ip -4 -o addr show dev " + interfaceName;
+        std::string addrOutput = executeCommand(addrCmd);
 
-    // // Step 1: Find the active connection name for the given device interface
-    // std::string cmd1 = "nmcli -t -f GENERAL.CONNECTION dev show " + interfaceName;
-    // FILE* pipe1 = popen(cmd1.c_str(), "r");
-    // if (!pipe1) return "unknown";
-    
-    // if (fgets(buffer, sizeof(buffer), pipe1) != nullptr) {
-    //     connectionName = std::string(buffer);
-    //     // Remove trailing newline
-    //     connectionName.erase(connectionName.find_last_not_of("\n\r") + 1);
-    //     // The output is "GENERAL.CONNECTION:<name>", so we find the colon and take the rest
-    //     size_t colon_pos = connectionName.find(':');
-    //     if (colon_pos != std::string::npos) {
-    //         connectionName = connectionName.substr(colon_pos + 1);
-    //     }
-    // }
-    // pclose(pipe1);
+        if (addrOutput.find(" dynamic ") != std::string::npos) {
+            return "dhcp";
+        }
 
-    // if (connectionName.empty()) {
-    //     return "unknown";
-    // }
+        std::string routeCmd = "ip -4 -o route show dev " + interfaceName;
+        std::string routeOutput = executeCommand(routeCmd);
 
-    // // Step 2: Get the ipv4.method for that connection
-    // std::string result = "unknown";
-    // std::string cmd2 = "nmcli -t -f ipv4.method con show \"" + connectionName + "\"";
-    // FILE* pipe2 = popen(cmd2.c_str(), "r");
-    // if (!pipe2) return "unknown";
+        if (routeOutput.find("proto dhcp") != std::string::npos) {
+            return "dhcp";
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error checking interface: " << e.what() << std::endl;
+        return "static";
+    }
 
-    // if (fgets(buffer, sizeof(buffer), pipe2) != nullptr) {
-    //     std::string line(buffer);
-    //     if (line.find("auto") != std::string::npos) {
-    //         result = "dhcp";
-    //     } else if (line.find("manual") != std::string::npos) {
-    //         result = "static";
-    //     }
-    // }
-    // pclose(pipe2);
-    
-    // return result;
-
-    return "unknown"; // Placeholder until a reliable method is implemented
+    return "static";
 }
 
 class LinuxPlatform;
@@ -149,27 +126,73 @@ void dbusThread() {
         return;
     }
 
-    const char* match_rule = "type='signal',interface='org.freedesktop.login1.Session',member='Unlock'";
-    const char* match_rule2 = "type='signal',interface='org.freedesktop.login1.Session',member='Lock'";
+    // Lock/Unlock signals are only emitted by logind when something calls
+    // back into logind itself (e.g. loginctl lock-session). Many desktop
+    // screen lockers (GNOME, KDE, light-locker, etc.) lock the screen
+    // locally without notifying logind, so the Lock signal is unreliable.
+    // The LockedHint property on the session object is kept in sync by
+    // logind regardless of how the screen got locked/unlocked, so watch
+    // PropertiesChanged for it instead.
+    const char* match_rule = "type='signal',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='org.freedesktop.login1.Session'";
+    const char* match_rule3 = "type='signal',interface='org.freedesktop.login1.Manager',member='SessionNew'";
+    const char* match_rule4 = "type='signal',interface='org.freedesktop.login1.Manager',member='SessionRemoved'";
     dbus_bus_add_match(conn, match_rule, &err);
-    dbus_bus_add_match(conn, match_rule2, &err);
-    
+    dbus_bus_add_match(conn, match_rule3, &err);
+    dbus_bus_add_match(conn, match_rule4, &err);
+
     syslog(LOG_INFO, "D-Bus thread started and listening for session signals.");
 
-    while (true) {
-        dbus_connection_read_write_dispatch(conn, -1);
+    while (!g_terminate.load()) {
+        dbus_connection_read_write_dispatch(conn, 200);
         DBusMessage* msg = dbus_connection_pop_message(conn);
-
         if (msg == NULL) continue;
 
-        if (dbus_message_is_signal(msg, "org.freedesktop.login1.Session", "Lock")) {
-            if (g_session_callback) g_session_callback("7");
-        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Session", "Unlock")){
-            if (g_session_callback) g_session_callback("8");
-        }
+        if (dbus_message_is_signal(msg, "org.freedesktop.DBus.Properties", "PropertiesChanged")) {
+            DBusMessageIter args;
+            if (dbus_message_iter_init(msg, &args) &&
+                dbus_message_iter_get_arg_type(&args) == DBUS_TYPE_STRING) {
+                const char* changedInterface = nullptr;
+                dbus_message_iter_get_basic(&args, &changedInterface);
 
+                if (changedInterface && strcmp(changedInterface, "org.freedesktop.login1.Session") == 0 &&
+                    dbus_message_iter_next(&args) &&
+                    dbus_message_iter_get_arg_type(&args) == DBUS_TYPE_ARRAY) {
+                    DBusMessageIter dictIter;
+                    dbus_message_iter_recurse(&args, &dictIter);
+
+                    while (dbus_message_iter_get_arg_type(&dictIter) == DBUS_TYPE_DICT_ENTRY) {
+                        DBusMessageIter entryIter;
+                        dbus_message_iter_recurse(&dictIter, &entryIter);
+
+                        const char* propName = nullptr;
+                        dbus_message_iter_get_basic(&entryIter, &propName);
+
+                        if (propName && strcmp(propName, "LockedHint") == 0 &&
+                            dbus_message_iter_next(&entryIter) &&
+                            dbus_message_iter_get_arg_type(&entryIter) == DBUS_TYPE_VARIANT) {
+                            DBusMessageIter variantIter;
+                            dbus_message_iter_recurse(&entryIter, &variantIter);
+
+                            if (dbus_message_iter_get_arg_type(&variantIter) == DBUS_TYPE_BOOLEAN) {
+                                dbus_bool_t lockedHint = FALSE;
+                                dbus_message_iter_get_basic(&variantIter, &lockedHint);
+                                if (g_session_callback) g_session_callback(lockedHint ? "7" : "8");
+                            }
+                        }
+                        dbus_message_iter_next(&dictIter);
+                    }
+                }
+            }
+        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "SessionNew")) {
+            if (g_session_callback) g_session_callback("5");
+        } else if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "SessionRemoved")) {
+            if (g_session_callback) g_session_callback("6");
+        }
         dbus_message_unref(msg);
     }
+
+    syslog(LOG_INFO, "D-Bus thread terminating.");
+    dbus_connection_unref(conn);
 }
 
 void signal_handler(int signum) {
@@ -188,18 +211,13 @@ public:
     // --- Core Platform Methods (Already Implemented Down Below) ---
     std::vector<NetworkInterface> getNetworkInterfaces() override;
     std::string getHostname() override;
+    std::string getCurrentSessionState() override;
     std::string getLoggedInUser() override;
     std::string getOsVersion() override;
     std::string getOsBuild() override;
-    bool openSerialPort(const std::string& portName, int baudrate) override;
-    void closeSerialPort() override;
-    bool writeSerial(const std::string& data) override;
     void logMessage(const std::string& message) override;
 
     // --- Performance Metrics (Need Stubs or Linux Implementation) ---
-    // Note: readSerial was missing a declaration too, but is implemented below.
-    bool readSerial(std::string &readData) override; 
-    
     int getCpuUsagePercent() override;
     int getRamUsagePercent() override;
     std::string getFreeDiskSpaceGB(const std::string& drivePath) override;
@@ -216,6 +234,7 @@ public:
     
     // --- Utility Methods (Need Stubs or Implementation) ---
     void showMessageDialog(const std::string& title, const std::string& message) override;
+    void shutdownSystem() override;
 
     int run(
         int argc, char* argv[],
@@ -226,7 +245,6 @@ public:
     ) override;
 
 private:
-    int serial_fd = -1;
     std::thread m_dbus_thread;
 
     unsigned long long m_prev_total_time = 0;
@@ -280,82 +298,9 @@ int LinuxPlatform::run(
     return 0;
 }
 
-bool LinuxPlatform::openSerialPort(const std::string& portName, int baudrate) {
-    serial_fd = open(portName.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
-    if (serial_fd < 0) {
-        logMessage("Error opening serial port " + portName);
-        return false;
-    }
-
-    struct termios tty;
-    if (tcgetattr(serial_fd, &tty) != 0) {
-        logMessage("Error getting termios attributes");
-        return false;
-    }
-
-    // Set Baud Rate to 115200
-    cfsetospeed(&tty, B115200);
-    cfsetispeed(&tty, B115200);
-
-    tty.c_cflag &= ~PARENB;         // No Parity
-    tty.c_cflag &= ~CSTOPB;         // 1 stop bit
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;
-    tty.c_cflag &= ~CRTSCTS;        // no hardware flow control
-    tty.c_cflag |= CREAD | CLOCAL;  // Enable receiver, ignore modem control lines
-
-    // Disable software flow control
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-
-    // Set raw input and output
-    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-    tty.c_oflag &= ~OPOST;
-
-    // --- CRITICAL FIX: Set VMIN=0 and VTIME=0 for NON-BLOCKING read ---
-    tty.c_cc[VMIN] = 0; 
-    tty.c_cc[VTIME] = 0; 
-
-    if (tcsetattr(serial_fd, TCSANOW, &tty) != 0) {
-        logMessage("Error setting termios attributes.");
-        return false;
-    }
-
-    return true;
-}
-
-void LinuxPlatform::closeSerialPort() {
-    if (serial_fd >= 0) {
-        close(serial_fd);
-        serial_fd = -1;
-    }
-}
-
-bool LinuxPlatform::writeSerial(const std::string& data) {
-    if (serial_fd < 0) {
-        // Log that the port isn't even open
-        logMessage("[writeSerial] Error: Serial port is not open.");
-        return false;
-    }
-
-    // Log what we are about to write
-    logMessage("[writeSerial] Attempting to write: " + data);
-    
-    ssize_t bytes_written = write(serial_fd, data.c_str(), data.length());
-
-    if (bytes_written < 0) {
-        // An error occurred
-        logMessage("[writeSerial] Error on write(): " + std::string(strerror(errno)));
-        return false;
-    }
-
-    // Log the result
-    logMessage("[writeSerial] write() returned: " + std::to_string(bytes_written) + " bytes written.");
-
-    return bytes_written == (ssize_t)data.length();
-}
-
 std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
     std::map<std::string, NetworkInterface> interfaces_map;
+
     struct ifaddrs *ifaddr, *ifa;
 
     if (getifaddrs(&ifaddr) == -1) {
@@ -368,13 +313,23 @@ std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
 
         std::string name = ifa->ifa_name;
 
+        std::string carrierPath = "/sys/class/net/" + name + "/operstate";
+        std::ifstream carrierFile(carrierPath);
+        std::string operstate;
+
         if ( (ifa->ifa_flags & IFF_LOOPBACK) ) {
             continue;
         }
 
         if (interfaces_map.find(name) == interfaces_map.end()) {
             interfaces_map[name].name = name;
-            interfaces_map[name].linkStatus = "up";
+            
+            if (carrierFile >> operstate && operstate == "up") {
+                interfaces_map[name].linkStatus = "up";
+            } else {
+                interfaces_map[name].linkStatus = "down";
+            }
+
             interfaces_map[name].ipv4 = "none";
             interfaces_map[name].ipv6 = "none";
             interfaces_map[name].macAddress = "none";
@@ -386,7 +341,7 @@ std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
             struct sockaddr_ll* s = (struct sockaddr_ll*)ifa->ifa_addr;
             std::stringstream ss;
             for (int i = 0; i < s->sll_halen; i++) {
-                ss << std::hex << std::setw(2) << std::setfill('0') << (int)s->sll_addr[i];
+                ss << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << (int)s->sll_addr[i];
                 if (i < s->sll_halen - 1) ss << ":";
             }
 
@@ -408,7 +363,12 @@ std::vector<NetworkInterface> LinuxPlatform::getNetworkInterfaces() {
 
     std::vector<NetworkInterface> result_vector;
     for (auto const& [name, iface] : interfaces_map) {
-        result_vector.push_back(iface);
+        const std::string& mac = iface.macAddress;
+        if (mac.compare(0, 8, "00:17:FD") == 0 || // Amulet Hotkey
+            mac.compare(0, 8, "00:13:95") == 0 || // Congatec
+            mac.compare(0, 8, "00:07:32") == 0) { // AAEON
+            result_vector.push_back(iface);
+        }
     }
     return result_vector;
 }
@@ -432,17 +392,6 @@ std::string LinuxPlatform::getOsBuild() {
         return std::string(buffer.release);
     }
     return "Unknown Build";
-}
-
-bool LinuxPlatform::readSerial(std::string &readData) {
-    if (serial_fd < 0) return false;
-    char buffer[256];
-    ssize_t bytes_read = read(serial_fd, buffer, sizeof(buffer) - 1); 
-    if (bytes_read > 0) {
-        readData.append(buffer, bytes_read);
-        return true;
-    }
-    return false;
 }
 
 std::string LinuxPlatform::getSystemUptime() {
@@ -533,8 +482,46 @@ std::string LinuxPlatform::getFreeDiskSpaceGB(const std::string& drivePath) {
 }
 
 float LinuxPlatform::getDiskQueueLength() {
-    // Placeholder implementation
-    return 0.0f;
+    // Sum the "in_flight" (field 12) column of /proc/diskstats across whole-disk
+    // block devices only (skip partitions and loop/ram devices) as an analog to
+    // Windows' "Avg. Disk Queue Length" counter.
+    std::ifstream file("/proc/diskstats");
+    std::string line;
+    float total_in_flight = 0.0f;
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string major, minor, devName;
+        unsigned long long fields[10] = {0};
+
+        ss >> major >> minor >> devName;
+        for (int i = 0; i < 10; i++) {
+            if (!(ss >> fields[i])) break;
+        }
+
+        if (devName.rfind("loop", 0) == 0 || devName.rfind("ram", 0) == 0) {
+            continue;
+        }
+
+        // Skip partitions: sdXN, vdXN, hdXN have a trailing digit after the
+        // letters; nvme/mmcblk whole-disks already end in a digit, so only
+        // skip those with a partition suffix ("p<N>" or "n<N>p<N>").
+        bool isPartition = false;
+        if (devName.rfind("nvme", 0) == 0 || devName.rfind("mmcblk", 0) == 0) {
+            isPartition = (devName.find('p', devName.find_first_of("0123456789")) != std::string::npos);
+        } else {
+            isPartition = !devName.empty() && std::isdigit(static_cast<unsigned char>(devName.back()));
+        }
+        if (isPartition) {
+            continue;
+        }
+
+        // fields[8] is in_flight (the 12th whitespace-separated field overall:
+        // major, minor, name, then 9 read/write stat fields before in_flight).
+        total_in_flight += (float)fields[8];
+    }
+
+    return total_in_flight;
 }
 
 void LinuxPlatform::updatePdhMetrics() {
@@ -599,9 +586,35 @@ float LinuxPlatform::getGpuUsagePercent() {
         }
     }
 
-    // 2. Fallback for Intel Integrated Graphics (guaranteed present, but usage is complex to track)
-    // Returning 0.0f is a safe way to prevent crashes when the information is unavailable through simple means.
-    logMessage("GPU usage (percent) requested. Returning 0.0f as integrated Intel graphics usage is not tracked via generic commands.");
+    // 2. AMD: amdgpu exposes a direct busy-percent sysfs attribute.
+    std::string amdgpu_module = executeCommand("lsmod | grep amdgpu");
+    if (!amdgpu_module.empty()) {
+        std::string busy = executeCommand(
+            "cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | head -n 1");
+        if (!busy.empty()) {
+            try {
+                return std::stof(busy);
+            } catch (...) {
+                return 0.0f;
+            }
+        }
+    }
+
+    // 3. Intel integrated graphics: query via intel_gpu_top (igt-gpu-tools, a required
+    // package for the .deb build). Capture one JSON sample and read the Render/3D engine
+    // busy percentage.
+    std::string intel_busy = executeCommand(
+        "timeout 2 intel_gpu_top -J -s 1000 -o - 2>/dev/null "
+        "| grep -A3 '\"Render/3D' | grep -m1 '\"busy\"' | grep -oE '[0-9]+\\.?[0-9]*'");
+    if (!intel_busy.empty()) {
+        try {
+            return std::stof(intel_busy);
+        } catch (...) {
+            return 0.0f;
+        }
+    }
+
+    logMessage("GPU usage (percent) requested. Returning 0.0f: no NVIDIA/AMD/Intel usage source available.");
     return 0.0f;
 }
 std::string LinuxPlatform::getHighRamProcesses() {
@@ -653,8 +666,22 @@ std::string LinuxPlatform::getWindowsUpdateState() {
     return "Up to Date";
 }
 
+static int SyslogPriorityFor(const std::string& message) {
+    std::string upper = message;
+    std::transform(upper.begin(), upper.end(), upper.begin(),
+        [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+
+    if (upper.find("FATAL") != std::string::npos || upper.find("ERROR") != std::string::npos) {
+        return LOG_ERR;
+    }
+    if (upper.find("WARNING") != std::string::npos) {
+        return LOG_WARNING;
+    }
+    return LOG_INFO;
+}
+
 void LinuxPlatform::logMessage(const std::string& message) {
-    syslog(LOG_INFO, "%s", message.c_str());
+    syslog(SyslogPriorityFor(message), "%s", message.c_str());
 }
 
 std::string LinuxPlatform::getHostname() {
@@ -665,6 +692,27 @@ std::string LinuxPlatform::getHostname() {
 }
 
 std::string LinuxPlatform::getLoggedInUser() {
+    // `who` filters on tty/pts naming, but graphical sessions (X via a
+    // display manager, Wayland seats) often show up with a tty field like
+    // ":0" instead of "tty*"/"pts/*", so the filter misses them and this
+    // always returned "none" on graphical logins. loginctl reports the
+    // session owner regardless of session type, so prefer that.
+    //
+    // After logout the display manager spawns a fresh greeter session
+    // (Class=greeter, owned by gdm/lightdm/sddm etc). Just taking the
+    // first session in the list picked up that service account instead
+    // of "none", so filter to Class=user sessions only.
+    std::string name = executeCommand(
+        "for s in $(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}'); do "
+        "c=$(loginctl show-session \"$s\" -p Class --value 2>/dev/null); "
+        "if [ \"$c\" = \"user\" ]; then loginctl show-session \"$s\" -p Name --value 2>/dev/null; break; fi; "
+        "done"
+    );
+    name.erase(name.find_last_not_of("\n\r \t") + 1);
+    if (!name.empty()) {
+        return name;
+    }
+
     const char* cmd = "who | awk '$2~/^tty|pts/ {print $1}' | sort -u | head -n 1";
     char buffer[128] = {0};
     std::string result = "none";
@@ -676,9 +724,35 @@ std::string LinuxPlatform::getLoggedInUser() {
         result = std::string(buffer);
         result.erase(result.find_last_not_of("\n\r") + 1);
     }
-
     pclose(pipe);
+
     return result.empty() ? "none" : result;
+}
+
+std::string LinuxPlatform::getCurrentSessionState() {
+    std::string sessionId = executeCommand(
+        "loginctl list-sessions --no-legend 2>/dev/null | awk 'NR==1{print $1}'"
+    );
+
+    if (sessionId.empty()) {
+        return "unknown";
+    }
+    std::string locked = executeCommand(
+        "loginctl show-session " + sessionId + " -p LockedHint --value 2>/dev/null"
+    );
+
+    locked.erase(locked.find_last_not_of("\n\r \t") + 1);
+
+    if (locked == "yes") {
+        return "7"; // Locked
+    }
+
+    return "5";
+}
+
+void LinuxPlatform::shutdownSystem() {
+    logMessage("Shutdown requested via LinuxPlatform::shutdownSystem().");
+    executeCommand("systemctl poweroff");
 }
 
 #endif

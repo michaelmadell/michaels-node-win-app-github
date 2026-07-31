@@ -19,7 +19,7 @@ public:
 	*/
 	explicit MetricCache(int ttl_seconds)
 		: ttl_(std::chrono::seconds(ttl_seconds))
-		, lastUpdate_(std::chrono::steady_clock::time_point::min())
+		, lastUpdate_(std::chrono::steady_clock::now())
 		, isValid_(false)
 	{}
 

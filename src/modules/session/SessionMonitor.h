@@ -7,6 +7,8 @@
 #include <thread>
 #include <atomic>
 #include <functional>
+#include <mutex>
+#include <condition_variable>
 
 // Forward declaration
 class WindowsPlatform;
@@ -82,6 +84,9 @@ private:
     HWND window_ = nullptr;
     std::thread thread_;
     std::atomic<bool> active_{ false };
+    std::mutex windowMutex_;
+    std::condition_variable windowReadyCv_;
+    bool windowReady_ = false;
 };
 
 #endif // _WIN32

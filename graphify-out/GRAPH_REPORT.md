@@ -1,117 +1,151 @@
-# Graph Report - .  (2026-06-04)
+# Graph Report - .  (2026-06-05)
 
 ## Corpus Check
-- Corpus is ~15,846 words - fits in a single context window. You may not need a graph.
+- Corpus is ~21,896 words - fits in a single context window. You may not need a graph.
 
 ## Summary
-- 218 nodes · 285 edges · 17 communities (13 shown, 4 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 13 edges (avg confidence: 0.9)
+- 355 nodes · 581 edges · 31 communities (19 shown, 12 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 13 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_STL & Standard Headers|STL & Standard Headers]]
-- [[_COMMUNITY_Windows Service Lifecycle|Windows Service Lifecycle]]
-- [[_COMMUNITY_Windows Platform Types|Windows Platform Types]]
-- [[_COMMUNITY_Platform Interface & Factory|Platform Interface & Factory]]
-- [[_COMMUNITY_Deployment & Packaging|Deployment & Packaging]]
+- [[_COMMUNITY_Windows Platform Core|Windows Platform Core]]
+- [[_COMMUNITY_Linux Platform Interface|Linux Platform Interface]]
 - [[_COMMUNITY_Linux Platform Implementation|Linux Platform Implementation]]
-- [[_COMMUNITY_Application Core|Application Core]]
-- [[_COMMUNITY_VS Code CMake Settings|VS Code CMake Settings]]
-- [[_COMMUNITY_VS Code Build Tasks|VS Code Build Tasks]]
-- [[_COMMUNITY_VS Code C++ Config|VS Code C++ Config]]
-- [[_COMMUNITY_CMake Configuration|CMake Configuration]]
-- [[_COMMUNITY_Power State Callback|Power State Callback]]
-- [[_COMMUNITY_Void Callback Type|Void Callback Type]]
+- [[_COMMUNITY_Windows Service Manager|Windows Service Manager]]
+- [[_COMMUNITY_BMC Protocol and Concepts|BMC Protocol and Concepts]]
+- [[_COMMUNITY_Main Application Logic|Main Application Logic]]
+- [[_COMMUNITY_CPU Detection (3kcheck)|CPU Detection (3kcheck)]]
+- [[_COMMUNITY_Metrics Collection|Metrics Collection]]
+- [[_COMMUNITY_Core Abstractions and Cache|Core Abstractions and Cache]]
+- [[_COMMUNITY_Session Monitoring|Session Monitoring]]
+- [[_COMMUNITY_Serial Manager|Serial Manager]]
+- [[_COMMUNITY_Tray and Session UI|Tray and Session UI]]
+- [[_COMMUNITY_Registry Editor|Registry Editor]]
+- [[_COMMUNITY_Claude Code Config|Claude Code Config]]
+- [[_COMMUNITY_Platform Factory|Platform Factory]]
+- [[_COMMUNITY_Module Group 15|Module Group 15]]
+- [[_COMMUNITY_Module Group 16|Module Group 16]]
+- [[_COMMUNITY_Module Group 17|Module Group 17]]
+- [[_COMMUNITY_Module Group 18|Module Group 18]]
+- [[_COMMUNITY_Module Group 19|Module Group 19]]
+- [[_COMMUNITY_Module Group 20|Module Group 20]]
+- [[_COMMUNITY_Module Group 22|Module Group 22]]
+- [[_COMMUNITY_Module Group 24|Module Group 24]]
+- [[_COMMUNITY_Module Group 27|Module Group 27]]
+- [[_COMMUNITY_Module Group 28|Module Group 28]]
+- [[_COMMUNITY_Module Group 29|Module Group 29]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `files.associations` - 72 edges
-2. `WindowsPlatform` - 38 edges
-3. `LinuxPlatform` - 22 edges
-4. `string` - 8 edges
-5. `ServiceMain()` - 8 edges
-6. `sendLineToBmc()` - 8 edges
-7. `logMessage()` - 7 edges
-8. `Platform()` - 7 edges
-9. `string` - 7 edges
-10. `run()` - 7 edges
+1. `LinuxPlatform` - 35 edges
+2. `string` - 24 edges
+3. `string` - 18 edges
+4. `logMessage()` - 14 edges
+5. `run()` - 12 edges
+6. `string` - 10 edges
+7. `LogError()` - 10 edges
+8. `WndProc()` - 10 edges
+9. `Platform()` - 9 edges
+10. `OpenServiceHandle()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `sendLineToBmc()` --implements--> `BMC Serial Protocol (key=value CSV messages over serial port to management controller)`  [INFERRED]
-  src/main.cpp → README.md
-- `CMakeSettings.json (x64-Debug Ninja config)` --conceptually_related_to--> `CMakeLists.txt (build configuration)`  [INFERRED]
-  CMakeSettings.json → CMakeLists.txt
-- `tasks.json (VSCode build + clang-tidy tasks)` --conceptually_related_to--> `CMakeLists.txt (build configuration)`  [INFERRED]
-  .vscode/tasks.json → CMakeLists.txt
-- `CMakeLists.txt (build configuration)` --references--> `LinuxPlatform`  [EXTRACTED]
-  CMakeLists.txt → src/LinuxPlatform.cpp
-- `CMakeLists.txt (build configuration)` --references--> `WindowsPlatform`  [EXTRACTED]
-  CMakeLists.txt → src/WindowsPlatform.cpp
+- `Named Pipe Tray IPC` --rationale_for--> `TrayApp()`  [EXTRACTED]
+  README.md → src/modules/tray/TrayApp.cpp
+- `BMC Serial Protocol` --rationale_for--> `SerialManager`  [INFERRED]
+  README.md → src/modules/serial/SerialManager.h
+- `Version Info (20.26.5.1-rc7)` --references--> `CMakeLists Build Config`  [INFERRED]
+  src/version.h → CMakeLists.txt
+- `SerialManager` --semantically_similar_to--> `Platform()`  [INFERRED] [semantically similar]
+  src/modules/serial/SerialManager.h → src/core/Platform.h
+- `AMT SOL COM Port Conflict Resolution` --rationale_for--> `reassignComPort`  [EXTRACTED]
+  README.md → src/main.cpp
 
 ## Import Cycles
 - None detected.
 
 ## Hyperedges (group relationships)
-- **Platform Abstract Interface + Implementations (Windows and Linux)** — src_platform_platform, src_windowsplatform_windowsplatform, src_linuxplatform_linuxplatform [EXTRACTED 1.00]
-- **Windows Service Lifecycle (install, start, stop, remove)** — installer_install_install_ps1, installer_remove_remove_ps1, root_start_start_ps1, root_stop_stop_ps1, src_windowsplatform_servicemain, src_windowsplatform_servicectrlhandler [INFERRED 0.95]
-- **Linux systemd Service Lifecycle (install .deb, postinst, prerm, postrm)** — debian_postinst_postinst, debian_prerm_prerm, debian_postrm_postrm, root_cmakelists_cmakelists [INFERRED 0.95]
+- **Linux Systemd Service Lifecycle** — debian_postinst, debian_prerm, debian_postrm, build_sh [EXTRACTED 0.95]
+- **AMT COM Port Detection and Reassignment** — main_getamtcomport, main_reassigncomport, regedits_regedit_regedit [INFERRED 0.85]
+- **Platform Interface Implementations** — core_platform_platform, platform_windowsplatform_windowsplatform, platform_linuxplatform_linuxplatform [EXTRACTED 1.00]
+- **Windows Session and Tray Management** — session_sessionmonitor_sessionmonitor, tray_trayapp_trayapp, service_servicemanager_servicemanager, platform_windowsplatform_windowsplatform [INFERRED 0.85]
 
-## Communities (17 total, 4 thin omitted)
+## Communities (31 total, 12 thin omitted)
 
-### Community 0 - "STL & Standard Headers"
-Cohesion: 0.03
-Nodes (72): files.associations, algorithm, array, atomic, bit, cctype, charconv, chrono (+64 more)
+### Community 0 - "Windows Platform Core"
+Cohesion: 0.06
+Nodes (73): FILETIME, Windows_Addon, closeSerialPort(), FileTimeToInt64(), getCpuUsagePercent(), getCpuUsagePercentImpl(), getCurrentSessionState(), getDiskQueueLength() (+65 more)
 
-### Community 1 - "Windows Service Lifecycle"
-Cohesion: 0.07
-Nodes (31): SERVICE_STATUS, SERVICE_STATUS_HANDLE, PowerStateCallback, SessionStateCallback, VoidCallback, run(), startService(), stopService() (+23 more)
-
-### Community 2 - "Windows Platform Types"
-Cohesion: 0.16
-Nodes (20): DWORD, HANDLE, LPTSTR, NetworkInterface, string, vector, getHostname(), getLoggedInUser() (+12 more)
-
-### Community 3 - "Platform Interface & Factory"
+### Community 1 - "Linux Platform Interface"
 Cohesion: 0.11
-Nodes (19): Platform, unique_ptr, createPlatform(), dbusThread(), LinuxPlatform, closeSerialPort, getHostname, getLoggedInUser (+11 more)
+Nodes (30): Platform, createPlatform(), executeCommand(), getCpuTimes(), getCpuUsagePercent(), getCurrentSessionState(), getDhcpStatus(), getFreeDiskSpaceGB() (+22 more)
 
-### Community 4 - "Deployment & Packaging"
+### Community 2 - "Linux Platform Implementation"
+Cohesion: 0.06
+Nodes (31): LinuxPlatform, closeSerialPort, getCpuUsagePercent, getCurrentSessionState, getDiskQueueLength, getFreeDiskSpaceGB, getGpuDriverInfo, getGpuUsagePercent (+23 more)
+
+### Community 3 - "Windows Service Manager"
+Cohesion: 0.14
+Nodes (28): SC_HANDLE, GetLastErrorString(), GetStopEvent(), Install(), IsInstalled(), IsRunning(), LogError(), OpenServiceHandle() (+20 more)
+
+### Community 4 - "BMC Protocol and Concepts"
+Cohesion: 0.11
+Nodes (26): AMT SOL COM Port Conflict Resolution, BMC Serial Protocol, Named Pipe Tray IPC, GetAMTComPort, main, reassignComPort, CoreStation HX Agent Project Documentation, Regedit (+18 more)
+
+### Community 5 - "Main Application Logic"
+Cohesion: 0.24
+Nodes (18): AMTPortInfo, comPort, instanceId, checkSystemState(), string, wstring, disableAMTComPort(), enableAMTComPort() (+10 more)
+
+### Community 6 - "CPU Detection (3kcheck)"
+Cohesion: 0.16
+Nodes (17): GetCpuInfo(), IsHX2KCPU, IsHX2KCPU(), trim(), Platform(), NetworkInterface, SystemState, CPUInfo (+9 more)
+
+### Community 7 - "Metrics Collection"
+Cohesion: 0.15
+Nodes (14): GpuMetrics, CheckUpdates(), CollectAll(), CollectGpu(), CollectPerformance(), CollectProcesses(), GetFormattedMetrics(), PerformanceMetrics (+6 more)
+
+### Community 8 - "Core Abstractions and Cache"
 Cohesion: 0.12
-Nodes (18): BMC Serial Protocol (key=value CSV messages over serial port to management controller), CoreStationHXAgent Service (system monitoring agent for Amulet Hotkey CoreStation hardware), postinst (Debian post-install: enable+start systemd service), postrm (Debian post-removal: disable+purge systemd service), prerm (Debian pre-removal: stop systemd service), install.ps1 (Windows service installer), installer/release-notes.txt, remove.ps1 (Windows service remover) (+10 more)
+Nodes (9): CacheDurations(), get(), namespace, ComInitializer(), class, MetricsCollector(), class, std (+1 more)
 
-### Community 5 - "Linux Platform Implementation"
-Cohesion: 0.19
-Nodes (16): NetworkInterface, PowerStateCallback, SessionStateCallback, string, vector, VoidCallback, getDhcpStatus(), getHostname() (+8 more)
+### Community 9 - "Session Monitoring"
+Cohesion: 0.15
+Nodes (16): GetCurrentSessionState(), HandleSessionChange(), Start(), Stop(), ThreadProc(), WndProc(), DWORD, HWND (+8 more)
 
-### Community 6 - "Application Core"
-Cohesion: 0.22
-Nodes (12): class, Cross-Platform Service Pattern (same logic runs as Windows Service or Linux systemd daemon), checkSystemState(), string, createPlatform() declaration (main.cpp), heartbeatThread(), main(), sendLineToBmc() (+4 more)
+### Community 10 - "Serial Manager"
+Cohesion: 0.26
+Nodes (10): MessageCallback, closeSerialPort(), Close(), Open(), ProcessIncomingData(), Read(), TryReconnect(), Write() (+2 more)
 
-### Community 7 - "VS Code CMake Settings"
-Cohesion: 0.50
-Nodes (3): cmake.buildDirectory, cmake.configureOnOpen, cmake.generator
+### Community 11 - "Tray and Session UI"
+Cohesion: 0.17
+Nodes (10): NOTIFYICONDATAW, run(), class, SessionMonitor(), PowerStateCallback, SessionStateCallback, StringCallback, VoidCallback (+2 more)
 
-### Community 8 - "VS Code Build Tasks"
-Cohesion: 0.50
-Nodes (3): problemMatcher, tasks, version
+### Community 12 - "Registry Editor"
+Cohesion: 0.39
+Nodes (8): Create(), Delete(), Read(), Write(), DWORD, Regedit(), string, WindowsPlatform
+
+### Community 14 - "Platform Factory"
+Cohesion: 0.67
+Nodes (3): createPlatform(), Platform, unique_ptr
 
 ## Knowledge Gaps
-- **131 isolated node(s):** `configurations`, `version`, `cmake.generator`, `cmake.buildDirectory`, `cmake.configureOnOpen` (+126 more)
+- **108 isolated node(s):** `allow`, `build.sh script`, `class`, `comPort`, `instanceId` (+103 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `WindowsPlatform` connect `Windows Service Lifecycle` to `Windows Platform Types`, `Platform Interface & Factory`, `Deployment & Packaging`, `Application Core`?**
-  _High betweenness centrality (0.183) - this node is a cross-community bridge._
-- **Why does `LinuxPlatform` connect `Platform Interface & Factory` to `Windows Service Lifecycle`, `Deployment & Packaging`, `Linux Platform Implementation`, `Application Core`?**
-  _High betweenness centrality (0.121) - this node is a cross-community bridge._
-- **Why does `files.associations` connect `STL & Standard Headers` to `VS Code CMake Settings`?**
-  _High betweenness centrality (0.118) - this node is a cross-community bridge._
-- **Are the 2 inferred relationships involving `WindowsPlatform` (e.g. with `Cross-Platform Service Pattern (same logic runs as Windows Service or Linux systemd daemon)` and `LinuxPlatform`) actually correct?**
-  _`WindowsPlatform` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 2 inferred relationships involving `LinuxPlatform` (e.g. with `Cross-Platform Service Pattern (same logic runs as Windows Service or Linux systemd daemon)` and `WindowsPlatform`) actually correct?**
-  _`LinuxPlatform` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `configurations`, `version`, `cmake.generator` to the rest of the system?**
-  _131 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `STL & Standard Headers` be split into smaller, more focused modules?**
-  _Cohesion score 0.027777777777777776 - nodes in this community are weakly interconnected._
+- **Why does `thread` connect `Tray and Session UI` to `Windows Platform Core`, `Linux Platform Interface`, `Linux Platform Implementation`, `Main Application Logic`, `Core Abstractions and Cache`?**
+  _High betweenness centrality (0.235) - this node is a cross-community bridge._
+- **Why does `LinuxPlatform` connect `Linux Platform Implementation` to `Linux Platform Interface`, `Tray and Session UI`, `CPU Detection (3kcheck)`?**
+  _High betweenness centrality (0.157) - this node is a cross-community bridge._
+- **Why does `Platform()` connect `CPU Detection (3kcheck)` to `Core Abstractions and Cache`, `Windows Platform Core`, `Linux Platform Implementation`, `BMC Protocol and Concepts`?**
+  _High betweenness centrality (0.117) - this node is a cross-community bridge._
+- **What connects `allow`, `build.sh script`, `class` to the rest of the system?**
+  _108 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Windows Platform Core` be split into smaller, more focused modules?**
+  _Cohesion score 0.061088485746019994 - nodes in this community are weakly interconnected._
+- **Should `Linux Platform Interface` be split into smaller, more focused modules?**
+  _Cohesion score 0.1126984126984127 - nodes in this community are weakly interconnected._
+- **Should `Linux Platform Implementation` be split into smaller, more focused modules?**
+  _Cohesion score 0.06451612903225806 - nodes in this community are weakly interconnected._

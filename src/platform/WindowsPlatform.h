@@ -1,9 +1,9 @@
 #pragma once
 
 #ifdef _WIN32
-#include "core/Platform.h"
-#include "Windows_Addon.h"
-#include "modules/metrics/MetricCache.h"
+#include "../core/Platform.h"
+#include "WinHandles.h"
+#include "../modules/metrics/MetricCache.h"
 #include <windows.h>
 #include <wtsapi32.h>
 #include <pdh.h>
@@ -12,10 +12,12 @@
 #include <mutex>
 #include <atomic>
 #include <chrono>
+#include <string>
 
 // Forward declarations for modules
 class TrayApp;
 class SessionMonitor;
+class SerialBridgePipe;
 
 /**
  * @brief Windows-specific platform implementation
@@ -36,12 +38,11 @@ public:
     std::string getLoggedInUser() override;
     std::string getOsVersion() override;
     std::string getOsBuild() override;
-
-    bool openSerialPort(const std::string& portName, int baudrate) override;
-    void closeSerialPort() override;
-    bool writeSerial(const std::string& data) override;
-    bool readSerial(std::string& readData) override;
+    
     void logMessage(const std::string& message) override;
+
+    void setSerialBridgeHandler(SerialBridgeHandler handler) override;
+    bool forwardSerialBridgeMessage(const std::string& data) override;
 
     int getCpuUsagePercent() override;
     int getRamUsagePercent() override;
@@ -51,12 +52,15 @@ public:
     float getNetworkRetransRate() override;
     std::string getSystemUptime() override;
     void updatePdhMetrics() override;
+    void invalidateMetricCaches() override;
 
     std::string getGpuDriverInfo() override;
     float getGpuUsagePercent() override;
     std::string getHighRamProcesses() override;
 
     void showMessageDialog(const std::string& title, const std::string& message) override;
+
+    void shutdownSystem() override;
 
     int run(
         int argc, char* argv[],
@@ -72,16 +76,16 @@ public:
     void startService();
     void stopService(const std::string& stopReason);
 
+    // Tray-helper mode: called when this process is spawned by the service
+    // into the user session via CreateProcessAsUser. Runs the tray app until
+    // the parent service process exits, then returns.
+    int runAsTrayHelper(DWORD parentPid);
+
     // Delete copy constructor and assignment operator
     WindowsPlatform(const WindowsPlatform&) = delete;
     WindowsPlatform& operator=(const WindowsPlatform&) = delete;
 
 private:
-    // Serial communication
-    UniqueHandle hSerial = UniqueHandle(INVALID_HANDLE_VALUE);
-    std::chrono::steady_clock::time_point lastSerialAttempt_;
-    static constexpr int SERIAL_RETRY_DELAY_MS = 5000;
-
     // Callbacks
     VoidCallback on_start_callback;
     StringCallback on_stop_callback;
@@ -117,6 +121,11 @@ private:
 #ifdef ENABLE_SESSION_MONITOR
     std::unique_ptr<SessionMonitor> session_monitor_;
 #endif
+
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    std::unique_ptr<SerialBridgePipe> serial_bridge_pipe_;
+#endif
+    SerialBridgeHandler serial_bridge_handler_;
 
     // Thread safety
     std::mutex platformMutex_;
@@ -154,11 +163,26 @@ private:
     void stopTrayApp();
     void startSessionMonitor();
     void stopSessionMonitor();
+    void startSerialBridgePipe();
+    void stopSerialBridgePipe();
+
+    // Spawn a tray helper process in the active user session (called when
+    // running as a Session 0 service where direct tray creation is invisible).
+    void spawnTrayHelper();
+
+    // Terminate and release the tray helper process handle. Must be called
+    // with trayHelperMutex_ held.
+    void killTrayHelper();
 
     // Mode detection
     bool hasSwitch(int argc, char* argv[], const char* sw);
     bool hasSwitchCmd(const wchar_t* sw);
     bool runningUnderServiceControlManager();
+
+    // Handle to the tray helper child process (valid when service is in Session 0).
+    // Always access under trayHelperMutex_.
+    HANDLE hTrayHelperProcess_ = INVALID_HANDLE_VALUE;
+    std::mutex trayHelperMutex_;
 };
 
 #endif // _WIN32

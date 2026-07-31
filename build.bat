@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-for /f %%i in ('powershell -command "[int](Get-Date -UFormat %%s)"') do set START_EPOCH=%%i
+set "START_TIME=%TIME%"
 
 echo ============================================================================
 echo CoreStationHXAgent - CMake Build
@@ -34,7 +34,7 @@ echo [2/5] Ensuring build directory exists...
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 
 echo [3/5] Configuring CMake...
-cmake -S . -B "%BUILD_DIR%" -A x64 -DBUILD_REGEDIT=OFF
+cmake -S . -B "%BUILD_DIR%" -A x64
 if errorlevel 1 (
     echo ERROR: CMake configure failed
     exit /b 1
@@ -73,13 +73,25 @@ if exist "release-notes.txt" (
 for %%F in ("%OUTPUT_EXE_FILE%") do set FILE_SIZE=%%~zF
 set /a FILE_SIZE_KB=FILE_SIZE/1024
 
-for /f %%i in ('powershell -command "[int](Get-Date -UFormat %%s)"') do set END_EPOCH=%%i
-set /a ELAPSED_S=END_EPOCH-START_EPOCH
+set "END_TIME=%TIME%"
+
+echo ===========================================================================
+echo Do you want to sign the executable? (Y/N)
+set /p SIGN_CHOICE=
+if /I "%SIGN_CHOICE%"=="Y" (
+    echo Signing the executable...
+    sign "%OUTPUT_EXE_FILE%"
+    echo Signing completed.
+) else (
+    echo Skipping signing.
+)
 
 echo    Output: %OUTPUT_EXE_FILE% (!FILE_SIZE_KB! KB)
 echo.
 echo ============================================================================
-echo BUILD SUCCESSFUL (completed in !ELAPSED_S! seconds)
+echo BUILD SUCCESSFUL
+echo    Started: %START_TIME%
+echo    Ended:   %END_TIME%
 echo ============================================================================
 echo.
 

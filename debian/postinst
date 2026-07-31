@@ -2,18 +2,75 @@
 # A "noisy" version for debugging
 set -e
 
+_say() {
+    # apt runs dpkg behind its own pty and captures stdout/stderr for its
+    # progress pane, so neither stream reliably reaches the terminal.
+    # /dev/tty is the controlling terminal directly; fall back to stderr
+    # for non-interactive installs that have no controlling tty.
+    printf '%s\n' "$*" > /dev/tty 2>/dev/null || printf '%s\n' "$*" >&2
+}
+
 case "$1" in
     configure)
-        echo "    /---\/---\/---\    "
-        echo "    |   ||   ||   |    "
-        echo "    \---/\---/\---/    "
-        echo "   Amulet Hotkey Ltd   "    
-        echo "Enabling CoreStationHXAgent Service..."
-        systemctl enable CoreStationHXAgent.service
+        # _say "   .----.   .----.   .----."
+        # _say "  /      \\ /      \\ /      \\"
+        # _say " |        |        |        |"
+        # _say "  \\      / \\      / \\      /"
+        # _say "   '----'   '----'   '----'"
+        # _say "   Amulet Hotkey Ltd"
 
-        echo "Starting CoreStationHXAgent Service..."
-        systemctl restart CoreStationHXAgent.service
-        echo "--- postinst script finished ---"
+
+        _say " "                                                                        
+_say "            ███████████████     ████████████████    ████████████████            "
+_say "         ██████████████████████████████████████████ ███████████████████         "
+_say "       ██████████████████████████████████████████████████████████████████       "
+_say "     █████████           ██████████           █████████           █████████     "
+_say "    ███████             ████████████        ████ ████████            ███████    "
+_say "  ███████              ██████ ███████      ███████ ██████             ███████   "
+_say "  ██████               ██████  ██████     ███████   ██████              ██████  "
+_say " ██████               ██████    ██████    ██████    ██████               ██████ "
+_say " ██████               ██████    ██████   ██████      ██████              ██████ "
+_say " ██████               █████      ██████  ██████      ██████               █████ "
+_say " ██████               █████      ██████  ██████      ██████              ██████ "
+_say " ██████               ██████    ██████   ███████     ██████              ██████ "
+_say " ██████               ██████    ██████    ██████    ██████               ██████ "
+_say "  ██████               ██████  ██████      ██████   ██████              ██████  "
+_say "   ███████             ███████ █████       ███████ ██████             ███████   "
+_say "    ████████            ████████ ███        ████████ ███            ████████    "
+_say "     █████████            █████████          ██████████           █████████     "
+_say "       ██████████████████████████████████████████████████████████████████       "
+_say "         ████████████████████ ███████████████████ █████████████████████         "
+_say "             ██████████████      ██████████████      ██████████████             "
+_say " "
+_say "            Amulet Hotkey Ltd - CoreStationHXAgent Service Installer"                                                                                                   
+_say " "
+
+        # NTFS-built packages can't enforce Unix permissions; fix here on the
+        # real Linux filesystem before systemd reads the unit file.
+        chmod 644 /usr/lib/systemd/system/CoreStationHXAgent.service 2>/dev/null || true
+
+        # Pick up unit file changes shipped in this version before
+        # enabling/restarting, otherwise systemd keeps using its cached copy.
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload >/dev/null >/dev/null 2>&1 || true
+        fi
+
+        _say "Enabling CoreStationHXAgent Service..."
+
+        if [ -x "/usr/bin/deb-systemd-helper" ]; then
+            deb-systemd-helper unmask CoreStationHXAgent.service >/dev/null || true
+            deb-systemd-helper enable CoreStationHXAgent.service || true
+        fi
+
+        _say "Starting CoreStationHXAgent Service..."
+
+        if [ -x "/usr/bin/deb-systemd-invoke" ]; then
+            deb-systemd-invoke restart CoreStationHXAgent.service >/dev/null || true
+        elif [ -d /run/systemd/system ]; then
+            systemctl restart CoreStationHXAgent.service >/dev/null 2>&1 || true
+        fi
+
+        # _say "--- postinst script finished ---"
     ;;
 esac
 

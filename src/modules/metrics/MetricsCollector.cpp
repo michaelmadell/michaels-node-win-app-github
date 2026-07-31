@@ -1,5 +1,5 @@
 #include "MetricsCollector.h"
-#include "core/Platform.h"
+#include "../../core/Platform.h"
 #include <sstream>
 #include <iomanip>
 
@@ -34,6 +34,10 @@ MetricsCollector::PerformanceMetrics MetricsCollector::CollectPerformance() {
         return metrics;
     }
 
+    if (!cachingEnabled_) {
+        platform_->invalidateMetricCaches();
+    }
+
     metrics.cpuUsage = platform_->getCpuUsagePercent();
     metrics.ramUsage = platform_->getRamUsagePercent();
     metrics.diskQueue = platform_->getDiskQueueLength();
@@ -57,6 +61,10 @@ MetricsCollector::GpuMetrics MetricsCollector::CollectGpu() {
         return metrics;
     }
 
+    if (!cachingEnabled_) {
+        platform_->invalidateMetricCaches();
+    }
+
     metrics.driverInfo = platform_->getGpuDriverInfo();
     metrics.usage = platform_->getGpuUsagePercent();
 
@@ -68,6 +76,10 @@ MetricsCollector::ProcessMetrics MetricsCollector::CollectProcesses() {
 
     if (!platform_) {
         return metrics;
+    }
+
+    if (!cachingEnabled_) {
+        platform_->invalidateMetricCaches();
     }
 
     metrics.highRamProcesses = platform_->getHighRamProcesses();
@@ -82,14 +94,19 @@ MetricsCollector::UpdateStatus MetricsCollector::CheckUpdates() {
         return status;
     }
 
+    if (!cachingEnabled_) {
+        platform_->invalidateMetricCaches();
+    }
+
     status.state = platform_->getWindowsUpdateState();
 
     return status;
 }
 
 void MetricsCollector::InvalidateCache() {
-    // The platform implementations handle their own caches
-    // This could be extended to call platform-specific cache invalidation
+    if (platform_) {
+        platform_->invalidateMetricCaches();
+    }
 }
 
 void MetricsCollector::SetCachingEnabled(bool enabled) {

@@ -5,9 +5,12 @@
 michaels-node-win-app
 │   .gitignore                  - files and folders that GitHub should not commit
 │   app.rc                      - resource definitions for things like Icons
+│   architecture-graph.html     - interactive HTML graph of the codebase structure (open in a browser)
 │   app.res                     - compiled resource file
-│   build.bat                   - Windows Build script
-│   build.sh                    - Linux Build script
+│   build.bat                   - Windows Build script (CMake + MSVC)
+│   build-g++.bat               - Windows Build script (CMake + MSYS2 MinGW G++)
+│   build.sh                    - Linux Build script (cross-compiles Windows .exe via MinGW)
+│   build-linux.sh              - Linux Build script (CMake + native GCC/G++)
 │   CMakeLists.txt              - CMake configuration
 │   CoreStationHXAgent.service  - Service file for installation in Linux
 │   logo.ico                    - Application Icon
@@ -52,12 +55,12 @@ michaels-node-win-app
      │   ├─ serial
      │   │   ├─ SerialManager.cpp       - Functions for serial operations
      │   │   └─ SerialManager.h         - Header for serial operations
-     │   ├─ service
-     │   │   ├─ ServiceManager.cpp      - Functions for handling Service operations
-     │   │   └─ ServiceManager.h        - Header for service functions
      │   ├─ session
      │   │   ├─ SessionMonitor.cpp      - Functions for handling session states
      │   │   └─ SessionMonitor.h        - Header for session handler
+     │   ├─ serialpipe
+     │   │   ├─ SerialBridgePipe.cpp    - Authenticated named-pipe to serial bridge
+     │   │   └─ SerialBridgePipe.h      - Header for serial bridge pipe
      │   └─ tray
      │       ├─ TrayApp.cpp             - Tray application functions
      │       └─ TrayApp.h               - Tray Application header
@@ -65,8 +68,18 @@ michaels-node-win-app
          ├─ LinuxPlatform.cpp           - Linux specific functions
          ├─ WindowsPlatform.cpp         - Windows specific functions
          ├─ WindowsPlatform.h           - Header for windows specific functions
-         └─ Windows_Addon.h             - Addon Windows header specs
+         └─ WinHandles.h                - RAII wrappers for Windows handles
+tools/
+   └─ serial_bridge_client.py       - Test client for the serial bridge pipe (see Serial bridge pipe section)
 ```
+
+## Architecture ##
+- Open `architecture-graph.html` in a browser for an interactive graph of the codebase: every module/class is a clickable node showing what it does in plain English, the file it lives in, and arrows showing what it depends on / what depends on it.
+- No build step or server needed — it's a single self-contained HTML file (inline CSS/SVG/JS, no external dependencies), so it works offline straight from the file system.
+- Quick summary of the shape of the app:
+    - `main.cpp` is the entry point — it picks service/console/tray-helper mode, builds the platform object, and owns the `SerialManager` (talks to the BMC over serial) and `MetricsCollector` (gathers CPU/RAM/GPU/network stats)
+    - `Platform` (in `core/`) is the interface that hides OS differences; `WindowsPlatform` and `LinuxPlatform` are its two implementations
+    - `WindowsPlatform` additionally owns the Windows-only helper modules: `TrayApp` (tray icon/tooltip), `SessionMonitor` (WTS session change notifications), `Regedit` (optional registry access), `MetricCache` (TTL cache for slow lookups) and `WinHandles` (RAII wrappers for Win32 handles/COM)
 
 ## Linux Build ##
 Developed on Ubuntu 24.04.5 LTS due to better compatibility with the Meteor Lake Processor
@@ -141,7 +154,7 @@ This project was developed on a Win 11 Pro CoreStation Node
 
 
 ### Debug output
-Only RC builds write serial output to `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`
+RC builds write all log output to `C:\ProgramData\ahk\node-win-app.log` via `LogMessage(<string>);`. GA builds only write messages tagged `ERROR`, `WARNING`, or `FATAL` to the same file -- routine/verbose messages are suppressed.
 
 ### Tray helper (interactive mode)
 - When the app runs interactively (StartServiceCtrlDispatcher fails), a tray icon is created using the Windows notification area.
@@ -165,12 +178,37 @@ Only RC builds write serial output to `C:\ProgramData\ahk\node-win-app.log` via 
   ```
 - Tooltip format: `Host: <hostname> | IP: <ip> | Up: <uptime>`.
 
+### Serial bridge pipe
+- A second named pipe, `\\.\pipe\corestation_serial_bridge`, lets a local application forward raw bytes straight to the serial port the agent is connected to (COM1/COM3 depending on CPU model).
+- The pipe is created with a security descriptor (`D:(A;;GA;;;BA)`) restricting connection to **BUILTIN\Administrators** -- any other caller's `CreateFile` fails with access denied before a single byte is exchanged. There is no app-level secret/token.
+- Whatever bytes are written to the pipe are forwarded **as-is** (no framing, no newline added) to the live `SerialManager` connection used by the main serial worker thread -- not a separate/unopened connection.
+- Started/stopped alongside the session monitor in both interactive and service mode. Controlled by the `BUILD_SERIAL_BRIDGE_PIPE` CMake option (default `ON`, Windows only).
+- Test client: `tools/serial_bridge_client.py` (stdlib only, run from an elevated prompt):
+  ```powershell
+  python tools\serial_bridge_client.py "hello world"
+  python tools\serial_bridge_client.py --hex 41420D0A
+  python tools\serial_bridge_client.py --interactive
+  ```
+
+### C2A command dispatch
+- BMC-to-Agent (C2A) commands arrive prefixed and are dispatched in `processIncomingCommand()` (`src/main.cpp`, `src/linux/main.cpp`):
+  - `ping` → replies `pong`
+  - `status` → replies with cpu/ram/uptime, e.g. `status, cpu=12%, ram=34%, uptime=2d 04h 13m 09s`
+  - `shutdown` (Windows only) → calls `platform->shutdownSystem()` to power off the node
+  - any other command → falls back to the original behavior of showing it as a message dialog
+
 
 ### To build
 - Update `version.h` with the desired release details and commit to git
 - Run `build.bat` from windows **cmd shell**. This will populate the installer dir that can then be passed to a third party
 - As admin from **PowerShell shell** run `installer/install.ps1` to setup as windows service. This will automatically stop and remove any previous versions before instalation 
 - `remove.ps1` can be used to remove the service
+
+#### Alternative: build with MSYS2 MinGW G++
+- Run `build-g++.bat` instead of `build.bat` to build with the MSYS2 MinGW64/UCRT64 G++ toolchain via CMake (`-G "MinGW Makefiles"`) instead of MSVC
+- Auto-detects the MSYS2 toolchain (checks `PATH`, then `C:\msys64\<mingw64|ucrt64|clang64>\bin`) and CMake (checks `PATH`, then the copy bundled with Visual Studio)
+- Requires `mingw-w64-x86_64-gcc` (or the `ucrt64`/`clang64` equivalent) installed via `pacman` in MSYS2
+- Output goes to `build-mingw\bin\CoreStationHXAgent.exe` (kept separate from the MSVC `build\` dir)
 
 
 ### Build machine setup #
@@ -343,6 +381,8 @@ To enable pre-commit checks I created this file
 ### Future development
 
 The tray helper app (`TrayApp.cpp/h`) is implemented and communicates with the service via a named pipe (`\\.\pipe\corestation_tray`). See the **Tray helper** section above for usage details.
+
+The serial bridge pipe (`SerialBridgePipe.cpp/h`) lets another local admin-elevated app forward raw bytes to the serial port via `\\.\pipe\corestation_serial_bridge`. See the **Serial bridge pipe** section above for usage details.
 
 The first development version (tag `2025.4.1-adhoc1`) was a pure tray app before it was converted to a Windows service.
 
