@@ -3,30 +3,56 @@
 set -e
 
 _say() {
-    # apt's fancy progress UI runs dpkg behind its own pty and captures
-    # both stdout and stderr to redraw its progress pane, so neither
-    # plain echo nor `>&2` reliably reaches the terminal under `apt
-    # install`. /dev/tty is the actual controlling terminal, separate
-    # from that pty, so write there directly; fall back to stderr for
-    # non-interactive installs that have no controlling tty.
-    if [ -w /dev/tty ] 2>/dev/null; then
-        echo "$1" > /dev/tty 2>/dev/null || echo "$1" >&2
-    else
-        echo "$1" >&2
-    fi
+    # apt runs dpkg behind its own pty and captures stdout/stderr for its
+    # progress pane, so neither stream reliably reaches the terminal.
+    # /dev/tty is the controlling terminal directly; fall back to stderr
+    # for non-interactive installs that have no controlling tty.
+    printf '%s\n' "$*" > /dev/tty 2>/dev/null || printf '%s\n' "$*" >&2
 }
 
 case "$1" in
     configure)
-        _say "    /---\/---\/---\    "
-        _say "    |   ||   ||   |    "
-        _say "    \---/\---/\---/    "
-        _say "   Amulet Hotkey Ltd   "
+        # _say "   .----.   .----.   .----."
+        # _say "  /      \\ /      \\ /      \\"
+        # _say " |        |        |        |"
+        # _say "  \\      / \\      / \\      /"
+        # _say "   '----'   '----'   '----'"
+        # _say "   Amulet Hotkey Ltd"
+
+
+        _say " "                                                                        
+_say "            ███████████████     ████████████████    ████████████████            "
+_say "         ██████████████████████████████████████████ ███████████████████         "
+_say "       ██████████████████████████████████████████████████████████████████       "
+_say "     █████████           ██████████           █████████           █████████     "
+_say "    ███████             ████████████        ████ ████████            ███████    "
+_say "  ███████              ██████ ███████      ███████ ██████             ███████   "
+_say "  ██████               ██████  ██████     ███████   ██████              ██████  "
+_say " ██████               ██████    ██████    ██████    ██████               ██████ "
+_say " ██████               ██████    ██████   ██████      ██████              ██████ "
+_say " ██████               █████      ██████  ██████      ██████               █████ "
+_say " ██████               █████      ██████  ██████      ██████              ██████ "
+_say " ██████               ██████    ██████   ███████     ██████              ██████ "
+_say " ██████               ██████    ██████    ██████    ██████               ██████ "
+_say "  ██████               ██████  ██████      ██████   ██████              ██████  "
+_say "   ███████             ███████ █████       ███████ ██████             ███████   "
+_say "    ████████            ████████ ███        ████████ ███            ████████    "
+_say "     █████████            █████████          ██████████           █████████     "
+_say "       ██████████████████████████████████████████████████████████████████       "
+_say "         ████████████████████ ███████████████████ █████████████████████         "
+_say "             ██████████████      ██████████████      ██████████████             "
+_say " "
+_say "            Amulet Hotkey Ltd - CoreStationHXAgent Service Installer"                                                                                                   
+_say " "
+
+        # NTFS-built packages can't enforce Unix permissions; fix here on the
+        # real Linux filesystem before systemd reads the unit file.
+        chmod 644 /usr/lib/systemd/system/CoreStationHXAgent.service 2>/dev/null || true
 
         # Pick up unit file changes shipped in this version before
         # enabling/restarting, otherwise systemd keeps using its cached copy.
         if [ -d /run/systemd/system ]; then
-            systemctl daemon-reload >/dev/null 2>&1 || true
+            systemctl daemon-reload >/dev/null >/dev/null 2>&1 || true
         fi
 
         _say "Enabling CoreStationHXAgent Service..."
@@ -44,7 +70,7 @@ case "$1" in
             systemctl restart CoreStationHXAgent.service >/dev/null 2>&1 || true
         fi
 
-        _say "--- postinst script finished ---"
+        # _say "--- postinst script finished ---"
     ;;
 esac
 

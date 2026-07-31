@@ -18,7 +18,7 @@ mkdir -p "$INSTALLER_DIR"
 
 echo "[2/4] Configuring CMake..."
 # NOTE: Linux generators use CMAKE_BUILD_TYPE instead of the Windows --config flag at build time
-cmake -S . -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE="$CONFIG" -DBUILD_REGEDIT=OFF
+cmake -S . -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE="$CONFIG" -DBUILD_REGEDIT=OFF -DBUILD_TRAY_APP=OFF
 if [ $? -ne 0 ]; then
     echo "ERROR: CMake Configure Failed."
     exit 1
