@@ -63,13 +63,8 @@ try {
             
             # 6. Delete Application executable
             # Fixed: Use $env:TEMP instead of %temp% for PowerShell compatibility
-            $exePath = "C:\ProgramData\ahk\nodeWinApp.exe"
-            if (Test-Path $exePath) {
-                Write-Host "Moving Application executable to temp..."
-                Move-Item -Path $exePath -Destination "$env:TEMP\nodeWinApp.exe" -Force
-            }
             $exePath = "C:\Program Files (x86)\CoreStation HX Agent\CoreStationHXAgent.exe"
-             if (Test-Path $exePath) {
+            if (Test-Path $exePath) {
                 Write-Host "Moving Application executable to temp..."
                 Move-Item -Path $exePath -Destination "$env:TEMP\CoreStationHXAgent.exe" -Force
             }
