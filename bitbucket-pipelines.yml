@@ -1,0 +1,56 @@
+# Full cross-platform build, meant to mirror .github/workflows/ci-build.yml.
+#
+# Bitbucket Cloud has no hosted Windows runner, so like GitHub Actions here,
+# Windows is cross-compiled with mingw-w64 + NSIS from the same Ubuntu image
+# - no self-hosted Windows machine required.
+#
+# LIMITATION: Bitbucket's `pull-requests` pipeline key only matches the PR's
+# SOURCE branch, not its destination - there's no native way to say "only run
+# for PRs targeting ci-build" in this section. The workaround (used below) is
+# to match every source branch ('**') and have the first line of every step
+# check $BITBUCKET_PR_DESTINATION_BRANCH and exit early otherwise. The step
+# still shows green and briefly spins up a container for non-matching PRs.
+
+image: ubuntu:24.04
+
+pipelines:
+  pull-requests:
+    '**':
+      - parallel:
+          - step:
+              name: Windows (mingw-w64 cross) + NSIS installer
+              size: 2x
+              script:
+                - |
+                  if [ "$BITBUCKET_PR_DESTINATION_BRANCH" != "ci-build" ]; then
+                    echo "Destination branch is '$BITBUCKET_PR_DESTINATION_BRANCH', not 'ci-build' - skipping."
+                    exit 0
+                  fi
+                - apt-get update
+                - apt-get install -y mingw-w64 nsis cmake ninja-build git
+                - source tools/ci-version.sh
+                - cmake -S . -B build-win -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+                - cmake --build build-win --target CoreStationHXAgent
+                - mkdir -p installer
+                - cp build-win/bin/CoreStationHXAgent.exe installer/CoreStationHXAgent.exe
+                - makensis -DAPP_VERSION="${APP_VERSION}" -DAPP_VERSION_SHORT="${APP_VERSION_SHORT}" CoreStationAppInstaller.nsi
+              artifacts:
+                - build-win/bin/CoreStationHXAgent.exe
+                - CoreStation_HX_Agent_Installer_*.exe
+
+          - step:
+              name: Linux build + Debian package
+              script:
+                - |
+                  if [ "$BITBUCKET_PR_DESTINATION_BRANCH" != "ci-build" ]; then
+                    echo "Destination branch is '$BITBUCKET_PR_DESTINATION_BRANCH', not 'ci-build' - skipping."
+                    exit 0
+                  fi
+                - apt-get update
+                - apt-get install -y cmake build-essential pkg-config libdbus-1-dev dpkg-dev git
+                - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+                - cmake --build build --target CoreStationHXAgent -- -j"$(nproc)"
+                - cd build && cpack -G DEB && cd ..
+              artifacts:
+                - build/bin/CoreStationHXAgent
+                - build/*.deb

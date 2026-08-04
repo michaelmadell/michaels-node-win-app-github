@@ -1,0 +1,103 @@
+name: CI Build (Windows / Linux / Debian)
+
+# Full cross-platform build, triggered by any pull request targeting the
+# ci-build branch. Windows is cross-compiled with mingw-w64 + NSIS from an
+# Ubuntu runner (no Windows runner needed) so the same toolchain works here
+# and in Bitbucket Pipelines. Artifacts are attached to the workflow run
+# (Actions tab) and expire automatically - nothing is published permanently.
+
+on:
+  pull_request:
+    branches: [ci-build]
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.ver.outputs.app_version }}
+      app_version_short: ${{ steps.ver.outputs.app_version_short }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: ver
+        run: |
+          source tools/ci-version.sh
+          echo "app_version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "app_version_short=$APP_VERSION_SHORT" >> "$GITHUB_OUTPUT"
+
+  windows-cross:
+    needs: version
+    runs-on: ubuntu-latest
+    env:
+      APP_VERSION: ${{ needs.version.outputs.app_version }}
+      APP_VERSION_SHORT: ${{ needs.version.outputs.app_version_short }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mingw-w64 and NSIS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 nsis cmake ninja-build
+
+      - name: Configure (mingw-w64 cross toolchain)
+        run: |
+          cmake -S . -B build-win -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build CoreStationHXAgent.exe
+        run: cmake --build build-win --target CoreStationHXAgent
+
+      - name: Stage installer inputs
+        run: |
+          mkdir -p installer
+          cp build-win/bin/CoreStationHXAgent.exe installer/CoreStationHXAgent.exe
+
+      - name: Build NSIS installer
+        run: |
+          makensis -DAPP_VERSION="${APP_VERSION}" -DAPP_VERSION_SHORT="${APP_VERSION_SHORT}" CoreStationAppInstaller.nsi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CoreStationHXAgent-windows-${{ env.APP_VERSION }}
+          path: |
+            build-win/bin/CoreStationHXAgent.exe
+            CoreStation_HX_Agent_Installer_${{ env.APP_VERSION }}.exe
+          if-no-files-found: error
+
+  linux-and-debian:
+    needs: version
+    runs-on: ubuntu-latest
+    env:
+      APP_VERSION: ${{ needs.version.outputs.app_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential pkg-config libdbus-1-dev dpkg-dev
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build CoreStationHXAgent
+        run: cmake --build build --target CoreStationHXAgent -- -j"$(nproc)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CoreStationHXAgent-linux-${{ env.APP_VERSION }}
+          path: build/bin/CoreStationHXAgent
+          if-no-files-found: error
+
+      - name: Package .deb (cpack)
+        working-directory: build
+        run: cpack -G DEB
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CoreStationHXAgent-debian-${{ env.APP_VERSION }}
+          path: build/*.deb
+          if-no-files-found: error
