@@ -4,10 +4,10 @@
 #define MyAppName "CoreStation HX Agent"
 ; Overridable from the command line for CI: ISCC /DMyAppVersion=x /DMyAppVersionShort=y
 #ifndef MyAppVersion
-  #define MyAppVersion "20.26.5.1_rc8"
+  #define MyAppVersion "20.26.8.1_rc1"
 #endif
 #ifndef MyAppVersionShort
-  #define MyAppVersionShort "20.26.5.1"
+  #define MyAppVersionShort "20.26.8.1"
 #endif
 #define MyAppPublisher "Amulet Hotkey LTD"
 #define MyAppURL "https://www.amulethotkey.com/"
@@ -51,9 +51,9 @@ VersionInfoProductName=CoreStation HX Agent Installer
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: ".\install.ps1"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\CoreStationHXAgent.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\remove.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\installer\install.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\installer\CoreStationHXAgent.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\installer\remove.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: ".\logo.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
