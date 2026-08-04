@@ -444,3 +444,5 @@ The network changes come several seconds later just before power off, note stati
   network, 74:fe:48:a3:fe:8d, up, 192.168.203.52, fe80::1451:e373:4c26:e165, static, Ethernet
   network, 00:17:fd:60:02:e1, up, 192.168.203.51, fe80::98d7:656:a39:8ad3,  static,  Ethernet 2
   ```  
+
+<!-- ci-build trigger test: safe to delete -->
