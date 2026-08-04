@@ -1,8 +1,10 @@
 # Full cross-platform build, meant to mirror .github/workflows/ci-build.yml.
 #
 # Bitbucket Cloud has no hosted Windows runner, so like GitHub Actions here,
-# Windows is cross-compiled with mingw-w64 + NSIS from the same Ubuntu image
-# - no self-hosted Windows machine required.
+# Windows is cross-compiled with mingw-w64 from the same Ubuntu image, and
+# the Inno Setup installer (.iss) is built with the real ISCC compiler
+# running under Wine (see tools/build-inno-installer.sh) - no self-hosted
+# Windows machine required.
 #
 # LIMITATION: Bitbucket's `pull-requests` pipeline key only matches the PR's
 # SOURCE branch, not its destination - there's no native way to say "only run
@@ -18,7 +20,7 @@ pipelines:
     '**':
       - parallel:
           - step:
-              name: Windows (mingw-w64 cross) + NSIS installer
+              name: Windows (mingw-w64 cross) + Inno Setup installer
               size: 2x
               script:
                 - |
@@ -27,16 +29,14 @@ pipelines:
                     exit 0
                   fi
                 - apt-get update
-                - apt-get install -y mingw-w64 nsis cmake ninja-build git
+                - apt-get install -y mingw-w64 cmake ninja-build git
                 - source tools/ci-version.sh
                 - cmake -S . -B build-win -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-toolchain.cmake -DCMAKE_BUILD_TYPE=Release
                 - cmake --build build-win --target CoreStationHXAgent
-                - mkdir -p installer
-                - cp build-win/bin/CoreStationHXAgent.exe installer/CoreStationHXAgent.exe
-                - makensis -DAPP_VERSION="${APP_VERSION}" -DAPP_VERSION_SHORT="${APP_VERSION_SHORT}" CoreStationAppInstaller.nsi
+                - bash tools/build-inno-installer.sh
               artifacts:
                 - build-win/bin/CoreStationHXAgent.exe
-                - CoreStation_HX_Agent_Installer_*.exe
+                - Output/CoreStation_HX_Agent_Installer_*.exe
 
           - step:
               name: Linux build + Debian package
