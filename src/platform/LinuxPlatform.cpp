@@ -195,7 +195,7 @@ void dbusThread() {
     dbus_connection_unref(conn);
 }
 
-void signal_handler(int signum) {
+void signal_handler(int /*signum*/) {
     g_terminate = true;
 }
 
@@ -259,7 +259,7 @@ std::unique_ptr<Platform> createPlatform() {
 }
 
 int LinuxPlatform::run(
-    int argc, char* argv[],
+    int /*argc*/, char* /*argv*/[],
     VoidCallback on_start,
     StringCallback on_stop,
     PowerStateCallback power_cb,

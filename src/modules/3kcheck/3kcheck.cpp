@@ -71,7 +71,7 @@ CPUInfo GetCpuInfo() {
         std::array<char, 49> brand = {};
         char* writePtr = brand.data();
 
-        for (int leaf = 0x80000002; leaf <= 0x80000004; ++leaf) {
+        for (unsigned int leaf = 0x80000002; leaf <= 0x80000004; ++leaf) {
             QueryCPUID(regs.data(), leaf);
             std::memcpy(writePtr, regs.data(), sizeof(regs));
             writePtr += sizeof(regs);
