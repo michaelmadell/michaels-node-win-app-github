@@ -150,6 +150,7 @@ endif()
 set(MODULE_SOURCES
     src/modules/serial/SerialManager.cpp
     src/modules/amt/AMTPortManager.cpp
+    src/modules/cmc/CmcCommandHandler.cpp
 )
 
 # Platform-specific sources
@@ -207,6 +208,7 @@ set(HEADER_FILES
     src/version.h
     src/modules/serial/SerialManager.h
     src/modules/amt/AMTPortManager.h
+    src/modules/cmc/CmcCommandHandler.h
 )
 
 if(BUILD_METRICS)

@@ -57,10 +57,36 @@ bool SerialManager::Open(const std::string& portName, int baudrate) {
     dcbSerialParams.StopBits = ONESTOPBIT;
     dcbSerialParams.Parity = NOPARITY;
 
+    // Explicitly disable hardware and software flow control (mirrors the
+    // Linux side's ~CRTSCTS / ~(IXON|IXOFF|IXANY)). Without this, whatever
+    // handshaking mode the port driver defaulted to is left in place - if
+    // that's CTS-based, WriteFile blocks until the timeout and returns a
+    // partial write whenever the peer isn't actively asserting CTS.
+    dcbSerialParams.fOutxCtsFlow = FALSE;
+    dcbSerialParams.fOutxDsrFlow = FALSE;
+    dcbSerialParams.fDsrSensitivity = FALSE;
+    dcbSerialParams.fRtsControl = RTS_CONTROL_ENABLE;
+    dcbSerialParams.fDtrControl = DTR_CONTROL_ENABLE;
+    dcbSerialParams.fOutX = FALSE;
+    dcbSerialParams.fInX = FALSE;
+
+    // Without this, a single framing/overrun/parity error on the line
+    // (very likely with nothing coherent driving the far end yet) latches
+    // the port into an aborted state: every WriteFile/ReadFile after that
+    // returns 0 bytes immediately, forever, until something acknowledges
+    // the error via ClearCommError(). Keep the driver from doing that.
+    dcbSerialParams.fAbortOnError = FALSE;
+
     if (!SetCommState(handle, &dcbSerialParams)) {
         CloseHandle(handle);
         return false;
     }
+
+    // Defensively clear any error already latched from a previous session,
+    // and drop any stale bytes sitting in the driver's TX/RX buffers.
+    DWORD commErrors = 0;
+    ClearCommError(handle, &commErrors, NULL);
+    PurgeComm(handle, PURGE_RXCLEAR | PURGE_TXCLEAR);
 
     COMMTIMEOUTS timeouts = { 0 };
     timeouts.ReadIntervalTimeout = 5;

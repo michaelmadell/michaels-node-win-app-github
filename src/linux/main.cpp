@@ -1,6 +1,7 @@
 #include "../core/Platform.h"
 #include "../core/SystemState.h"
 #include "../modules/serial/SerialManager.h"
+#include "../modules/cmc/CmcCommandHandler.h"
 #include "../modules/3kcheck/3kcheck.h"
 #include "../version.h"
 
@@ -15,6 +16,7 @@
 
 std::unique_ptr<Platform> platform;
 std::unique_ptr<SerialManager> serialManager;
+std::unique_ptr<CmcCommandHandler> cmcHandler;
 
 SystemState currentState;
 std::mutex stateMutex;
@@ -111,7 +113,10 @@ void processIncomingCommand(const std::string& command) {
         std::string message = command.substr(prefix.size());
         platform->logMessage("Received C2A Command: " + message);
         std::cout << "[RX] Received C2A Command: " << message << std::endl;
-        platform->showMessageDialog("Command from BMC", message);
+
+        if (cmcHandler) {
+            cmcHandler->handle(message);
+        }
     }
     else {
         platform->logMessage("Received: " + command);
@@ -143,6 +148,8 @@ void serialThread() {
             processIncomingCommand(command);
         }
     );
+
+    cmcHandler = std::make_unique<CmcCommandHandler>(platform.get(), sendLineToBmc);
 
     platform->setSerialBridgeHandler([](const std::string& data) {
         return serialManager && serialManager->Write(data);
@@ -259,6 +266,9 @@ int main(int argc, char* argv[]) {
             if (serialManager) {
                 serialManager->Close();
             }
+
+            // Cancels and joins any in-flight grace-period thread before exit.
+            cmcHandler.reset();
         },
         [](const std::string& powerState) {
             std::lock_guard<std::mutex> lock(stateMutex);

@@ -47,7 +47,10 @@ class Platform{
 
     virtual void showMessageDialog(const std::string& title, const std::string& message) = 0;
 
-    virtual void shutdownSystem() = 0;
+    virtual void shutdownSystem(const std::string& reason = "") = 0;
+    virtual void restartSystem(const std::string& reason = "") = 0;
+    virtual void lockActiveSession() = 0;
+    virtual void logoffActiveSession() = 0;
 
     virtual int run(
         int argc, char* argv[], 

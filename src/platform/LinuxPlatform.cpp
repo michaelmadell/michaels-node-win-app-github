@@ -234,7 +234,10 @@ public:
     
     // --- Utility Methods (Need Stubs or Implementation) ---
     void showMessageDialog(const std::string& title, const std::string& message) override;
-    void shutdownSystem() override;
+    void shutdownSystem(const std::string& reason = "") override;
+    void restartSystem(const std::string& reason = "") override;
+    void lockActiveSession() override;
+    void logoffActiveSession() override;
 
     int run(
         int argc, char* argv[],
@@ -750,9 +753,48 @@ std::string LinuxPlatform::getCurrentSessionState() {
     return "5";
 }
 
-void LinuxPlatform::shutdownSystem() {
-    logMessage("Shutdown requested via LinuxPlatform::shutdownSystem().");
+void LinuxPlatform::shutdownSystem(const std::string& reason) {
+    logMessage("Shutdown requested via LinuxPlatform::shutdownSystem()." +
+        (reason.empty() ? "" : (" Reason: " + reason)));
     executeCommand("systemctl poweroff");
+}
+
+void LinuxPlatform::restartSystem(const std::string& reason) {
+    logMessage("Restart requested via LinuxPlatform::restartSystem()." +
+        (reason.empty() ? "" : (" Reason: " + reason)));
+    executeCommand("systemctl reboot");
+}
+
+// Finds the session id of the active graphical/console user session, using
+// the same Class=user filtering getLoggedInUser() uses (loginctl sessions
+// can include greeter/service sessions that aren't the interactive user).
+static std::string getActiveUserSessionId() {
+    std::string sessionId = executeCommand(
+        "for s in $(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}'); do "
+        "c=$(loginctl show-session \"$s\" -p Class --value 2>/dev/null); "
+        "if [ \"$c\" = \"user\" ]; then echo \"$s\"; break; fi; "
+        "done"
+    );
+    sessionId.erase(sessionId.find_last_not_of("\n\r \t") + 1);
+    return sessionId;
+}
+
+void LinuxPlatform::lockActiveSession() {
+    std::string sessionId = getActiveUserSessionId();
+    if (sessionId.empty()) {
+        logMessage("lockActiveSession: no active user session found.");
+        return;
+    }
+    executeCommand("loginctl lock-session " + sessionId);
+}
+
+void LinuxPlatform::logoffActiveSession() {
+    std::string sessionId = getActiveUserSessionId();
+    if (sessionId.empty()) {
+        logMessage("logoffActiveSession: no active user session found.");
+        return;
+    }
+    executeCommand("loginctl terminate-session " + sessionId);
 }
 
 #endif

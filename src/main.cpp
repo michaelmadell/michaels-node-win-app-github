@@ -19,6 +19,7 @@
 #include "core/SystemState.h"
 #include "modules/amt/AMTPortManager.h"
 #include "modules/serial/SerialManager.h"
+#include "modules/cmc/CmcCommandHandler.h"
 #include "modules/3kcheck/3kcheck.h"
 #ifdef ENABLE_METRICS
 #include "modules/metrics/MetricsCollector.h"
@@ -45,6 +46,7 @@
 
 std::unique_ptr<Platform> platform;
 std::unique_ptr<SerialManager> serialManager;
+std::unique_ptr<CmcCommandHandler> cmcHandler;
 #ifdef ENABLE_METRICS
 std::unique_ptr<MetricsCollector> metricsCollector;
 #endif
@@ -62,6 +64,8 @@ std::atomic<bool> g_stop_request_sent{false};
 
 void sendLineToBmc(const std::string& output_string) {
     if (!serialManager) return;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(250)); // Small delay to avoid overwhelming the serial port
 
     std::cout << "[SENDING] " << output_string << std::endl;
 
@@ -210,23 +214,8 @@ void processIncomingCommand(const std::string& command) {
         platform->logMessage("Received C2A Command: " + message);
         std::cout << "[RX] Received C2A Command: " << message << std::endl;
 
-        // Sample c2a command dispatch. Add new commands here; anything that
-        // doesn't match a known command falls back to the original behavior
-        // of showing it as a message dialog.
-        if (message == "ping") {
-            sendLineToBmc("pong");
-        }
-        else if (message == "status") {
-            sendLineToBmc("status, cpu=" + std::to_string(platform->getCpuUsagePercent()) + "%, "
-                + "ram=" + std::to_string(platform->getRamUsagePercent()) + "%, "
-                + "uptime=" + platform->getSystemUptime());
-        }
-        else if (message == "shutdown") {
-            platform->logMessage("Received shutdown command from BMC. Initiating shutdown.");
-            platform->shutdownSystem();
-        }
-        else {
-            platform->showMessageDialog("Command from BMC", message);
+        if (cmcHandler) {
+            cmcHandler->handle(message);
         }
     }
     else {
@@ -304,6 +293,8 @@ void serialThread() {
             processIncomingCommand(command);
         }
     );
+
+    cmcHandler = std::make_unique<CmcCommandHandler>(platform.get(), sendLineToBmc);
 
     platform->setSerialBridgeHandler([](const std::string& data) {
         return serialManager && serialManager->Write(data);
@@ -508,6 +499,9 @@ int main(int argc, char* argv[]) {
             if (serialManager) {
                 serialManager->Close();
             }
+
+            // Cancels and joins any in-flight grace-period thread before exit.
+            cmcHandler.reset();
         },
         // powerState callback
         [](const std::string& powerState) {

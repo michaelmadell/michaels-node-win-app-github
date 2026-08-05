@@ -60,7 +60,10 @@ public:
 
     void showMessageDialog(const std::string& title, const std::string& message) override;
 
-    void shutdownSystem() override;
+    void shutdownSystem(const std::string& reason = "") override;
+    void restartSystem(const std::string& reason = "") override;
+    void lockActiveSession() override;
+    void logoffActiveSession() override;
 
     int run(
         int argc, char* argv[],
@@ -157,6 +160,10 @@ private:
     // Helper methods
     void updateCpuTimes();
     std::string getProcessName(HANDLE hProcess);
+
+    // Enables SE_SHUTDOWN_NAME on the current process token; shared by
+    // shutdownSystem() and restartSystem(). Returns false (and logs) on failure.
+    bool enableShutdownPrivilege();
 
     // Module management
     void startTrayApp();

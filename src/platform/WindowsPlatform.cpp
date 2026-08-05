@@ -1327,14 +1327,14 @@ void WindowsPlatform::stopService(const std::string& stopReason)
     SetEvent(g_stop_event.get());
 }
 
-void WindowsPlatform::shutdownSystem()
+bool WindowsPlatform::enableShutdownPrivilege()
 {
     HANDLE hToken;
     TOKEN_PRIVILEGES tkp;
 
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
-        logMessage("Failed to open process token for shutdown.");
-        return;
+        logMessage("Failed to open process token for shutdown/restart.");
+        return false;
     }
 
     LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid);
@@ -1342,17 +1342,68 @@ void WindowsPlatform::shutdownSystem()
     tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
     AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, (PTOKEN_PRIVILEGES)NULL, 0);
-    if (GetLastError() != ERROR_SUCCESS) {
-        logMessage("Failed to adjust token privileges for shutdown.");
-        CloseHandle(hToken);
+    bool ok = (GetLastError() == ERROR_SUCCESS);
+    if (!ok) {
+        logMessage("Failed to adjust token privileges for shutdown/restart.");
+    }
+
+    CloseHandle(hToken);
+    return ok;
+}
+
+void WindowsPlatform::shutdownSystem(const std::string& reason)
+{
+    logMessage("Initiating system shutdown." + (reason.empty() ? "" : (" Reason: " + reason)));
+
+    if (!enableShutdownPrivilege()) {
         return;
     }
 
     if (!ExitWindowsEx(EWX_SHUTDOWN | EWX_FORCE, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER)) {
         logMessage("Failed to initiate system shutdown.");
     }
+}
 
-    CloseHandle(hToken);
+void WindowsPlatform::restartSystem(const std::string& reason)
+{
+    logMessage("Initiating system restart." + (reason.empty() ? "" : (" Reason: " + reason)));
+
+    if (!enableShutdownPrivilege()) {
+        return;
+    }
+
+    if (!ExitWindowsEx(EWX_REBOOT | EWX_FORCE, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER)) {
+        logMessage("Failed to initiate system restart.");
+    }
+}
+
+void WindowsPlatform::lockActiveSession()
+{
+    DWORD sessionId = WTSGetActiveConsoleSessionId();
+    if (sessionId == 0xFFFFFFFF) {
+        logMessage("lockActiveSession: no active console session.");
+        return;
+    }
+
+    // Disconnecting the console session (as opposed to logging it off) locks
+    // it: the user's apps and state are preserved, and Windows requires the
+    // user to re-enter credentials to reconnect - identical to Win+L.
+    if (!WTSDisconnectSession(WTS_CURRENT_SERVER_HANDLE, sessionId, FALSE)) {
+        logMessage("lockActiveSession: WTSDisconnectSession failed, error " + std::to_string(GetLastError()));
+    }
+}
+
+void WindowsPlatform::logoffActiveSession()
+{
+    DWORD sessionId = WTSGetActiveConsoleSessionId();
+    if (sessionId == 0xFFFFFFFF) {
+        logMessage("logoffActiveSession: no active console session.");
+        return;
+    }
+
+    if (!WTSLogoffSession(WTS_CURRENT_SERVER_HANDLE, sessionId, FALSE)) {
+        logMessage("logoffActiveSession: WTSLogoffSession failed, error " + std::to_string(GetLastError()));
+    }
 }
 
 #endif // _WIN32
