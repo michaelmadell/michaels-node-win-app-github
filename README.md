@@ -49,9 +49,6 @@ michaels-node-win-app
      │   │   ├─ MetricCache.h   - header for Caching metrics
      │   │   ├─ MetricsCollector.cpp    - Functions for collecting system metrics
      │   │   └─ MetricsCollector.h      - Headers for metrics collector
-     │   ├─ regedits
-     │   │   ├─ Regedit.cpp     - Functions for performing Registry edits
-     │   │   └─ Regedit.h       - Headers for registry edits
      │   ├─ serial
      │   │   ├─ SerialManager.cpp       - Functions for serial operations
      │   │   └─ SerialManager.h         - Header for serial operations
@@ -79,7 +76,7 @@ tools/
 - Quick summary of the shape of the app:
     - `main.cpp` is the entry point — it picks service/console/tray-helper mode, builds the platform object, and owns the `SerialManager` (talks to the BMC over serial) and `MetricsCollector` (gathers CPU/RAM/GPU/network stats)
     - `Platform` (in `core/`) is the interface that hides OS differences; `WindowsPlatform` and `LinuxPlatform` are its two implementations
-    - `WindowsPlatform` additionally owns the Windows-only helper modules: `TrayApp` (tray icon/tooltip), `SessionMonitor` (WTS session change notifications), `Regedit` (optional registry access), `MetricCache` (TTL cache for slow lookups) and `WinHandles` (RAII wrappers for Win32 handles/COM)
+    - `WindowsPlatform` additionally owns the Windows-only helper modules: `TrayApp` (tray icon/tooltip), `SessionMonitor` (WTS session change notifications), `MetricCache` (TTL cache for slow lookups) and `WinHandles` (RAII wrappers for Win32 handles/COM)
 
 ## Linux Build ##
 Developed on Ubuntu 24.04.5 LTS due to better compatibility with the Meteor Lake Processor

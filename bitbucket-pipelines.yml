@@ -31,7 +31,7 @@ pipelines:
                 - apt-get update
                 - apt-get install -y mingw-w64 cmake ninja-build git
                 - source tools/ci-version.sh
-                - cmake -S . -B build-win -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+                - cmake -S . -B build-win -G Ninja -DCMAKE_TOOLCHAIN_FILE=mingw-w64-toolchain.cmake -DCMAKE_BUILD_TYPE=Release
                 - cmake --build build-win --target CoreStationHXAgent
                 - bash tools/build-inno-installer.sh
               artifacts:

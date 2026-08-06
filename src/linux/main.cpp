@@ -1,7 +1,9 @@
 #include "../core/Platform.h"
 #include "../core/SystemState.h"
 #include "../modules/serial/SerialManager.h"
+#ifdef ENABLE_C2A
 #include "../modules/cmc/CmcCommandHandler.h"
+#endif
 #include "../modules/3kcheck/3kcheck.h"
 #include "../version.h"
 
@@ -16,7 +18,9 @@
 
 std::unique_ptr<Platform> platform;
 std::unique_ptr<SerialManager> serialManager;
+#ifdef ENABLE_C2A
 std::unique_ptr<CmcCommandHandler> cmcHandler;
+#endif
 
 SystemState currentState;
 std::mutex stateMutex;
@@ -29,7 +33,13 @@ void sendLineToBmc(const std::string& output_string) {
     std::cout << "[SENDING] " << output_string << std::endl;
 
     platform->logMessage(output_string);
-    serialManager->Write(output_string + "\r\n");
+
+    if (serialManager->Write(output_string + "\r\n")) {
+        std::cout << "[SENT OK] " << output_string << std::endl;
+    } else {
+        std::cerr << "[SEND FAILED] " << output_string << std::endl;
+        platform->logMessage("[ERROR] Failed to write to serial port: " + output_string);
+    }
 }
 
 void notifyStopRequested(const std::string& stopReason) {
@@ -106,6 +116,7 @@ void checkSystemState() {
     }
 }
 
+#ifdef ENABLE_C2A
 void processIncomingCommand(const std::string& command) {
     const std::string prefix = "c2a, ";
 
@@ -123,6 +134,7 @@ void processIncomingCommand(const std::string& command) {
         std::cout << "[RX] " << command << std::endl;
     }
 }
+#endif
 
 void serialThread() {
     std::cout << "[DEBUG] serialThread has started." << std::endl;
@@ -145,11 +157,20 @@ void serialThread() {
 
     serialManager = std::make_unique<SerialManager>(
         [](const std::string& command) {
+#ifdef ENABLE_C2A
             processIncomingCommand(command);
+            std::cout << "[RX] " << command << std::endl;
+#else
+            platform->logMessage("Received: " + command);
+            platform->logMessage("Not processing C2A commands because ENABLE_C2A is not defined.");
+            std::cout << "[RX] " << command << std::endl;
+#endif
         }
     );
 
+#ifdef ENABLE_C2A
     cmcHandler = std::make_unique<CmcCommandHandler>(platform.get(), sendLineToBmc);
+#endif
 
     platform->setSerialBridgeHandler([](const std::string& data) {
         return serialManager && serialManager->Write(data);
@@ -267,8 +288,10 @@ int main(int argc, char* argv[]) {
                 serialManager->Close();
             }
 
+#ifdef ENABLE_C2A
             // Cancels and joins any in-flight grace-period thread before exit.
             cmcHandler.reset();
+#endif
         },
         [](const std::string& powerState) {
             std::lock_guard<std::mutex> lock(stateMutex);

@@ -1,5 +1,5 @@
 #pragma once
-
+#ifdef ENABLE_METRICS
 #include "../../core/SystemState.h"
 #include "MetricCache.h"
 #include <memory>
@@ -134,3 +134,4 @@ private:
     Platform* platform_;
     bool cachingEnabled_ = true;
 };
+#endif

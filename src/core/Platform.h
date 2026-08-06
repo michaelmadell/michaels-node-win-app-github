@@ -31,13 +31,17 @@ class Platform{
     virtual void setSerialBridgeHandler(SerialBridgeHandler handler) { (void)handler; }
     virtual bool forwardSerialBridgeMessage(const std::string& data) { (void)data; return false; }
 
+    // Cheap, dependency-free system stats (no PDH/WMI needed) - always
+    // available so C2A's "status" command works without BUILD_METRICS.
     virtual int getCpuUsagePercent() = 0;
     virtual int getRamUsagePercent() = 0;
+    virtual std::string getSystemUptime() = 0;
+
+    #ifdef ENABLE_METRICS
     virtual std::string getFreeDiskSpaceGB(const std::string& drivePath) = 0;
     virtual std::string getWindowsUpdateState() = 0;
     virtual float getDiskQueueLength() = 0;
     virtual float getNetworkRetransRate() = 0;
-    virtual std::string getSystemUptime() = 0;
     virtual void updatePdhMetrics() = 0;
     virtual void invalidateMetricCaches() {}
 
@@ -45,12 +49,17 @@ class Platform{
     virtual float getGpuUsagePercent() = 0;
     virtual std::string getHighRamProcesses() = 0;
 
+    #endif
+
+    #ifdef ENABLE_C2A
     virtual void showMessageDialog(const std::string& title, const std::string& message) = 0;
 
     virtual void shutdownSystem(const std::string& reason = "") = 0;
     virtual void restartSystem(const std::string& reason = "") = 0;
     virtual void lockActiveSession() = 0;
     virtual void logoffActiveSession() = 0;
+
+    #endif
 
     virtual int run(
         int argc, char* argv[], 

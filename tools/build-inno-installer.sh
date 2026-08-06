@@ -4,7 +4,7 @@
 # place instead of duplicated across two YAML files).
 #
 # Expects CoreStationHXAgent.exe already built at build-win/bin/CoreStationHXAgent.exe
-# (see cmake/mingw-w64-toolchain.cmake). Requires APP_VERSION / APP_VERSION_SHORT
+# (see mingw-w64-toolchain.cmake). Requires APP_VERSION / APP_VERSION_SHORT
 # in the environment (source tools/ci-version.sh first).
 #
 # CoreStationAppInstaller.iss expects install.ps1/CoreStationHXAgent.exe/remove.ps1

@@ -1,3 +1,5 @@
+#ifdef ENABLE_METRICS
+
 #include "MetricsCollector.h"
 #include "../../core/Platform.h"
 #include <sstream>
@@ -142,3 +144,4 @@ std::string MetricsCollector::GetFormattedMetrics() {
 
     return ss.str();
 }
+#endif

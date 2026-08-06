@@ -2,7 +2,9 @@
 
 #ifdef _WIN32
 #include "../core/Platform.h"
+#ifdef ENABLE_TRAY_APP
 #include "WinHandles.h"
+#endif
 #include "../modules/metrics/MetricCache.h"
 #include <windows.h>
 #include <wtsapi32.h>
@@ -18,6 +20,10 @@
 class TrayApp;
 class SessionMonitor;
 class SerialBridgePipe;
+
+// Defined in WindowsPlatformInfo.cpp, used across the WindowsPlatform*.cpp
+// translation units.
+std::string WideToUtf8(const std::wstring& wstr);
 
 /**
  * @brief Windows-specific platform implementation
@@ -44,26 +50,32 @@ public:
     void setSerialBridgeHandler(SerialBridgeHandler handler) override;
     bool forwardSerialBridgeMessage(const std::string& data) override;
 
+    // Cheap, dependency-free system stats - always available (see Platform.h).
     int getCpuUsagePercent() override;
     int getRamUsagePercent() override;
+    std::string getSystemUptime() override;
+
+#ifdef ENABLE_METRICS
     std::string getFreeDiskSpaceGB(const std::string& drivePath) override;
     std::string getWindowsUpdateState() override;
     float getDiskQueueLength() override;
     float getNetworkRetransRate() override;
-    std::string getSystemUptime() override;
     void updatePdhMetrics() override;
     void invalidateMetricCaches() override;
 
     std::string getGpuDriverInfo() override;
     float getGpuUsagePercent() override;
     std::string getHighRamProcesses() override;
+#endif
 
+#ifdef ENABLE_C2A
     void showMessageDialog(const std::string& title, const std::string& message) override;
 
     void shutdownSystem(const std::string& reason = "") override;
     void restartSystem(const std::string& reason = "") override;
     void lockActiveSession() override;
     void logoffActiveSession() override;
+#endif
 
     int run(
         int argc, char* argv[],
@@ -133,37 +145,44 @@ private:
     // Thread safety
     std::mutex platformMutex_;
 
-    // Metric caches
+    // Caches + impl for the always-available cheap trio (see Platform.h).
     MetricCache<int> cpuCache_{ CacheDurations::CPU_USAGE };
     MetricCache<int> ramCache_{ CacheDurations::RAM_USAGE };
+    MetricCache<std::string> uptimeCache_{ CacheDurations::SYSTEM_UPTIME };
+
+    int getCpuUsagePercentImpl();
+    int getRamUsagePercentImpl();
+    std::string getSystemUptimeImpl();
+    void updateCpuTimes();
+
+    #ifdef ENABLE_METRICS
+    // Metric caches
     MetricCache<std::string> diskSpaceCache_{ CacheDurations::FREE_DISK_SPACE };
     MetricCache<std::string> windowsUpdateCache_{ CacheDurations::WINDOWS_UPDATE };
     MetricCache<float> diskQueueCache_{ CacheDurations::DISK_QUEUE };
     MetricCache<float> netRetransCache_{ CacheDurations::NET_RETRANS };
-    MetricCache<std::string> uptimeCache_{ CacheDurations::SYSTEM_UPTIME };
     MetricCache<std::string> gpuDriverCache_{ CacheDurations::GPU_DRIVER_INFO };
     MetricCache<float> gpuUsageCache_{ CacheDurations::GPU_USAGE };
     MetricCache<std::string> highRamProcsCache_{ CacheDurations::HIGH_RAM_PROCS };
 
     // Implementation methods (cached versions call these)
-    int getCpuUsagePercentImpl();
-    int getRamUsagePercentImpl();
     std::string getFreeDiskSpaceGBImpl(const std::string& drivePath);
     std::string getWindowsUpdateStateImpl();
     float getDiskQueueLengthImpl();
     float getNetworkRetransRateImpl();
-    std::string getSystemUptimeImpl();
     std::string getGpuDriverInfoImpl();
     float getGpuUsagePercentImpl();
     std::string getHighRamProcessesImpl();
 
     // Helper methods
-    void updateCpuTimes();
     std::string getProcessName(HANDLE hProcess);
+    #endif
 
+    #ifdef ENABLE_C2A
     // Enables SE_SHUTDOWN_NAME on the current process token; shared by
     // shutdownSystem() and restartSystem(). Returns false (and logs) on failure.
     bool enableShutdownPrivilege();
+    #endif
 
     // Module management
     void startTrayApp();

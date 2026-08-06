@@ -29,6 +29,7 @@ struct SystemState {
     std::string powerState;
     std::string sessionState;
     std::string username;
+    #ifdef ENABLE_METRICS
     int cpuUsagePercent = 0;
     int ramUsagePercent = 0;
     std::string freeDiskSpaceGB;
@@ -39,9 +40,15 @@ struct SystemState {
     std::string gpuDriverInfo = "Unknown";
     float gpuUsagePercent = 0.0f;
     std::string highRamProcesses = "none";
+    #endif
 
     bool operator!=(const SystemState& other) const {
-        return std::tie(networkInterfaces, hostname, powerState, sessionState, username, cpuUsagePercent, ramUsagePercent, freeDiskSpaceGB, windowsUpdateState, diskQueueLength, networkRetransRate, systemUptime, gpuDriverInfo, gpuUsagePercent, highRamProcesses) !=
-               std::tie(other.networkInterfaces, other.hostname, other.powerState, other.sessionState, other.username, other.cpuUsagePercent, other.ramUsagePercent, other.freeDiskSpaceGB, other.windowsUpdateState, other.diskQueueLength, other.networkRetransRate, other.systemUptime, other.gpuDriverInfo, other.gpuUsagePercent, other.highRamProcesses);
+        #ifdef ENABLE_METRICS
+            return std::tie(networkInterfaces, hostname, powerState, sessionState, username, cpuUsagePercent, ramUsagePercent, freeDiskSpaceGB, windowsUpdateState, diskQueueLength, networkRetransRate, systemUptime, gpuDriverInfo, gpuUsagePercent, highRamProcesses) !=
+                   std::tie(other.networkInterfaces, other.hostname, other.powerState, other.sessionState, other.username, other.cpuUsagePercent, other.ramUsagePercent, other.freeDiskSpaceGB, other.windowsUpdateState, other.diskQueueLength, other.networkRetransRate, other.systemUptime, other.gpuDriverInfo, other.gpuUsagePercent, other.highRamProcesses);
+        #else
+            return std::tie(networkInterfaces, hostname, powerState, sessionState, username) !=
+                   std::tie(other.networkInterfaces, other.hostname, other.powerState, other.sessionState, other.username);
+        #endif
     }
 };

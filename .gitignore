@@ -6,9 +6,7 @@
 # Node artifact files
 node_modules/
 dist/
-build/
-build-mingw/
-build-win/
+build*/
 .claude/
 .vscode/
 .vs/

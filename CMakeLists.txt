@@ -11,8 +11,8 @@ project(CoreStationHXAgent
 option(BUILD_METRICS "Build with metric support" OFF)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
 option(BUILD_TRAY_APP "Build with system tray application (Windows only)" ON)
-option(BUILD_REGEDIT "Build with registry editing components (Windows only)" OFF)
 option(BUILD_SERIAL_BRIDGE_PIPE "Build with named-pipe bridge for external apps to forward bytes to the serial port (Windows only)" OFF)
+option(BUILD_C2A "Build with C2A command support (ping/status/shutdown/message-dialog via BMC serial link)" OFF)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
@@ -150,13 +150,23 @@ endif()
 set(MODULE_SOURCES
     src/modules/serial/SerialManager.cpp
     src/modules/amt/AMTPortManager.cpp
-    src/modules/cmc/CmcCommandHandler.cpp
 )
+
+if(BUILD_C2A)
+    list(APPEND MODULE_SOURCES
+        src/modules/cmc/CmcCommandHandler.cpp
+    )
+endif()
 
 # Platform-specific sources
 if(WIN32)
     list(APPEND CORE_SOURCES
         src/platform/WindowsPlatform.cpp
+        src/platform/WindowsPlatformInfo.cpp
+        src/platform/WindowsPlatformTray.cpp
+        src/platform/WindowsPlatformSession.cpp
+        src/platform/WindowsPlatformSerialBridge.cpp
+        src/platform/WindowsPlatformMetrics.cpp
     )
 
     list(APPEND MODULE_SOURCES
@@ -181,12 +191,6 @@ if(WIN32)
         )
     endif()
 
-    if(BUILD_REGEDIT)
-            list(APPEND MODULE_SOURCES
-            src/modules/regedits/Regedit.cpp
-        )
-    endif()
-
     if(BUILD_SERIAL_BRIDGE_PIPE)
         list(APPEND MODULE_SOURCES
             src/modules/serialpipe/SerialBridgePipe.cpp
@@ -195,6 +199,9 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
     list(APPEND CORE_SOURCES
         src/platform/LinuxPlatform.cpp
+        src/platform/LinuxPlatformDbus.cpp
+        src/platform/LinuxPlatformInfo.cpp
+        src/platform/LinuxPlatformMetrics.cpp
     )
     list(APPEND MODULE_SOURCES
         src/modules/3kcheck/3kcheck.cpp
@@ -208,11 +215,14 @@ set(HEADER_FILES
     src/version.h
     src/modules/serial/SerialManager.h
     src/modules/amt/AMTPortManager.h
-    src/modules/cmc/CmcCommandHandler.h
 )
 
 if(BUILD_METRICS)
     list(APPEND HEADER_FILES src/modules/metrics/MetricCache.h)
+endif()
+
+if(BUILD_C2A)
+    list(APPEND HEADER_FILES src/modules/cmc/CmcCommandHandler.h)
 endif()
 
 if(WIN32)
@@ -225,10 +235,6 @@ if(WIN32)
     if(BUILD_SESSION_MONITOR)
         list(APPEND HEADER_FILES src/modules/session/SessionMonitor.h)
     endif()
-
-    if(BUILD_REGEDIT)
-        list(APPEND HEADER_FILES src/modules/regedits/Regedit.h)
-        endif()
 
     if(BUILD_SERIAL_BRIDGE_PIPE)
         list(APPEND HEADER_FILES src/modules/serialpipe/SerialBridgePipe.h)
@@ -275,12 +281,12 @@ if(BUILD_TRAY_APP AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_TRAY_APP)
 endif()
 
-if(BUILD_REGEDIT AND WIN32)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_REGEDIT)
-endif()
-
 if(BUILD_SERIAL_BRIDGE_PIPE AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SERIAL_BRIDGE_PIPE)
+endif()
+
+if(BUILD_C2A)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_C2A)
 endif()
 
 # Compiler Flags
@@ -399,11 +405,12 @@ message(STATUS "Compiler:          ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER
 message(STATUS "Platform:          ${CMAKE_SYSTEM_NAME}")
 message(STATUS "")
 message(STATUS "Features:")
-message(STATUS "  TrayApp:         ${BUILD_TRAY_APP}")
-message(STATUS "  Metrics:         ${BUILD_METRICS}")
-message(STATUS "  Session Monitor: ${BUILD_SESSION_MONITOR}")
-message(STATUS "  Registry Edit:   ${BUILD_REGEDIT}")
-message(STATUS "  Testing:         ${ENABLE_TESTING}")
+message(STATUS "  TrayApp:            ${BUILD_TRAY_APP}")
+message(STATUS "  Metrics:            ${BUILD_METRICS}")
+message(STATUS "  Session Monitor:    ${BUILD_SESSION_MONITOR}")
+message(STATUS "  Serial Bridge Pipe: ${BUILD_SERIAL_BRIDGE_PIPE}")
+message(STATUS "  C2A Commands:       ${BUILD_C2A}")
+message(STATUS "  Testing:            ${ENABLE_TESTING}")
 message(STATUS "")
 message(STATUS "Source Files:")
 foreach(src ${CORE_SOURCES} ${MODULE_SOURCES})
