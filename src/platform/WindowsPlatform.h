@@ -2,9 +2,9 @@
 
 #ifdef _WIN32
 #include "../core/Platform.h"
-#ifdef ENABLE_TRAY_APP
+// UniqueHandle/UniquePdhQuery/ComInitializer are used unconditionally below
+// (stop event, PDH query, COM init) - not actually tray-specific.
 #include "WinHandles.h"
-#endif
 #include "../modules/metrics/MetricCache.h"
 #include <windows.h>
 #include <wtsapi32.h>
