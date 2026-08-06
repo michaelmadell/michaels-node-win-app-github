@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+fi
+
+echo "Enabling CoreStationHXAgent Serivce..."
+systemctl enable CoreStationHXAgent.service >/dev/null 2>&1 || true
+
+echo "Starting CoreStationHXAgent Serivce..."
+systemctl start CoreStationHXAgent.service >/dev/null 2>&1 || true
+
+exit 0

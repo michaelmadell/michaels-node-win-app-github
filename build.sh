@@ -46,7 +46,12 @@ x86_64-w64-mingw32-g++-posix -O2 -DNDEBUG -static \
     -DENABLE_SERIAL_BRIDGE_PIPE \
     src/main.cpp \
     src/Platform/WindowsPlatform.cpp \
+    src/Platform/WindowsPlatformInfo.cpp \
+    src/Platform/WindowsPlatformSession.cpp \
+    src/Platform/WindowsPlatformSerialBridge.cpp \
+    src/Platform/WindowsPlatformMetrics.cpp \
     src/modules/serial/SerialManager.cpp \
+    src/modules/amt/AMTPortManager.cpp \
     src/modules/3kcheck/3kcheck.cpp \
     src/modules/serialpipe/SerialBridgePipe.cpp \
     app.res \

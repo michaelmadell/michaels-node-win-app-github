@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" -eq 0 ]; then
+    echo "Disabling CoreStationHXAgent Serivce..."
+    systemctl disable CoreStationHXAgent.service >/dev/null 2>&1 || true
+fi
+
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+fi
+
+exit 0
