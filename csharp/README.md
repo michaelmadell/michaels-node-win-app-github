@@ -67,6 +67,20 @@ appExit, shutting down
 Session state codes are the Windows `WTS_*` values; the Linux provider maps
 logind states onto the same numbers so the controller sees one vocabulary.
 
+`winVersion` is the friendly OS name and `osBuild` the numeric one, on both
+platforms:
+
+| | Windows | Linux |
+| --- | --- | --- |
+| `winVersion` | `Windows 11 Pro 24H2` | `Ubuntu 24.04.4 LTS` |
+| `osBuild` | `10.0.26100` | `6.18.5-fc-v20` |
+
+On Windows the friendly name comes from the registry's `ProductName` plus
+`DisplayVersion`. Windows 11 still reports a `ProductName` of "Windows 10 …"
+for application-compatibility reasons, so the agent rewrites it to "11" when
+the build number is 22000 or higher — the same correction the C++ agent makes,
+and the only reliable way to tell the two apart.
+
 ### Inbound commands
 
 Lines prefixed `c2a, ` are commands. The serial link is a fixed PCB trace to

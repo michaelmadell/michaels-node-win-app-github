@@ -47,23 +47,30 @@ public sealed class WindowsSystemInformation : ISystemInformation
         return string.IsNullOrWhiteSpace(userName) ? "none" : userName;
     }
 
+    /// <summary>
+    /// The friendly edition name, e.g. "Windows 11 Pro 24H2".
+    /// </summary>
     public string GetOsVersion()
+    {
+        // On .NET Core and later this is backed by RtlGetVersion, so it reports
+        // the true build rather than a value shimmed by the app manifest.
+        var version = Environment.OSVersion.Version;
+        var fallback = $"{version.Major}.{version.Minor}.{version.Build}";
+
+        return WindowsVersionFormatter.Format(
+            ReadRegistryString("ProductName"),
+            ReadRegistryString("DisplayVersion"),
+            version.Build,
+            fallback);
+    }
+
+    /// <summary>
+    /// The numeric version, e.g. "10.0.26100".
+    /// </summary>
+    public string GetOsBuild()
     {
         var version = Environment.OSVersion.Version;
         return $"{version.Major}.{version.Minor}.{version.Build}";
-    }
-
-    public string GetOsBuild()
-    {
-        var build = ReadRegistryString("CurrentBuildNumber");
-        var revision = ReadRegistryString("UBR");
-
-        if (string.IsNullOrEmpty(build))
-        {
-            return Environment.OSVersion.Version.Build.ToString();
-        }
-
-        return string.IsNullOrEmpty(revision) ? $"Build {build}" : $"Build {build}.{revision}";
     }
 
     public string GetCurrentSessionState()
