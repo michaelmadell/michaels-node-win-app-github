@@ -163,7 +163,64 @@ void heartbeatThread() {
     platform->logMessage("Heartbeat thread finished");
 }
 
+void resendThread() {
+    platform->logMessage("Resend thread started.");
 
+    const auto resendInterval = std::chrono::minutes(5);
+    auto lastResend = std::chrono::steady_clock::now();
+
+    while (!g_terminate.load()) {
+        auto now = std::chrono::steady_clock::now();
+        if (now - lastResend >= resendInterval) {
+            lastResend = now;
+
+            if (g_terminate.load()) break;
+
+            try {
+                auto sendInitialInfo = [&]() {
+                    std::stringstream versionStream;
+                    versionStream << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_RELEASE << "." << VERSION_BUILD;
+                    if (std::string(VERSION_EXTRAVERSION) == "rc") {
+                        versionStream << "_" << VERSION_EXTRAVERSION << VERSION_RC_NO;
+                    }
+                    else {
+                        versionStream << "_" << VERSION_EXTRAVERSION;
+                    }
+
+                    std::cout << "[DEBUG] resending initial messages..." << std::endl;
+                    sendLineToBmc("appVersion, " + versionStream.str());
+
+                    // Send initial username
+                    {
+                        std::lock_guard<std::mutex> lock(stateMutex);
+                        currentState.username = platform->getLoggedInUser();
+                        sendLineToBmc("username, " + currentState.username);
+
+                        // Send initial network state
+                        currentState.networkInterfaces = platform->getNetworkInterfaces();
+                        for (const auto& iface : currentState.networkInterfaces) {
+                            std::stringstream ss;
+                            ss << "network, " << iface.macAddress << ", " << iface.linkStatus
+                                << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
+                                << iface.dhcp << ", " << iface.name;
+                            sendLineToBmc(ss.str());
+                        }
+                    }
+
+                    std::cout << "[DEBUG] resent initial messages." << std::endl;
+                };
+
+                sendInitialInfo();
+            } catch (const std::exception& e) {
+                std::cerr << "[ERROR] Exception in ResendThread: " << e.what() << std::endl;
+                platform->logMessage("[ERROR] Exception in ResendThread: " + std::string(e.what()));
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    platform->logMessage("Resend thread finished");
+}
 
 
 void checkSystemState() {
@@ -484,6 +541,7 @@ int main(int argc, char* argv[]) {
 
     std::thread workerThread;
     std::thread hbThread;
+    std::thread reThread;
 
     std::cout << "[DEBUG] Calling platform->run(). Waiting for on_start callback..." << std::endl;
 
@@ -494,6 +552,7 @@ int main(int argc, char* argv[]) {
             std::cout << "[DEBUG] on_start callback EXECUTED. Launching serialThread." << std::endl;
             workerThread = std::thread(serialThread);
             hbThread = std::thread(heartbeatThread);
+            reThread = std::thread(resendThread);
         },
         // on_stop callback
         [&](const std::string& stopReason) {
@@ -509,6 +568,9 @@ int main(int argc, char* argv[]) {
             }
             if (hbThread.joinable()) {
                 hbThread.join();
+            }
+            if (reThread.joinable()) {
+                reThread.join();
             }
 
             if (serialManager) {
