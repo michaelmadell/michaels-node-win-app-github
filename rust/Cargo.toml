@@ -1,0 +1,66 @@
+[package]
+name = "corestationhxagent"
+version = "20.26.8"
+description = "CoreStation Host Agent for serial monitoring"
+authors = ["Michael Madell <michael.madell@amulethotkey.com>"]
+edition = "2021"
+
+[dependencies]
+serialport = "4.0"
+chrono = "0.4"
+lazy_static = "1.4"
+
+[features]
+default = ["metrics", "c2a", "tray_app", "session_monitor", "serial_bridge_pipe"]
+metrics = []
+c2a = []
+tray_app = []
+session_monitor = []
+serial_bridge_pipe = []
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62.2", features = [
+    "Win32_Foundation", 
+    "Win32_System_RemoteDesktop",
+    "Win32_System_Performance",
+    "Win32_System_SystemInformation",
+    "Win32_System_Pipes",
+    "Win32_System_IO",
+    "Win32_Storage_FileSystem",
+    "Win32_Security_Authorization",
+    "Win32_System_Threading",
+    "Win32_System_ProcessStatus",
+    "Win32_Security",
+    "Win32_System_Services",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_Networking_WinSock",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_StationsAndDesktops",
+    "Win32_UI_Shell",
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_NetworkManagement_Ndis",
+] }
+winreg = "0.56.0"
+wmi = "0.18.4"
+windows-service = "0.8.1"
+
+[target.'cfg(unix)'.dependencies]
+dbus = "0.9"
+syslog = "7.0.0"
+libc = "0.2"
+
+[package.metadata.deb]
+maintainer = "Michael Madell <michael.madell@amulethotkey.com>"
+depends = "$auto, network-manager, intel-gpu-tools"
+assets = [
+    ["target/release/corestationhxagent", "usr/sbin/", "755"],
+    ["CoreStationHXAgent.service", "usr/lib/systemd/system/", "644"]
+]
+
+[package.metadata.generate-rpm]
+license = "Proprietary"
+requires = ["network-manager", "intel-gpu-tools"]
+
+[build-dependencies]
+winres = "0.1"
