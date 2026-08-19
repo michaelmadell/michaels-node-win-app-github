@@ -19,7 +19,7 @@
   <!--
     DANGEROUS: compiles out IPC bridge client authentication (see Ipc/ClientAuthenticator.cs).
     Defined ONLY for the Debug configuration, so it can never end up in a `dotnet publish -c
-    Release` artifact -- there is no runtime switch, environment variable, or config value that
+    Release` artifact. There is no runtime switch, environment variable, or config value that
     can enable this. See specs/001-secure-serial-ipc/research.md Decision 6.
   -->
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -32,6 +32,12 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
     <PackageReference Include="System.IO.Ports" Version="8.0.0" />
+
+    <!-- SignedCms/CMS-PKCS#7 verification for the Linux IPC bridge's
+         detached-signature check (Ipc/LinuxSerialBridgeListener.cs). Not
+         part of the net8.0 shared framework despite being a first-party
+         .NET assembly. Confirmed by a failed build, not assumed. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" />
 
     <!-- Windows-only at runtime; every call site is guarded by an
          OperatingSystem.IsWindows() check so the Linux build is unaffected. -->
@@ -46,7 +52,7 @@
   <!--
     IPC bridge trust anchor (Linux detached-signature verification). Glob
     rather than a literal filename so the build doesn't fail while the real
-    certificate bundle isn't present yet -- see Ipc/README.md.
+    certificate bundle isn't present yet. See Ipc/README.md.
   -->
   <ItemGroup>
     <Content Include="Ipc/*.pem">

@@ -1,6 +1,7 @@
 #pragma once
 
 #if defined(__linux__)
+#include <functional>
 #include <string>
 
 // Linux counterpart to WindowsIpcClientAuth.h -- see
@@ -28,14 +29,14 @@ namespace IpcAuth {
 // an executable with a valid, trusted detached signature. clientFd must be
 // an already-accept()-ed connection.
 bool LinuxIsAuthenticated(int clientFd, const std::string& logPrefix,
-                           void (*logFn)(const std::string&));
+                           const std::function<void(const std::string&)>& logFn);
 
 // Attempts to load the trust anchor (certs/digicert_ca_chain.pem) once,
 // logging the outcome. Returns false if the trust anchor is missing or
 // unparseable -- callers (SerialBridgeSocket::Start) MUST treat that as a
 // fatal startup condition and refuse to start the bridge rather than run
 // with authentication silently broken.
-bool LinuxTrustAnchorIsUsable(const std::string& logPrefix, void (*logFn)(const std::string&));
+bool LinuxTrustAnchorIsUsable(const std::string& logPrefix, const std::function<void(const std::string&)>& logFn);
 
 // Pure comparison logic, factored out so it's unit-testable without a real
 // signed file or a live OpenSSL CMS_verify call (see

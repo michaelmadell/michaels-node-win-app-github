@@ -29,8 +29,10 @@ spec FR-013.
   Decision 4).
 - C#/Windows: P/Invoke onto `WinVerifyTrust` (new native interop in `Platform/Windows/`,
   following the existing `NativeMethods.cs` pattern) — no new NuGet package.
-- C#/Linux: `System.Security.Cryptography.Pkcs.SignedCms` + `UnixDomainSocketEndPoint`, both
-  already part of the .NET 8 shared framework — no new NuGet package.
+- C#/Linux: `System.Security.Cryptography.Pkcs.SignedCms` + `UnixDomainSocketEndPoint`. Only the
+  latter is shared-framework; `SignedCms` needs an explicit `PackageReference` — confirmed by a
+  failed build during implementation, correcting this plan's original assumption (see
+  `research.md` Decision 4).
 
 **Storage**: N/A — no persistence on either agent; trusted identity is a compiled-in constant,
 per-connection identity is in-memory only (`data-model.md`).

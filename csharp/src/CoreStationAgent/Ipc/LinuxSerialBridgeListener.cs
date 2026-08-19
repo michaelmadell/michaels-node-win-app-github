@@ -1,6 +1,7 @@
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;

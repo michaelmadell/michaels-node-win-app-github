@@ -2,6 +2,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <functional>
 #include <string>
 
 // Resolves and authenticates the identity of a process connected to the
@@ -25,7 +26,7 @@ namespace IpcAuth {
 // executable signed by the trusted company identity. hPipe must already be
 // connected (i.e. called after ConnectNamedPipe succeeds).
 bool WindowsIsAuthenticated(HANDLE hPipe, const std::string& logPrefix,
-                             void (*logFn)(const std::string&));
+                             const std::function<void(const std::string&)>& logFn);
 
 // Pure comparison logic, factored out so it's unit-testable without a real
 // signed file or a live WinVerifyTrust call (see tests/test_ipc_client_auth.cpp).

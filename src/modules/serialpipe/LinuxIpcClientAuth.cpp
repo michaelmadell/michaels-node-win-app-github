@@ -29,7 +29,7 @@ X509_STORE* g_trustAnchor = nullptr;  // owned for process lifetime once loaded
 // Loads certs/digicert_ca_chain.pem into an X509_STORE, once. Leaves
 // g_trustAnchor null on any failure (missing file, empty file, no valid
 // certs parsed) -- callers must treat null as "cannot authenticate anyone".
-void LoadTrustAnchorOnce(const std::string& logPrefix, void (*logFn)(const std::string&)) {
+void LoadTrustAnchorOnce(const std::string& logPrefix, const std::function<void(const std::string&)>& logFn) {
     BIO* bio = BIO_new_file(kCaChainPath, "r");
     if (!bio) {
         logFn(logPrefix + "FATAL: cannot open trust anchor '" + kCaChainPath +
@@ -55,13 +55,24 @@ void LoadTrustAnchorOnce(const std::string& logPrefix, void (*logFn)(const std::
         return;
     }
 
+    // CMS_verify's default chain-verification purpose is
+    // X509_PURPOSE_SMIME_SIGN (it assumes S/MIME email signing), which
+    // rejects an otherwise-valid chain whose leaf's extended key usage is
+    // codeSigning rather than emailProtection -- confirmed against a real
+    // codeSigning-only dev certificate (see specs/001-secure-serial-ipc/
+    // .devcerts validation): CMS_verify failed with "unsuitable
+    // certificate purpose" until this was set. X509_PURPOSE_ANY is correct
+    // here because the actual authorization decision is the Subject
+    // (CN/O/OU) comparison in SubjectMatchesTrustedIdentity, not EKU.
+    X509_STORE_set_purpose(store, X509_PURPOSE_ANY);
+
     g_trustAnchor = store;
     logFn(logPrefix + "Loaded " + std::to_string(loaded) + " trust anchor certificate(s) from '" +
           kCaChainPath + "'");
 }
 
 std::string ResolveClientImagePath(int clientFd, const std::string& logPrefix,
-                                    void (*logFn)(const std::string&)) {
+                                    const std::function<void(const std::string&)>& logFn) {
     struct ucred cred {};
     socklen_t credLen = sizeof(cred);
     if (getsockopt(clientFd, SOL_SOCKET, SO_PEERCRED, &cred, &credLen) != 0) {
@@ -109,7 +120,7 @@ std::string GetX509NameField(X509_NAME* name, int nid) {
 // against the process-wide trust anchor, then compares the signer's
 // Subject to TrustedSigningIdentity. False on any failure.
 bool VerifyDetachedSignatureMatches(const std::string& imagePath, const std::string& logPrefix,
-                                     void (*logFn)(const std::string&)) {
+                                     const std::function<void(const std::string&)>& logFn) {
     if (imagePath.empty() || !g_trustAnchor) return false;
 
     bool contentOk = false;
@@ -181,13 +192,13 @@ bool SubjectMatchesTrustedIdentity(const std::string& cn, const std::string& o,
            (ou == TrustedSigningIdentity::OrganizationalUnit);
 }
 
-bool LinuxTrustAnchorIsUsable(const std::string& logPrefix, void (*logFn)(const std::string&)) {
+bool LinuxTrustAnchorIsUsable(const std::string& logPrefix, const std::function<void(const std::string&)>& logFn) {
     std::call_once(g_trustAnchorInit, LoadTrustAnchorOnce, logPrefix, logFn);
     return g_trustAnchor != nullptr;
 }
 
 bool LinuxIsAuthenticated(int clientFd, const std::string& logPrefix,
-                           void (*logFn)(const std::string&)) {
+                           const std::function<void(const std::string&)>& logFn) {
 #ifdef IPC_AUTH_DEV_DISABLE
     static std::atomic<bool> warned{false};
     if (!warned.exchange(true)) {

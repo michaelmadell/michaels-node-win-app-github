@@ -7,16 +7,20 @@ namespace CoreStationAgent.Ipc;
 /// renewal never requires touching this file -- see
 /// specs/001-secure-serial-ipc/research.md Decision 1.
 ///
-/// *** PLACEHOLDER VALUES -- MUST BE REPLACED BEFORE THIS FEATURE SHIPS ***
+/// *** DEV/TEST CERTIFICATE -- MUST BE REPLACED BEFORE THIS FEATURE SHIPS ***
 /// Same values as (and MUST stay in sync with) src/modules/serialpipe/TrustedIdentity.h.
-/// Left obviously-wrong on purpose: these placeholders can never accidentally
-/// match a real signer, so the bridge fails closed until someone fills this in.
+/// Currently match a locally-generated, throwaway dev CA + code-signing cert
+/// (see .devcerts/, gitignored) used only to compile and exercise this
+/// feature end-to-end without the company's real EV certificate. MUST be
+/// replaced with the real EV certificate's Subject before release -- a
+/// build using these values accepts only clients signed by the throwaway
+/// dev CA, nothing else.
 /// </summary>
 public static class TrustedSigningIdentity
 {
-    public const string CommonName = "REPLACE_ME_COMMON_NAME";
-    public const string Organization = "REPLACE_ME_ORGANIZATION";
-    public const string OrganizationalUnit = "REPLACE_ME_ORG_UNIT";
+    public const string CommonName = "CoreStation Dev Code Signing (NOT FOR PRODUCTION)";
+    public const string Organization = "Amulet Hotkey Ltd (DEV TEST ONLY)";
+    public const string OrganizationalUnit = "CoreStation Dev Signing";
 }
 
 /// <summary>

@@ -20,7 +20,7 @@ namespace {
 // already-connected pipe handle. Returns an empty string on any failure --
 // callers must treat that as "not authenticated", not as a wildcard.
 std::wstring ResolveClientImagePath(HANDLE hPipe, const std::string& logPrefix,
-                                     void (*logFn)(const std::string&)) {
+                                     const std::function<void(const std::string&)>& logFn) {
     DWORD clientPid = 0;
     if (!GetNamedPipeClientProcessId(hPipe, &clientPid)) {
         logFn(logPrefix + "GetNamedPipeClientProcessId failed, error=" + std::to_string(GetLastError()));
@@ -75,7 +75,7 @@ std::string GetCertNameField(PCCERT_CONTEXT cert, LPCSTR oid) {
 // the WinVerifyTrust state it opens, on every return path.
 bool VerifyAuthenticodeSignerMatches(const std::wstring& imagePath,
                                       const std::string& logPrefix,
-                                      void (*logFn)(const std::string&)) {
+                                      const std::function<void(const std::string&)>& logFn) {
     if (imagePath.empty()) return false;
 
     WINTRUST_FILE_INFO fileInfo = {};
@@ -137,7 +137,7 @@ bool SubjectMatchesTrustedIdentity(const std::string& cn, const std::string& o,
 }
 
 bool WindowsIsAuthenticated(HANDLE hPipe, const std::string& logPrefix,
-                             void (*logFn)(const std::string&)) {
+                             const std::function<void(const std::string&)>& logFn) {
 #ifdef IPC_AUTH_DEV_DISABLE
     static std::atomic<bool> warned{false};
     if (!warned.exchange(true)) {

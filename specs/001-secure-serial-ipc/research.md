@@ -82,12 +82,15 @@ specific gap.
 **Alternatives considered**: GnuTLS/libgcrypt — rejected, no material advantage over OpenSSL and
 less commonly already present; shelling out to `openssl`/`gpg` CLI — rejected per above.
 
-**C# agent**: no new dependency. `System.Security.Cryptography.Pkcs.SignedCms` (CMS/PKCS#7
-verification) and Unix domain sockets (`UnixDomainSocketEndPoint`) are both part of the .NET 8
-shared framework on Linux already — nothing to add to `CoreStationAgent.csproj`. The Windows
-Authenticode check has no fully-managed API; it's a P/Invoke onto `WinVerifyTrust`, following the
-same pattern already used in `Platform/Windows/NativeMethods.cs` for other Win32 calls — also not
-a new package dependency.
+**C# agent**: one small new dependency. Unix domain sockets (`UnixDomainSocketEndPoint`) are part
+of the .NET 8 shared framework already. `System.Security.Cryptography.Pkcs.SignedCms`
+(CMS/PKCS#7 verification) is **not** — confirmed by a failed build during implementation
+(`CS1069`), despite being a first-party .NET assembly; it needs an explicit
+`PackageReference Include="System.Security.Cryptography.Pkcs"` in `CoreStationAgent.csproj`. This
+correction supersedes the original wording of this decision. The Windows Authenticode check has
+no fully-managed API; it's a P/Invoke onto `WinVerifyTrust` (`Platform/Windows/
+WinTrustNativeMethods.cs`, using classic `[DllImport]` rather than the project's usual
+`[LibraryImport]` — see that file's header comment) — not a package dependency either way.
 
 ## Decision 5: C# bridge forwards through the existing single-writer outbound channel
 

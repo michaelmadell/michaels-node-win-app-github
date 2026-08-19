@@ -5,10 +5,15 @@
 // against these same Subject fields -- see
 // specs/001-secure-serial-ipc/research.md Decision 1).
 //
-// *** PLACEHOLDER VALUES -- MUST BE REPLACED BEFORE THIS FEATURE SHIPS ***
-// These MUST be extracted from the company's actual, currently-active EV
-// code-signing certificate (the same one build-production.bat/sign.bat
-// already use via smctl), e.g.:
+// *** DEV/TEST CERTIFICATE -- MUST BE REPLACED BEFORE THIS FEATURE SHIPS ***
+// These currently match a locally-generated, throwaway dev CA + code-signing
+// cert (see .devcerts/, gitignored -- regenerate anytime with a plain
+// `openssl req` self-signed CA + leaf, there is nothing precious about it)
+// used only to compile and exercise this feature end-to-end without access
+// to the company's real EV certificate. They MUST be replaced with values
+// extracted from the actual, currently-active EV code-signing certificate
+// (the same one build-production.bat/sign.bat use via smctl) before this
+// reaches a release build, e.g.:
 //   PowerShell:  (Get-AuthenticodeSignature .\CoreStationHXAgent.exe).SignerCertificate |
 //                  Select-Object Subject
 //   or:          signtool verify /v CoreStationHXAgent.exe
@@ -23,13 +28,12 @@ namespace IpcAuth {
 struct TrustedSigningIdentity {
     // TODO(spec 001-secure-serial-ipc T001): replace with the real values
     // from the live EV certificate before this feature reaches a release
-    // build. Left obviously-wrong on purpose -- these placeholders can
-    // never accidentally match a real signer, so the bridge fails closed
-    // (rejects everyone) until someone fills this in, rather than silently
-    // trusting nothing-in-particular.
-    static constexpr const char* CommonName = "REPLACE_ME_COMMON_NAME";
-    static constexpr const char* Organization = "REPLACE_ME_ORGANIZATION";
-    static constexpr const char* OrganizationalUnit = "REPLACE_ME_ORG_UNIT";
+    // build. Currently a dev/test cert (see comment above), not the real
+    // company identity -- a build using these values will accept only
+    // clients signed by the throwaway dev CA in .devcerts/, nothing else.
+    static constexpr const char* CommonName = "CoreStation Dev Code Signing (NOT FOR PRODUCTION)";
+    static constexpr const char* Organization = "Amulet Hotkey Ltd (DEV TEST ONLY)";
+    static constexpr const char* OrganizationalUnit = "CoreStation Dev Signing";
 };
 
 }  // namespace IpcAuth
