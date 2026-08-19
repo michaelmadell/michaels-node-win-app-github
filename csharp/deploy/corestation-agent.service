@@ -1,0 +1,25 @@
+[Unit]
+Description=CoreStation Agent (system telemetry over serial to the chassis controller)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+ExecStart=/opt/corestation-agent/CoreStationAgent
+WorkingDirectory=/opt/corestation-agent
+Restart=always
+RestartSec=10
+
+# Journal entries appear under this identifier.
+SyslogIdentifier=corestation-agent
+
+# Root is required to read the serial device and to run poweroff/reboot on
+# behalf of the chassis controller.
+User=root
+
+# Settings can also be overridden here, e.g.:
+# Environment=Agent__PortName=/dev/ttyS2
+# Environment=Agent__EnableMetrics=false
+
+[Install]
+WantedBy=multi-user.target
