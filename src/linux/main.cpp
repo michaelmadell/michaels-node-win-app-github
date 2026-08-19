@@ -1,6 +1,7 @@
 #include "../core/Platform.h"
 #include "../core/SystemState.h"
 #include "../modules/serial/SerialManager.h"
+#include "../platform/LinuxPlatform.h"
 #ifdef ENABLE_C2A
 #include "../modules/cmc/CmcCommandHandler.h"
 #endif
@@ -176,6 +177,13 @@ void serialThread() {
         return serialManager && serialManager->Write(data);
     });
 
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    // Linux has no service-control lifecycle equivalent to WindowsPlatform's
+    // internal start/stop call sites, so the bridge is started here,
+    // directly after the handler it depends on is wired up.
+    static_cast<LinuxPlatform*>(platform.get())->startSerialBridgeSocket();
+#endif
+
     if (!serialManager->Open(portName, 115200)) {
         std::cerr << "[DEBUG] Failed to open serial port, will retry in background: " << portName << std::endl;
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);
@@ -276,6 +284,10 @@ int main(int argc, char* argv[]) {
             std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread. Reason: " << stopReason << std::endl;
             notifyStopRequested(stopReason);
             g_terminate = true;
+
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+            static_cast<LinuxPlatform*>(platform.get())->stopSerialBridgeSocket();
+#endif
 
             if (workerThread.joinable()) {
                 workerThread.join();

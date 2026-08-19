@@ -4,6 +4,20 @@
 CoreStation HX Agent Release notes
 
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+20.26.8.1_rc1
+-------------
+- Merged in the cross-platform C# (.NET 8) agent (csharp/) alongside the existing C++ agent
+- Added an authenticated local IPC bridge so other company applications can forward messages to
+  the serial port -- now enforced by a code-signing check (Authenticode on Windows, a new
+  detached-signature check on Linux), not just an OS-level ACL/Administrator privilege
+- Added the same bridge to Linux for the first time (Unix domain socket), matching the
+  Windows-only named-pipe bridge that already existed
+- Added a compile-time-only developer flag (IPC_AUTH_DEV_DISABLE) to disable that authentication
+  for local testing -- never present in Release/RC/GA builds
+- See specs/001-secure-serial-ipc/ for the full design and rationale
+
+
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 20.26.5.1_rc8
 -------------
 - fix missing tray app after reboot

@@ -47,6 +47,7 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<SerialTransportSer
 builder.Services.AddHostedService<ShutdownNotifier>();
 builder.Services.AddHostedService<InboundCommandService>();
 builder.Services.AddHostedService<TelemetryService>();
+builder.Services.AddHostedService<SerialBridgeService>();
 
 var host = builder.Build();
 

@@ -4,6 +4,10 @@
 #include "../core/Platform.h"
 #include <thread>
 #include <string>
+#include <memory>
+
+// Forward declaration -- full definition only needed by LinuxPlatformSerialBridge.cpp.
+class SerialBridgeSocket;
 
 // Internal helpers shared across the LinuxPlatform*.cpp translation units.
 // Defined in LinuxPlatform.cpp.
@@ -24,6 +28,15 @@ public:
     std::string getOsVersion() override;
     std::string getOsBuild() override;
     void logMessage(const std::string& message) override;
+
+    // IPC bridge glue (Unix domain socket counterpart of WindowsPlatform's
+    // named-pipe bridge). See ENABLE_SERIAL_BRIDGE_PIPE / BUILD_SERIAL_BRIDGE_PIPE.
+    void setSerialBridgeHandler(SerialBridgeHandler handler) override;
+    bool forwardSerialBridgeMessage(const std::string& data) override;
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    void startSerialBridgeSocket();
+    void stopSerialBridgeSocket();
+#endif
 
     // Cheap, dependency-free system stats - always available (see Platform.h).
     int getCpuUsagePercent() override;
@@ -69,6 +82,15 @@ private:
 
     unsigned long long m_prev_tcp_out = 0;
     unsigned long long m_prev_tcp_retrans = 0;
+
+    // IPC bridge glue. LinuxPlatform owns its own handler storage --
+    // Platform::setSerialBridgeHandler's base implementation is a no-op, and
+    // WindowsPlatform's stored handler is private to that class, so this
+    // cannot be shared between the two platform implementations.
+    SerialBridgeHandler serial_bridge_handler_;
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+    std::unique_ptr<SerialBridgeSocket> serial_bridge_socket_;
+#endif
 };
 
 #endif // __linux__

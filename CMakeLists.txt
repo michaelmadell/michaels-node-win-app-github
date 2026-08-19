@@ -11,8 +11,9 @@ project(CoreStationHXAgent
 option(BUILD_METRICS "Build with metric support" OFF)
 option(BUILD_SESSION_MONITOR "Build with session state monitoring" ON)
 option(BUILD_TRAY_APP "Build with system tray application (Windows only)" ON)
-option(BUILD_SERIAL_BRIDGE_PIPE "Build with named-pipe bridge for external apps to forward bytes to the serial port (Windows only)" OFF)
+option(BUILD_SERIAL_BRIDGE_PIPE "Build with a local IPC bridge (named pipe on Windows, Unix domain socket on Linux) for external apps to forward bytes to the serial port" OFF)
 option(BUILD_C2A "Build with C2A command support (ping/status/shutdown/message-dialog via BMC serial link)" OFF)
+option(IPC_AUTH_DEV_DISABLE "DANGEROUS: compile out IPC client signature verification (dev/test builds only -- never define for Release/RC/GA)" OFF)
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
@@ -194,6 +195,7 @@ if(WIN32)
     if(BUILD_SERIAL_BRIDGE_PIPE)
         list(APPEND MODULE_SOURCES
             src/modules/serialpipe/SerialBridgePipe.cpp
+            src/modules/serialpipe/WindowsIpcClientAuth.cpp
         )
     endif()
 elseif(UNIX AND NOT APPLE)
@@ -202,10 +204,18 @@ elseif(UNIX AND NOT APPLE)
         src/platform/LinuxPlatformDbus.cpp
         src/platform/LinuxPlatformInfo.cpp
         src/platform/LinuxPlatformMetrics.cpp
+        src/platform/LinuxPlatformSerialBridge.cpp
     )
     list(APPEND MODULE_SOURCES
         src/modules/3kcheck/3kcheck.cpp
     )
+
+    if(BUILD_SERIAL_BRIDGE_PIPE)
+        list(APPEND MODULE_SOURCES
+            src/modules/serialpipe/SerialBridgeSocket.cpp
+            src/modules/serialpipe/LinuxIpcClientAuth.cpp
+        )
+    endif()
 endif()
 
 # Header files (for IDE organization)
@@ -237,7 +247,17 @@ if(WIN32)
     endif()
 
     if(BUILD_SERIAL_BRIDGE_PIPE)
-        list(APPEND HEADER_FILES src/modules/serialpipe/SerialBridgePipe.h)
+        list(APPEND HEADER_FILES
+            src/modules/serialpipe/SerialBridgePipe.h
+            src/modules/serialpipe/WindowsIpcClientAuth.h
+        )
+    endif()
+elseif(UNIX AND NOT APPLE)
+    if(BUILD_SERIAL_BRIDGE_PIPE)
+        list(APPEND HEADER_FILES
+            src/modules/serialpipe/SerialBridgeSocket.h
+            src/modules/serialpipe/LinuxIpcClientAuth.h
+        )
     endif()
 endif()
 
@@ -281,12 +301,20 @@ if(BUILD_TRAY_APP AND WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_TRAY_APP)
 endif()
 
-if(BUILD_SERIAL_BRIDGE_PIPE AND WIN32)
+if(BUILD_SERIAL_BRIDGE_PIPE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SERIAL_BRIDGE_PIPE)
 endif()
 
 if(BUILD_C2A)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_C2A)
+endif()
+
+# DANGEROUS: only ever defined for developer/test configurations -- see the
+# IPC_AUTH_DEV_DISABLE option comment above. Never define this for a
+# Release/RC/GA build (build.bat, build-production.bat, build.sh,
+# build-linux.sh/.bash never pass -DIPC_AUTH_DEV_DISABLE=ON).
+if(IPC_AUTH_DEV_DISABLE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE IPC_AUTH_DEV_DISABLE)
 endif()
 
 # Compiler Flags
@@ -331,11 +359,28 @@ if(WIN32)
         oleaut32
         psapi
     )
+
+    if(BUILD_SERIAL_BRIDGE_PIPE)
+        # Authenticode verification for the IPC bridge's client authentication
+        # (src/modules/serialpipe/WindowsIpcClientAuth.cpp).
+        target_link_libraries(${PROJECT_NAME} PRIVATE wintrust crypt32)
+    endif()
 elseif(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(DBUS REQUIRED dbus-1)
     target_include_directories(${PROJECT_NAME} PRIVATE ${DBUS_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} PRIVATE ${DBUS_LIBRARIES})
+
+    # OpenSSL is only pulled in for the IPC bridge's detached-signature (CMS)
+    # verification on Linux -- there's no libc/syscall equivalent of
+    # WinVerifyTrust to check a PKCS#7 signature against a trust anchor, and
+    # shelling out to the openssl CLI and parsing its output was rejected
+    # (see specs/001-secure-serial-ipc/research.md Decision 4 -- this repo
+    # already fixed one command-injection-shaped shell-out bug).
+    if(BUILD_SERIAL_BRIDGE_PIPE)
+        find_package(OpenSSL REQUIRED)
+        target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto)
+    endif()
 endif()
 
 # Output Directory
@@ -421,8 +466,11 @@ message(STATUS "Features:")
 message(STATUS "  TrayApp:            ${BUILD_TRAY_APP}")
 message(STATUS "  Metrics:            ${BUILD_METRICS}")
 message(STATUS "  Session Monitor:    ${BUILD_SESSION_MONITOR}")
-message(STATUS "  Serial Bridge Pipe: ${BUILD_SERIAL_BRIDGE_PIPE}")
+message(STATUS "  Serial Bridge:      ${BUILD_SERIAL_BRIDGE_PIPE}")
 message(STATUS "  C2A Commands:       ${BUILD_C2A}")
+if(IPC_AUTH_DEV_DISABLE)
+    message(STATUS "  *** IPC_AUTH_DEV_DISABLE is ON: IPC bridge client authentication is COMPILED OUT. Dev/test builds only. ***")
+endif()
 message(STATUS "  Testing:            ${ENABLE_TESTING}")
 message(STATUS "")
 message(STATUS "Source Files:")

@@ -43,6 +43,16 @@ public sealed class AgentOptions
     public bool EnableC2A { get; set; } = true;
 
     /// <summary>
+    /// Run the authenticated serial IPC bridge (Windows named pipe /
+    /// Linux Unix domain socket) that lets other company applications
+    /// forward messages to the serial port. See
+    /// specs/001-secure-serial-ipc. Authentication itself cannot be
+    /// disabled via this or any other runtime setting -- see
+    /// Ipc/ClientAuthenticator.cs's IPC_AUTH_DEV_DISABLE compile-time flag.
+    /// </summary>
+    public bool EnableSerialBridge { get; set; } = true;
+
+    /// <summary>
     /// Warning window before a shutdown/restart that arrives without an
     /// explicit "timeout" or "time" modifier.
     /// </summary>

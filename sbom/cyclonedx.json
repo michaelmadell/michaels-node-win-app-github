@@ -1,0 +1,34 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "CoreStationHXAgent",
+      "description": "CoreStation Host Agent for serial monitoring"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "googletest",
+      "version": "1.15.2",
+      "scope": "excluded",
+      "description": "C++ unit test framework (tests/ only, ENABLE_TESTING=ON; not linked into the shipped agent binary)",
+      "purl": "pkg:github/google/googletest@v1.15.2"
+    },
+    {
+      "type": "library",
+      "name": "dbus-1",
+      "description": "D-Bus client library, Linux build only -- used for NetworkManager/session queries (src/platform/LinuxPlatformDbus.cpp)",
+      "purl": "pkg:generic/dbus-1"
+    },
+    {
+      "type": "library",
+      "name": "OpenSSL",
+      "description": "libcrypto, Linux build only, IPC bridge feature (BUILD_SERIAL_BRIDGE_PIPE) -- verifies detached CMS/PKCS#7 client signatures for the authenticated serial IPC channel. Added by specs/001-secure-serial-ipc; see that feature's research.md Decision 4 for the native-vs-shell-out justification.",
+      "purl": "pkg:generic/openssl"
+    }
+  ]
+}

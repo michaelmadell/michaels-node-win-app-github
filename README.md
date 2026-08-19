@@ -175,12 +175,14 @@ RC builds write all log output to `C:\ProgramData\ahk\node-win-app.log` via `Log
   ```
 - Tooltip format: `Host: <hostname> | IP: <ip> | Up: <uptime>`.
 
-### Serial bridge pipe
-- A second named pipe, `\\.\pipe\corestation_serial_bridge`, lets a local application forward raw bytes straight to the serial port the agent is connected to (COM1/COM3 depending on CPU model).
-- The pipe is created with a security descriptor (`D:(A;;GA;;;BA)`) restricting connection to **BUILTIN\Administrators** -- any other caller's `CreateFile` fails with access denied before a single byte is exchanged. There is no app-level secret/token.
-- Whatever bytes are written to the pipe are forwarded **as-is** (no framing, no newline added) to the live `SerialManager` connection used by the main serial worker thread -- not a separate/unopened connection.
-- Started/stopped alongside the session monitor in both interactive and service mode. Controlled by the `BUILD_SERIAL_BRIDGE_PIPE` CMake option (default `ON`, Windows only).
-- Test client: `tools/serial_bridge_client.py` (stdlib only, run from an elevated prompt):
+### Serial bridge (authenticated IPC)
+- A local IPC channel lets another company application forward raw bytes straight to the serial port the agent is connected to: a named pipe on Windows (`\\.\pipe\corestation_serial_bridge`), a Unix domain socket on Linux (`/run/corestation/serial_bridge.sock`). Same endpoint identity regardless of whether the C++ (`src/`) or C# (`csharp/`) agent is running.
+- **Authenticated, not just ACL-restricted**: connecting is not enough by itself, even as Administrator/root. The connecting client's executable must be signed with the company's EV code-signing identity -- Authenticode on Windows, a detached CMS/PKCS#7 signature file (`<binary>.sig`, see `tools/sign-linux-release.sh`) on Linux -- checked against the Subject (CN/O/OU), not the certificate's thumbprint, so a routine cert renewal doesn't require reconfiguring anything. The pipe/socket-level ACL (`D:(A;;GA;;;BA)` on Windows, restricted socket permissions on Linux) is defense-in-depth only, layered on top. See `specs/001-secure-serial-ipc/` for the full design.
+- Whatever bytes an authenticated client sends are forwarded to the live serial connection: as-is (no framing) on the C++ agent, matching today's behavior; through the C# agent's existing outbound line queue on the C# agent (so it gets the same trailing line terminator every other outbound message does -- see `specs/001-secure-serial-ipc/research.md` Decision 5).
+- An unsigned or wrongly-signed caller is disconnected before a single byte is read, and the rejection is logged.
+- Controlled by the `BUILD_SERIAL_BRIDGE_PIPE` CMake option (C++, default `OFF`, both platforms) / `Agent:EnableSerialBridge` (C#, default `true`).
+- **Dev-only flag**: `IPC_AUTH_DEV_DISABLE` (CMake option, or the C# project's Debug-only build constant) compiles the signature check out entirely. It is structurally absent from Release/RC/GA builds -- there is no runtime switch. **Never enable this outside local development.**
+- Test client: `tools/serial_bridge_client.py` (stdlib only, run from an elevated prompt) -- useful for exercising a dev-flag build, but it is **unsigned**, so a standard (non-dev) build will correctly refuse it:
   ```powershell
   python tools\serial_bridge_client.py "hello world"
   python tools\serial_bridge_client.py --hex 41420D0A

@@ -1,5 +1,6 @@
 #ifdef _WIN32
 #include "SerialBridgePipe.h"
+#include "WindowsIpcClientAuth.h"
 #include "../../platform/WindowsPlatform.h"
 #include <sddl.h>
 #include <chrono>
@@ -108,6 +109,24 @@ void SerialBridgePipe::PipeThreadProc() {
         }
 
         if (connected && !stop_.load()) {
+            // Authenticate before reading/forwarding a single byte -- see
+            // WindowsIpcClientAuth.h and specs/001-secure-serial-ipc.
+            // Administrator-only pipe ACL (above) is defense-in-depth only;
+            // this check is the actual control (spec.md FR-001..FR-005).
+            bool authenticated = IpcAuth::WindowsIsAuthenticated(
+                hPipe, "[SerialBridgePipe] ",
+                [this](const std::string& m) { Log(m); });
+
+            if (!authenticated) {
+                Log("WARNING: rejected unauthenticated IPC bridge connection");
+                if (ovConnect.hEvent) {
+                    CloseHandle(ovConnect.hEvent);
+                }
+                DisconnectNamedPipe(hPipe);
+                CloseHandle(hPipe);
+                continue;
+            }
+
             for (;;) {
                 char buffer[1024] = { 0 };
                 DWORD bytesRead = 0;
