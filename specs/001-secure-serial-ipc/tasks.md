@@ -124,7 +124,16 @@ platform/agent combinations. **No user story can be verified until this phase is
   `forwardSerialBridgeMessage` invoking that stored handler — mirroring `WindowsPlatform`'s
   existing `startSerialBridgePipe`/`stopSerialBridgePipe`/`setSerialBridgeHandler`/
   `forwardSerialBridgeMessage` (`src/platform/WindowsPlatform.h:192-193,50-51`,
-  `WindowsPlatformSerialBridge.cpp`). Depends on T009.
+  `WindowsPlatformSerialBridge.cpp`). Depends on T009. **Build-verified on real Linux (WSL Ubuntu
+  22.04, g++ 11.4, `cmake -DBUILD_SERIAL_BRIDGE_PIPE=ON`)** — this surfaced and fixed a second
+  real bug beyond the design: `~LinuxPlatform() = default` was inline in the header, but
+  `serial_bridge_socket_` is a `unique_ptr<SerialBridgeSocket>` and `SerialBridgeSocket` is only
+  forward-declared there — GCC needs the complete type to instantiate
+  `default_delete<SerialBridgeSocket>`, for *both* the destructor and (less obviously) the
+  constructor's exception-unwind path. Fixed by declaring `~LinuxPlatform();` in the header,
+  defining it `= default` out-of-line in `LinuxPlatformSerialBridge.cpp` (where the complete type
+  is visible), and including `SerialBridgeSocket.h` from `LinuxPlatform.cpp` too (for the
+  constructor). Neither half of this was reachable from the Windows build.
 - [X] T013 Wire `src/linux/main.cpp`: call `platform->startSerialBridgeSocket()` near the existing
   `setSerialBridgeHandler(...)` call (line ~175), and `stopSerialBridgeSocket()` on shutdown —
   Linux has no service-control lifecycle to hook into (unlike `WindowsPlatform`'s 4 internal call
@@ -215,22 +224,36 @@ platform/agent connects, sends a status string, and the exact content appears on
   binary + `.sig` (`.devcerts/dummy_linux_client.bin(.sig)`, via `openssl cms -sign`, the same
   mechanism `tools/sign-linux-release.sh` uses). Uses the dev identity, not a real company
   signing identity (blocked on T001/T005's real counterparts).
-- [ ] T030 [US1] **PARTIALLY VALIDATED, not checked off**: full `quickstart.md` Scenario C (live pipe/socket
-  connection through the running agent, on all four combinations) needs a Linux host and real
-  serial hardware/loopback, neither available here. What WAS validated, against real crypto and
-  the T029 dev-signed artifacts, with standalone harnesses replicating the production
-  verification logic exactly:
-  - Windows: `WinVerifyTrust` against the signed test client succeeds; extracted signer
-    CN/O/OU exactly matches `TrustedSigningIdentity` (dev CA temporarily trusted via
-    `certutil -user -addstore Root`, removed again after).
-  - Linux crypto design (via `openssl cms -verify`, since no Linux host is available to run
-    `LinuxIpcClientAuth.cpp` itself): **found and fixed a real bug** — `CMS_verify` defaults to
-    the S/MIME email-signing purpose and rejected an otherwise-valid `codeSigning`-purpose
-    certificate ("unsuitable certificate purpose") until `X509_STORE_set_purpose(store,
-    X509_PURPOSE_ANY)` was added to `LoadTrustAnchorOnce`.
+- [X] T030 [US1] **C++/Linux live-validated end-to-end** (WSL Ubuntu 22.04, real build, real
+  running agent, real Unix domain socket, real signed clients — not a harness): built the agent
+  with `-DBUILD_SERIAL_BRIDGE_PIPE=ON`, ran it as a normal (non-root) foreground process with the
+  T005 dev trust anchor in place, and connected a `test_client2_signed` binary (dev-cert-signed
+  via `openssl cms -sign`) that lingers 2s after writing before exiting. Result (syslog, since
+  `LinuxPlatform::logMessage` routes through `syslog()`, not stdout):
+  `[SerialBridgeSocket] ERROR: Failed to forward message to serial port` — i.e. authentication
+  succeeded and the forward path was actually reached; the only failure was the expected one (no
+  real serial hardware in this sandbox). C++/Windows and both C# combinations still rely on the
+  harness-level validation described below (no live pipe run attempted this pass). Full
+  `quickstart.md` Scenario C across all four combinations, with real serial hardware/loopback,
+  remains open.
+  - Windows: `WinVerifyTrust` against the T029 signed test client succeeds (harness, not a live
+    pipe run); extracted signer CN/O/OU exactly matches `TrustedSigningIdentity` (dev CA
+    temporarily trusted via `certutil -user -addstore Root`, removed again after).
+  - Linux crypto: **found and fixed two real bugs**, both confirmed via the live run above, not
+    just a harness — (1) `CMS_verify` defaults to the S/MIME email-signing purpose and rejected an
+    otherwise-valid `codeSigning`-purpose certificate ("unsuitable certificate purpose") until
+    `X509_STORE_set_purpose(store, X509_PURPOSE_ANY)` was added to `LoadTrustAnchorOnce`; (2) a
+    short-lived client that exits immediately after writing can be spuriously rejected because
+    `/proc/<pid>/exe` disappears once the process has fully exited, racing the server's identity
+    resolution — reproduced directly (a non-lingering client got "readlink(...) failed: No such
+    file or directory" → rejected, despite being correctly signed), documented as a real
+    limitation in spec.md's Edge Cases (client apps must keep the connection open briefly after
+    writing). Not something this feature can fully close without a protocol change (e.g., an
+    ack byte) — flagged for the team, not fixed here.
   - C# (`SignedCms`/`X509Chain`, runnable on Windows regardless of target OS): verified against
     the same openssl-produced signature — `CheckSignature`, chain build, and Subject extraction
-    all succeed and match, no equivalent purpose bug (confirmed, not assumed).
+    all succeed and match, no equivalent purpose bug (confirmed, not assumed). No live C# pipe/
+    socket run attempted.
   - C# build also surfaced and fixed a real missing-dependency bug: `System.Security.
     Cryptography.Pkcs` is not part of the net8.0 shared framework as `research.md` originally
     claimed — needed an explicit `PackageReference` (see `research.md` Decision 4 correction).
@@ -261,17 +284,20 @@ executables, run elevated/as root, are both refused on every combination.
   attributable (image path/PID, not the full identity chain). Depends on T019, T021.
 - [X] T034 [US2] In `csharp/src/CoreStationAgent/Ipc/LinuxSerialBridgeListener.cs`, same rejection
   + `LogWarning` behavior for the Unix domain socket path. Depends on T020, T021.
-- [X] T035 [P] [US2] Built and verified the unsigned case (Windows): the harness's real
-  `WinVerifyTrust` call against the **unsigned** original `CoreStationHXAgent.exe` correctly
-  returned failure (`TRUST_E_NOSIGNATURE`-class result). A signed-but-unrelated-certificate case
-  and the Linux equivalents weren't built (would need a second unrelated dev cert and a Linux
-  host respectively) — the unsigned-Windows case was judged the highest-value one to actually
-  prove, since it's the exact scenario spec.md Acceptance Scenario US2.1 describes.
-- [ ] T036 [US2] **PARTIALLY VALIDATED, not checked off**: same caveat as T030 — full live
-  connection-flow Scenario B (including the elevated-caller angle) needs a running agent and a
-  real named pipe/socket client, not exercised here. What was validated: the underlying rejection
-  decision itself (unsigned → `WinVerifyTrust` failure → `IsAuthenticated` false) is real, not
-  assumed, per T035.
+- [X] T035 [P] [US2] Built and verified both the unsigned and wrong-signer cases:
+  - Windows (harness): `WinVerifyTrust` against the **unsigned** original `CoreStationHXAgent.exe`
+    correctly returned failure (`TRUST_E_NOSIGNATURE`-class result).
+  - Linux (live agent, not a harness — see T030): an **unsigned** test client → rejected
+    ("no usable detached signature at '...'"). A **wrong-signer** test client, signed with a
+    freshly generated, completely unrelated self-signed cert (not part of the dev CA chain) →
+    rejected ("CMS_verify failed for '...'", chain doesn't lead to the trust anchor). Both
+    connections were refused with no bytes forwarded, both rejections logged.
+- [X] T036 [US2] **C++/Linux live-validated**: both rejection cases above ran against the actual
+  compiled, running agent on WSL — real `SO_PEERCRED`, real `CMS_verify`, real trust anchor, not
+  simulated. Confirms SC-001 (refused, zero bytes forwarded) and SC-005 (logged) for Linux.
+  Not covered live: the elevated/root-caller angle specifically (WSL test ran as a normal user,
+  not root, and root wasn't tested against this socket), and no live Windows/C# pipe or socket
+  run was attempted — those still rely on the Windows harness validation under T030/T035.
 
 **Checkpoint**: Both P1 stories (US1 forward, US2 reject) are complete and independently verified
 on all four combinations — this is the feature's MVP.
@@ -331,26 +357,29 @@ combinations.
   unaffected). No manual dependency line needed unless/until that default flips. Revisit then.
   RPM packaging has no separate `.spec` file to update either (CPack's RPM generator, same
   auto-detection). Depends on T002.
-- [ ] T044 [P] **PARTIALLY DEFERRED**: `bitbucket-pipelines.yml`'s two build jobs don't pass
-  `-DBUILD_SERIAL_BRIDGE_PIPE=ON` today, so CI is unaffected by this feature as shipped — didn't
-  flip it on here. The Windows half of the concern is resolved: `cmake -DBUILD_SERIAL_BRIDGE_PIPE=ON
-  -DENABLE_TESTING=ON` was actually configured and built clean with MinGW g++ 16.1.0 (see T007
-  note), so enabling it in the Windows CI job is now known-safe. The Linux half is still
-  unverified — no Linux toolchain in this environment to confirm the OpenSSL-linked
-  `SerialBridgeSocket.cpp`/`LinuxIpcClientAuth.cpp` actually compile. Recommend: build once on
-  Linux with the flag on, confirm it compiles, then add `libssl-dev` to that job's
-  `apt-get install` line and turn the flag on there too. Depends on T002.
-- [ ] T045 **PARTIALLY BLOCKED**: `clang-tidy` itself isn't available in this environment
-  (`cmake` turned out to be installed but not on PATH — found and used directly; no equivalent
-  fix found for `clang-tidy`). Compiler warnings from the actual build were reviewed instead
-  (g++ `-Wall -Wextra`, matching CMakeLists' non-MSVC flags) — the new IPC-bridge files produced
-  zero warnings; pre-existing files produced pre-existing warnings unrelated to this feature
-  (`TrayApp.cpp`/`SessionMonitor.cpp` struct-init order, `MetricCache.h` member-init order — none
-  touched by this change). Full `clang-tidy` still needs to run on a machine that has it.
-- [ ] T046 **PARTIALLY VALIDATED, not checked off**: see T030/T036 — the crypto core is
-  real-data-verified; the full multi-scenario, all-four-combination `quickstart.md` pass still
-  needs a Linux host, real serial hardware/loopback, and (for Scenario D) a second dev cert
-  sharing the same Subject to prove renewal-survival.
+- [ ] T044 [P] **Still not flipped on in CI, but both halves are now known-safe**:
+  `bitbucket-pipelines.yml`'s two build jobs still don't pass `-DBUILD_SERIAL_BRIDGE_PIPE=ON` —
+  didn't edit the pipeline itself here (out of caution about changing CI behavior sight-unseen).
+  Windows: `cmake -DBUILD_SERIAL_BRIDGE_PIPE=ON -DENABLE_TESTING=ON` built clean with MinGW g++
+  16.1.0. Linux: same flag built clean on real Linux (WSL Ubuntu 22.04, g++ 11.4, existing
+  `libssl-dev`/`libdbus-1-dev` already present) — see T012. Both are now verified compileable;
+  remaining step is purely pipeline config: add `libssl-dev` to the Linux job's
+  `apt-get install` line and turn the flag on in both jobs. Depends on T002.
+- [ ] T045 **PARTIALLY BLOCKED**: `clang-tidy` itself still isn't available in either environment
+  used (`cmake` was installed on Windows but not on PATH — found and used directly; WSL's Ubuntu
+  22.04 doesn't have `clang-tidy` installed either). Compiler warnings were reviewed on both real
+  builds instead (MinGW g++ 16.1.0 on Windows, g++ 11.4 on Linux, both `-Wall -Wextra` per
+  CMakeLists) — every new IPC-bridge file, on both platforms, produced zero warnings; pre-existing
+  files produced pre-existing warnings unrelated to this feature (`TrayApp.cpp`/
+  `SessionMonitor.cpp` struct-init order, `MetricCache.h` member-init order). Full `clang-tidy`
+  still needs to run on a machine that has it.
+- [ ] T046 **Substantially validated, not checked off**: see T030/T036 — C++/Linux is now
+  live-verified end-to-end (real build, real running agent, real signed/unsigned/wrong-signer
+  clients over the real socket). Still open: the same live pass for C++/Windows and both C#
+  combinations (no live pipe/socket run attempted for those — harness-level only), real serial
+  hardware/loopback for actual serial-port delivery (all testing so far confirms the bridge
+  reaches `forwardSerialBridgeMessage`/`IBmcChannel.Send`, not what happens after that), and (for
+  Scenario D) a second dev cert sharing the same Subject to prove renewal-survival.
 
 ---
 

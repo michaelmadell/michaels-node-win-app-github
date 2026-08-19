@@ -18,7 +18,15 @@ void getCpuTimes(unsigned long long& total_time, unsigned long long& idle_time);
 class LinuxPlatform : public Platform {
 public:
     LinuxPlatform();
-    ~LinuxPlatform() = default;
+    // Declared here, defined out-of-line in LinuxPlatformSerialBridge.cpp
+    // (as `= default`, not inline) -- required because serial_bridge_socket_
+    // is a unique_ptr<SerialBridgeSocket> and SerialBridgeSocket is only
+    // forward-declared in this header. An inline `= default` destructor
+    // here would need SerialBridgeSocket's complete type to instantiate
+    // std::default_delete, and fail with "invalid application of 'sizeof'
+    // to incomplete type" wherever this header is included (confirmed --
+    // this exact error was hit compiling LinuxPlatform.cpp on Linux).
+    ~LinuxPlatform();
 
     // --- Core Platform Methods (Already Implemented Down Below) ---
     std::vector<NetworkInterface> getNetworkInterfaces() override;

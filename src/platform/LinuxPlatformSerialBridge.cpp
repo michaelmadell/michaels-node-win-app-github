@@ -8,6 +8,12 @@
 #include "../modules/serialpipe/SerialBridgeSocket.h"
 #endif
 
+// Out-of-line (not `= default` in the header) so that when
+// ENABLE_SERIAL_BRIDGE_PIPE is on, SerialBridgeSocket's complete type is
+// visible wherever this destructor is actually instantiated -- see
+// LinuxPlatform.h's declaration comment.
+LinuxPlatform::~LinuxPlatform() = default;
+
 void LinuxPlatform::setSerialBridgeHandler(SerialBridgeHandler handler) {
     serial_bridge_handler_ = std::move(handler);
 }

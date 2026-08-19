@@ -133,6 +133,17 @@ same test client and confirm the connection is refused.
 - What happens on Linux when a client binary's detached signature file is missing, doesn't match
   the binary (e.g., binary was rebuilt/patched after signing), or doesn't match the company's
   Subject identity? Treated as unauthenticated, same as an unsigned Windows caller (FR-005).
+- **What happens on Linux when a legitimately signed client connects, writes its message, and
+  exits immediately (a true fire-and-forget one-shot process) before the agent finishes resolving
+  its identity?** Confirmed by live testing (WSL, real signed test client): the agent resolves
+  identity via `/proc/<pid>/exe`, which can disappear once the client process has fully exited —
+  a legitimately signed, correctly identified client can be spuriously rejected as unauthenticated
+  purely due to this timing race, not any actual signature problem. `SO_PEERCRED`'s PID/UID/GID
+  themselves are kernel-cached at connect time and not racy; only the `/proc` image-path lookup
+  is. Client applications MUST keep the connection open until the write is acknowledged, or at
+  minimum briefly after writing (a fixed short delay before exit is not a guarantee, only a
+  mitigation) — this is a client-side integration requirement, not something the agent can fully
+  eliminate on its own without a protocol change (e.g., a 1-byte ack) that's out of scope here.
 
 ## Requirements *(mandatory)*
 

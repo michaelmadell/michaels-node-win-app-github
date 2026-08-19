@@ -1,5 +1,13 @@
 #ifdef __linux__
 #include "LinuxPlatform.h"
+#ifdef ENABLE_SERIAL_BRIDGE_PIPE
+// LinuxPlatform's constructor (below) implicitly needs SerialBridgeSocket's
+// complete type too, not just the destructor (LinuxPlatformSerialBridge.cpp)
+// -- GCC instantiates unique_ptr<SerialBridgeSocket>'s destructor for the
+// constructor's exception-unwind path as well (confirmed: this exact error
+// on Linux persisted at the constructor even after fixing the destructor).
+#include "../modules/serialpipe/SerialBridgeSocket.h"
+#endif
 #include <iostream>
 #include <memory>
 #include <cstdio>
