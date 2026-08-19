@@ -81,7 +81,7 @@ std::string ResolveClientImagePath(int clientFd, const std::string& logPrefix,
     }
 
     char linkPath[64];
-    std::snprintf(linkPath, sizeof(linkPath), "/proc/%d/exe", cred.pid);
+    (void)std::snprintf(linkPath, sizeof(linkPath), "/proc/%d/exe", cred.pid);
 
     char imagePath[4096] = {0};
     ssize_t len = readlink(linkPath, imagePath, sizeof(imagePath) - 1);
@@ -104,7 +104,7 @@ std::string ReadWholeFile(const std::string& path, bool& ok) {
         contents.append(buf, n);
     }
     ok = !std::ferror(f);
-    std::fclose(f);
+    (void)std::fclose(f);
     return contents;
 }
 

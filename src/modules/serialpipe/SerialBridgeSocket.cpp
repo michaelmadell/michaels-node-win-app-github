@@ -46,7 +46,7 @@ bool SerialBridgeSocket::Start() {
     // trust anchor to check.
 #ifndef IPC_AUTH_DEV_DISABLE
     if (!IpcAuth::LinuxTrustAnchorIsUsable("[SerialBridgeSocket] ",
-                                           [](const std::string& m) { fprintf(stderr, "%s\n", m.c_str()); })) {
+                                           [](const std::string& m) { (void)fprintf(stderr, "%s\n", m.c_str()); })) {
         Log("FATAL: trust anchor unusable, refusing to start (see certs/README.md)");
         return false;
     }
