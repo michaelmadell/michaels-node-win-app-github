@@ -188,6 +188,11 @@ RC builds write all log output to `C:\ProgramData\ahk\node-win-app.log` via `Log
   python tools\serial_bridge_client.py --hex 41420D0A
   python tools\serial_bridge_client.py --interactive
   ```
+- The Subject checked against is currently a labeled throwaway dev certificate (`TrustedIdentity.h`
+  / `ClientAuthenticator.cs`, obviously marked "DEV TEST ONLY" / "NOT FOR PRODUCTION" in every
+  field) standing in for the company's real EV certificate, which this repo doesn't have checked
+  in. To generate your own dev identity, build/sign a real signed test client, and run the full
+  authenticated flow end-to-end locally (any platform), see `tools/devcerts/README.md`.
 
 ### C2A command dispatch
 - BMC-to-Agent (C2A) commands arrive prefixed and are dispatched in `processIncomingCommand()` (`src/main.cpp`, `src/linux/main.cpp`):

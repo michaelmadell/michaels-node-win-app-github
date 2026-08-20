@@ -7,7 +7,8 @@
 node_modules/
 dist/
 build*/
-.claude/
+.claude/*
+!.claude/skills/
 .vscode/
 .vs/
 
