@@ -50,6 +50,9 @@ try {
     # 4. Delete the service
     Write-Host "Deleting service from registry..." -ForegroundColor Yellow
     & sc.exe delete $ServiceName | Out-Null
+
+    # Remove the Event Viewer source registered by install.ps1
+    Remove-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application\CoreStationHXAgent" -Recurse -ErrorAction SilentlyContinue
     
     # 5. Verify the service has been removed
     Write-Host "Verifying service removal..."

@@ -7,6 +7,12 @@
 
 #include "../..//core/Platform.h"
 
+#ifdef _WIN32
+#include <cstddef>
+#include <expected>
+#include "../../core/Errors.h"
+#endif
+
 /**
  * @brief Manages serial port communication across platforms
  *
@@ -74,6 +80,18 @@ private:
 
 #ifdef _WIN32
     void* hSerial_ = nullptr;  // HANDLE
+
+    // Windows implementations behind the public bool API. Failures come back
+    // as SerialError and are reported through ReportError().
+    std::expected<void*, core::SerialError> OpenWindowsPort(const std::string& portName);
+    std::expected<void, core::SerialError> WriteWindows(const std::string& data);
+    std::expected<std::size_t, core::SerialError> ReadWindows(char* buffer, std::size_t size);
+
+    // Logs to stderr every time, but to Event Viewer only when the error
+    // differs from the last one reported - TryReconnect() retries every few
+    // seconds while the port is absent and would otherwise flood the log.
+    void ReportError(const core::SerialError& error);
+    void ClearReportedError();
 #else
     int serialFd_ = -1;
 #endif

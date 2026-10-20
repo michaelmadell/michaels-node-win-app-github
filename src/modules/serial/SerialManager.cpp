@@ -3,6 +3,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <format>
+#include "../../core/EventLogger.h"
+#include "../../platform/WinHandles.h"
 #else
 #include <unistd.h>
 #include <fcntl.h>
@@ -28,79 +31,14 @@ bool SerialManager::Open(const std::string& portName, int baudrate) {
     baudrate_ = baudrate;
 
 #ifdef _WIN32
-    HANDLE handle = CreateFileA(
-        portName.c_str(),
-        GENERIC_READ | GENERIC_WRITE,
-        0,
-        NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        NULL
-    );
-
-    if (handle == INVALID_HANDLE_VALUE) {
-        DWORD err = GetLastError();
-        std::cerr << "CreateFileA failed for " << portName << " with error " << err << std::endl;
+    auto handle = OpenWindowsPort(portName);
+    if (!handle) {
+        ReportError(handle.error());
         return false;
     }
+    ClearReportedError();
 
-    DCB dcbSerialParams = { 0 };
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-
-    if (!GetCommState(handle, &dcbSerialParams)) {
-        CloseHandle(handle);
-        return false;
-    }
-
-    dcbSerialParams.BaudRate = CBR_115200;
-    dcbSerialParams.ByteSize = 8;
-    dcbSerialParams.StopBits = ONESTOPBIT;
-    dcbSerialParams.Parity = NOPARITY;
-
-    // Explicitly disable hardware and software flow control (mirrors the
-    // Linux side's ~CRTSCTS / ~(IXON|IXOFF|IXANY)). Without this, whatever
-    // handshaking mode the port driver defaulted to is left in place - if
-    // that's CTS-based, WriteFile blocks until the timeout and returns a
-    // partial write whenever the peer isn't actively asserting CTS.
-    dcbSerialParams.fOutxCtsFlow = FALSE;
-    dcbSerialParams.fOutxDsrFlow = FALSE;
-    dcbSerialParams.fDsrSensitivity = FALSE;
-    dcbSerialParams.fRtsControl = RTS_CONTROL_ENABLE;
-    dcbSerialParams.fDtrControl = DTR_CONTROL_ENABLE;
-    dcbSerialParams.fOutX = FALSE;
-    dcbSerialParams.fInX = FALSE;
-
-    // Without this, a single framing/overrun/parity error on the line
-    // (very likely with nothing coherent driving the far end yet) latches
-    // the port into an aborted state: every WriteFile/ReadFile after that
-    // returns 0 bytes immediately, forever, until something acknowledges
-    // the error via ClearCommError(). Keep the driver from doing that.
-    dcbSerialParams.fAbortOnError = FALSE;
-
-    if (!SetCommState(handle, &dcbSerialParams)) {
-        CloseHandle(handle);
-        return false;
-    }
-
-    // Defensively clear any error already latched from a previous session,
-    // and drop any stale bytes sitting in the driver's TX/RX buffers.
-    DWORD commErrors = 0;
-    ClearCommError(handle, &commErrors, NULL);
-    PurgeComm(handle, PURGE_RXCLEAR | PURGE_TXCLEAR);
-
-    COMMTIMEOUTS timeouts = { 0 };
-    timeouts.ReadIntervalTimeout = 5;
-    timeouts.ReadTotalTimeoutConstant = 5;
-    timeouts.ReadTotalTimeoutMultiplier = 1;
-    timeouts.WriteTotalTimeoutConstant = 50;
-    timeouts.WriteTotalTimeoutMultiplier = 10;
-
-    if (!SetCommTimeouts(handle, &timeouts)) {
-        CloseHandle(handle);
-        return false;
-    }
-
-    hSerial_ = handle;
+    hSerial_ = *handle;
     isOpen_ = true;
     return true;
 
@@ -150,6 +88,155 @@ bool SerialManager::Open(const std::string& portName, int baudrate) {
 #endif
 }
 
+#ifdef _WIN32
+std::expected<void*, core::SerialError> SerialManager::OpenWindowsPort(const std::string& portName) {
+    UniqueHandle handle(CreateFileA(
+        portName.c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    ));
+
+    if (handle.get() == INVALID_HANDLE_VALUE) {
+        DWORD err = GetLastError();
+        // ACCESS_DENIED / SHARING_VIOLATION on a COM port means another
+        // process already has it open.
+        const bool busy = err == ERROR_ACCESS_DENIED || err == ERROR_SHARING_VIOLATION;
+        const bool missing = err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND;
+        return std::unexpected(core::SerialError{
+            .code = busy ? core::CoreError::Code::Busy
+                  : missing ? core::CoreError::Code::NotFound
+                  : core::CoreError::Code::IoError,
+            .sub_code = busy ? core::SerialError::SubCode::PortBusy : core::SerialError::SubCode::PortNotFound,
+            .message = std::format("CreateFileA failed for {}", portName),
+            .platform_error = err,
+        });
+    }
+
+    auto configureFailed = [&portName](const char* call) {
+        DWORD err = GetLastError();
+        return std::unexpected(core::SerialError{
+            .code = core::CoreError::Code::IoError,
+            .sub_code = core::SerialError::SubCode::ConfigureFailed,
+            .message = std::format("{} failed for {}", call, portName),
+            .platform_error = err,
+        });
+    };
+
+    DCB dcbSerialParams{};
+    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+
+    if (!GetCommState(handle.get(), &dcbSerialParams)) {
+        return configureFailed("GetCommState");
+    }
+
+    dcbSerialParams.BaudRate = CBR_115200;
+    dcbSerialParams.ByteSize = 8;
+    dcbSerialParams.StopBits = ONESTOPBIT;
+    dcbSerialParams.Parity = NOPARITY;
+
+    // Explicitly disable hardware and software flow control (mirrors the
+    // Linux side's ~CRTSCTS / ~(IXON|IXOFF|IXANY)). Without this, whatever
+    // handshaking mode the port driver defaulted to is left in place - if
+    // that's CTS-based, WriteFile blocks until the timeout and returns a
+    // partial write whenever the peer isn't actively asserting CTS.
+    dcbSerialParams.fOutxCtsFlow = FALSE;
+    dcbSerialParams.fOutxDsrFlow = FALSE;
+    dcbSerialParams.fDsrSensitivity = FALSE;
+    dcbSerialParams.fRtsControl = RTS_CONTROL_ENABLE;
+    dcbSerialParams.fDtrControl = DTR_CONTROL_ENABLE;
+    dcbSerialParams.fOutX = FALSE;
+    dcbSerialParams.fInX = FALSE;
+
+    // Without this, a single framing/overrun/parity error on the line
+    // (very likely with nothing coherent driving the far end yet) latches
+    // the port into an aborted state: every WriteFile/ReadFile after that
+    // returns 0 bytes immediately, forever, until something acknowledges
+    // the error via ClearCommError(). Keep the driver from doing that.
+    dcbSerialParams.fAbortOnError = FALSE;
+
+    if (!SetCommState(handle.get(), &dcbSerialParams)) {
+        return configureFailed("SetCommState");
+    }
+
+    // Defensively clear any error already latched from a previous session,
+    // and drop any stale bytes sitting in the driver's TX/RX buffers.
+    DWORD commErrors = 0;
+    ClearCommError(handle.get(), &commErrors, NULL);
+    PurgeComm(handle.get(), PURGE_RXCLEAR | PURGE_TXCLEAR);
+
+    COMMTIMEOUTS timeouts{};
+    timeouts.ReadIntervalTimeout = 5;
+    timeouts.ReadTotalTimeoutConstant = 5;
+    timeouts.ReadTotalTimeoutMultiplier = 1;
+    timeouts.WriteTotalTimeoutConstant = 50;
+    timeouts.WriteTotalTimeoutMultiplier = 10;
+
+    if (!SetCommTimeouts(handle.get(), &timeouts)) {
+        return configureFailed("SetCommTimeouts");
+    }
+
+    return handle.release();
+}
+
+std::expected<void, core::SerialError> SerialManager::WriteWindows(const std::string& data) {
+    DWORD bytesWritten = 0;
+    if (!WriteFile((HANDLE)hSerial_, data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
+        DWORD err = GetLastError();
+        Close();
+        return std::unexpected(core::SerialError{
+            .code = core::CoreError::Code::IoError,
+            .sub_code = core::SerialError::SubCode::WriteError,
+            .message = std::format("WriteFile failed on {}, closing serial port", portName_),
+            .platform_error = err,
+        });
+    }
+
+    if (bytesWritten != data.length()) {
+        return std::unexpected(core::SerialError{
+            .code = core::CoreError::Code::IoError,
+            .sub_code = core::SerialError::SubCode::WriteError,
+            .message = std::format("Partial write detected on {} ({} of {} bytes)", portName_, bytesWritten, data.length()),
+        });
+    }
+    return {};
+}
+
+// Returns the number of bytes read; 0 when nothing arrived before the
+// COMMTIMEOUTS read timeout, which is the normal idle case.
+std::expected<std::size_t, core::SerialError> SerialManager::ReadWindows(char* buffer, std::size_t size) {
+    DWORD bytesRead = 0;
+    if (!ReadFile((HANDLE)hSerial_, buffer, (DWORD)size, &bytesRead, NULL)) {
+        DWORD err = GetLastError();
+        if (err == ERROR_IO_PENDING) {
+            return 0;
+        }
+        return std::unexpected(core::SerialError{
+            .code = core::CoreError::Code::IoError,
+            .sub_code = core::SerialError::SubCode::ReadError,
+            .message = std::format("Error reading from serial port {}", portName_),
+            .platform_error = err,
+        });
+    }
+    return bytesRead;
+}
+
+void SerialManager::ReportError(const core::SerialError& error) {
+    std::cerr << core::describe(error) << std::endl;
+    core::EventLogger::instance().log_on_change("serial:" + portName_, "Serial", error);
+}
+
+// Called after a successful open: if a failure had been reported, log the
+// recovery so the Event Viewer trail doesn't end on a stale error.
+void SerialManager::ClearReportedError() {
+    core::EventLogger::instance().clear(
+        "serial:" + portName_, std::format("Serial: port {} opened after earlier failure", portName_));
+}
+#endif
+
 void SerialManager::Close() {
     if (!isOpen_) {
         return;
@@ -180,16 +267,8 @@ bool SerialManager::Write(const std::string& data) {
     }
 
 #ifdef _WIN32
-    DWORD bytesWritten = 0;
-    if (!WriteFile((HANDLE)hSerial_, data.c_str(), (DWORD)data.length(), &bytesWritten, NULL)) {
-        DWORD err = GetLastError();
-        std::cerr << "WriteFile failed (Error " << err << "), closing serial port" << std::endl;
-        Close();
-        return false;
-    }
-
-    if (bytesWritten != data.length()) {
-        std::cerr << "Partial write detected (" << bytesWritten << " of " << data.length() << " bytes)" << std::endl;
+    if (auto written = WriteWindows(data); !written) {
+        ReportError(written.error());
         return false;
     }
     return true;
@@ -212,20 +291,16 @@ bool SerialManager::Read(std::string& data) {
     char buffer[256];
 
 #ifdef _WIN32
-    DWORD bytesRead = 0;
-    if (ReadFile((HANDLE)hSerial_, buffer, sizeof(buffer) - 1, &bytesRead, NULL)) {
-        if (bytesRead > 0) {
-            data.append(buffer, bytesRead);
-            return true;
-        }
+    auto bytesRead = ReadWindows(buffer, sizeof(buffer) - 1);
+    if (!bytesRead) {
+        ReportError(bytesRead.error());
+        return false;
     }
-    else {
-        DWORD err = GetLastError();
-        if (err != ERROR_IO_PENDING) {
-            std::cerr << "Error reading from serial port: " << err << std::endl;
-        }
+    if (*bytesRead == 0) {
+        return false;
     }
-    return false;
+    data.append(buffer, *bytesRead);
+    return true;
 
 #else
     ssize_t bytes_read = read(serialFd_, buffer, sizeof(buffer) - 1);

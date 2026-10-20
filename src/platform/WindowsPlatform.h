@@ -6,7 +6,9 @@
 // (stop event, PDH query, COM init) - not actually tray-specific.
 #include "WinHandles.h"
 #include "../modules/metrics/MetricCache.h"
+#include "../core/Errors.h"
 #include <windows.h>
+#include <expected>
 #include <wtsapi32.h>
 #include <pdh.h>
 #include <memory>
@@ -150,8 +152,10 @@ private:
     MetricCache<int> ramCache_{ CacheDurations::RAM_USAGE };
     MetricCache<std::string> uptimeCache_{ CacheDurations::SYSTEM_UPTIME };
 
-    int getCpuUsagePercentImpl();
-    int getRamUsagePercentImpl();
+    // *Impl metric queries return the raw result; the public cached getters
+    // unwrap them with valueOrReport().
+    std::expected<int, core::PlatformError> getCpuUsagePercentImpl();
+    std::expected<int, core::PlatformError> getRamUsagePercentImpl();
     std::string getSystemUptimeImpl();
     void updateCpuTimes();
 
@@ -166,13 +170,19 @@ private:
     MetricCache<std::string> highRamProcsCache_{ CacheDurations::HIGH_RAM_PROCS };
 
     // Implementation methods (cached versions call these)
-    std::string getFreeDiskSpaceGBImpl(const std::string& drivePath);
-    std::string getWindowsUpdateStateImpl();
-    float getDiskQueueLengthImpl();
-    float getNetworkRetransRateImpl();
-    std::string getGpuDriverInfoImpl();
-    float getGpuUsagePercentImpl();
-    std::string getHighRamProcessesImpl();
+    std::expected<std::string, core::PlatformError> getFreeDiskSpaceGBImpl(const std::string& drivePath);
+    std::expected<std::string, core::PlatformError> getWindowsUpdateStateImpl();
+    std::expected<float, core::PlatformError> getDiskQueueLengthImpl();
+    std::expected<float, core::PlatformError> getNetworkRetransRateImpl();
+    std::expected<std::string, core::PlatformError> getGpuDriverInfoImpl();
+    std::expected<float, core::PlatformError> getGpuUsagePercentImpl();
+    std::expected<std::string, core::PlatformError> getHighRamProcessesImpl();
+
+    // Reads a single-value PDH counter; shared by disk queue / net retrans.
+    std::expected<float, core::PlatformError> readPdhCounter(PDH_HCOUNTER counter, const char* name);
+
+    // Opens the PDH query and adds the disk/network/GPU counters (constructor).
+    void initPdhCounters();
 
     // Helper methods
     std::string getProcessName(HANDLE hProcess);
@@ -180,9 +190,44 @@ private:
 
     #ifdef ENABLE_C2A
     // Enables SE_SHUTDOWN_NAME on the current process token; shared by
-    // shutdownSystem() and restartSystem(). Returns false (and logs) on failure.
-    bool enableShutdownPrivilege();
+    // shutdownSystem() and restartSystem().
+    std::expected<void, core::PlatformError> enableShutdownPrivilege();
+
+    // Enables the shutdown privilege then calls ExitWindowsEx(flags).
+    // `action` ("shutdown"/"restart") is only used in the error message.
+    std::expected<void, core::PlatformError> exitWindows(UINT flags, const char* action);
     #endif
+
+    // The session ID of the active console session, or NotFound when nobody
+    // is at the console (e.g. at the logon screen right after boot).
+    static std::expected<DWORD, core::PlatformError> activeConsoleSessionId();
+
+    // Logs a failed one-shot operation to the file log and Event Viewer.
+    void reportError(const std::string& context, const core::PlatformError& error);
+
+    // As reportError(), but for operations retried on a timer or polled by
+    // the heartbeat: the file log and Event Viewer only get an entry when the
+    // error changes (see EventLogger::log_on_change). `key` identifies the
+    // operation.
+    void reportErrorOnChange(const std::string& key, const std::string& context,
+                             const core::PlatformError& error);
+
+    // Unwraps a metric/info query for the Platform interface, which has to
+    // return a value: on failure reports via reportErrorOnChange() and returns
+    // `fallback` (the same placeholder the wire format has always carried);
+    // on success clears `key` so a later failure is reported again.
+    template <typename T>
+    T valueOrReport(std::expected<T, core::PlatformError> result, T fallback,
+                    const std::string& key, const std::string& context)
+    {
+        if (!result) {
+            reportErrorOnChange(key, context, result.error());
+            return fallback;
+        }
+        clearReportedError(key);
+        return std::move(*result);
+    }
+    void clearReportedError(const std::string& key);
 
     // Module management
     void startTrayApp();
@@ -195,6 +240,10 @@ private:
     // Spawn a tray helper process in the active user session (called when
     // running as a Session 0 service where direct tray creation is invisible).
     void spawnTrayHelper();
+
+    // Does the actual work for spawnTrayHelper(): launches the helper into
+    // `sessionId` and returns its process information.
+    std::expected<PROCESS_INFORMATION, core::PlatformError> launchTrayHelper(DWORD sessionId);
 
     // Terminate and release the tray helper process handle. Must be called
     // with trayHelperMutex_ held.

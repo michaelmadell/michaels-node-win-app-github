@@ -5,6 +5,8 @@
 #include <string>
 #include <thread>
 #include <atomic>
+#include <expected>
+#include "../../core/Errors.h"
 
 // Forward declaration
 class WindowsPlatform;
@@ -24,7 +26,11 @@ public:
     explicit SerialBridgePipe(WindowsPlatform* platform);
     ~SerialBridgePipe();
 
-    bool Start();
+    // Builds the pipe's security descriptor and starts the listener thread.
+    // Fails if the stop event or security descriptor can't be created.
+    std::expected<void, core::PipeError> Start();
+
+    // Signals the listener thread and joins it. Can't fail, so stays void.
     void Stop();
 
     SerialBridgePipe(const SerialBridgePipe&) = delete;
@@ -32,7 +38,12 @@ public:
 
 private:
     void PipeThreadProc();
+    std::expected<HANDLE, core::PipeError> CreatePipeInstance(SECURITY_ATTRIBUTES& sa);
     void Log(const std::string& msg);
+
+    // Logs every pipe error, but writes to Event Viewer only when it differs
+    // from the last one - CreatePipeInstance() is retried every second.
+    void ReportPipeError(const core::PipeError& error);
 
     static const char* const PIPE_NAME;
 
@@ -40,6 +51,9 @@ private:
     std::thread pipeThread_;
     std::atomic<bool> stop_{ false };
     HANDLE stopEvent_ = nullptr;
+    DWORD stopEventError_ = ERROR_SUCCESS;
+    PSECURITY_DESCRIPTOR securityDescriptor_ = nullptr;
+    bool devBypassLogged_ = false;
 };
 
 #endif // _WIN32

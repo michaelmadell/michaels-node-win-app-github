@@ -2,8 +2,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#include <functional>
+#include <expected>
 #include <string>
+#include "../../core/Errors.h"
 
 // Resolves and authenticates the identity of a process connected to the
 // serial bridge named pipe. See specs/001-secure-serial-ipc/data-model.md
@@ -18,15 +19,23 @@
 //
 // Any failure at any step is treated as "not authenticated" -- there is no
 // partial-trust state. When compiled with IPC_AUTH_DEV_DISABLE defined,
-// IsAuthenticated() always returns true (see spec.md FR-006/FR-007) and
-// logs a one-time dev-mode notice.
+// AuthenticateClient() always succeeds with devBypass set (see spec.md
+// FR-006/FR-007); the caller is responsible for the dev-mode notice.
 namespace IpcAuth {
 
-// Returns true only if the process on the other end of hPipe is running an
-// executable signed by the trusted company identity. hPipe must already be
-// connected (i.e. called after ConnectNamedPipe succeeds).
-bool WindowsIsAuthenticated(HANDLE hPipe, const std::string& logPrefix,
-                             const std::function<void(const std::string&)>& logFn);
+// The process on the other end of the pipe, once it has passed (or, in an
+// IPC_AUTH_DEV_DISABLE build, bypassed) authentication.
+struct AuthenticatedClient {
+    DWORD pid = 0;
+    std::wstring imagePath;
+    bool devBypass = false;  // true only in IPC_AUTH_DEV_DISABLE builds
+};
+
+// Succeeds only if the process on the other end of hPipe is running an
+// executable signed by the trusted company identity; otherwise the AuthError
+// says which step failed and why. hPipe must already be connected (i.e.
+// called after ConnectNamedPipe succeeds).
+std::expected<AuthenticatedClient, core::AuthError> AuthenticateClient(HANDLE hPipe);
 
 // Pure comparison logic, factored out so it's unit-testable without a real
 // signed file or a live WinVerifyTrust call (see tests/test_ipc_client_auth.cpp).

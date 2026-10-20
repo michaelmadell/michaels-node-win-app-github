@@ -8,9 +8,11 @@
 #include <tlhelp32.h>
 #include <psapi.h>
 #include <pdh.h>
+#include <pdhmsg.h>
 #include <sstream>
 #include <cctype>
 #include "WinHandles.h"
+#include "../core/EventLogger.h"
 #include <print>
 #include <format>
 
@@ -34,21 +36,6 @@
 #pragma comment(lib, "comsuppw.lib")
 #pragma comment(lib, "Psapi.lib")
 #pragma comment(lib, "shell32.lib")
-
-static std::string Trim(const std::string& input) {
-    if (input.empty()) {
-        return std::string();
-    }
-
-    const char* whitespace = " \t\r\n";
-    size_t start = input.find_first_not_of(whitespace);
-    if (start == std::string::npos) {
-        return std::string();
-    }
-
-    size_t end = input.find_last_not_of(whitespace);
-    return input.substr(start, end - start + 1);
-}
 
 static WindowsPlatform* g_platform_instance = nullptr;
 
@@ -97,32 +84,64 @@ WindowsPlatform::WindowsPlatform()
     updateCpuTimes();
 
 #ifdef ENABLE_METRICS
-    PDH_HQUERY rawQuery = NULL;
-    if (PdhOpenQuery(NULL, 0, &rawQuery) == ERROR_SUCCESS && rawQuery != NULL) {
-        // Store the raw handle in the unique_ptr wrapper
-        m_hQuery = UniquePdhQuery(rawQuery);
-        if (m_hQuery) {
-
-            // Counter for Avg. Disk Queue Length for the entire physical disk subsystem
-            PdhAddCounterA(m_hQuery.get(), "\\PhysicalDisk(_Total)\\Avg. Disk Queue Length", 0, &m_hDiskCounter);
-            // Counter for Segments Retransmitted/sec for IPv4 traffic
-            PdhAddCounterA(m_hQuery.get(), "\\TCPv4\\Segments Retransmitted/sec", 0, &m_hNetRetransCounter);
-
-            PdhAddCounterW(m_hQuery.get(), L"\\GPU Engine(*)\\Utilization Percentage", 0, &m_hGpuTotalCounter);
-
-            // Collect initial data sample for counters that require two samples (like averages/rates)
-            PdhCollectQueryData(m_hQuery.get());
-        }
-    }
-    else {
-        logMessage("[WARNING] Failed to open PDH Query for system metrics.");
-    }
+    initPdhCounters();
 
     if (!com_initializer.Succeeded()) {
-        logMessage("[WARNING] Failed to initialize COM for WMI access.");
+        reportError("[WARNING] COM initialization for WMI access", core::PlatformError{
+            .code = core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::WmiQueryFailed,
+            .message = "CoInitializeEx failed",
+            .platform_error = static_cast<std::uint32_t>(com_initializer.GetHResult()),
+        });
     }
     #endif
 }
+
+#ifdef ENABLE_METRICS
+// Failures here are reported once; the affected metric then quietly reports
+// its placeholder value (its counter handle stays NULL) rather than logging
+// on every poll.
+void WindowsPlatform::initPdhCounters()
+{
+    auto pdhError = [](PDH_STATUS status, std::string message) {
+        // NO_OBJECT/NO_COUNTER: the counter doesn't exist on this machine
+        // (e.g. no "GPU Engine" counters without a GPU driver).
+        const DWORD code = static_cast<DWORD>(status);
+        const bool missing = code == PDH_CSTATUS_NO_OBJECT || code == PDH_CSTATUS_NO_COUNTER;
+        return core::PlatformError{
+            .code = missing ? core::CoreError::Code::NotFound : core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::WmiQueryFailed,
+            .message = std::move(message),
+            .platform_error = static_cast<std::uint32_t>(status),
+        };
+    };
+
+    PDH_HQUERY rawQuery = NULL;
+    if (PDH_STATUS status = PdhOpenQuery(NULL, 0, &rawQuery); status != ERROR_SUCCESS || rawQuery == NULL) {
+        reportError("[WARNING] PDH setup for system metrics", pdhError(status, "PdhOpenQuery failed"));
+        return;
+    }
+    // Store the raw handle in the unique_ptr wrapper
+    m_hQuery = UniquePdhQuery(rawQuery);
+
+    auto addCounter = [&](const wchar_t* path, PDH_HCOUNTER* counter, const char* name) {
+        if (PDH_STATUS status = PdhAddCounterW(m_hQuery.get(), path, 0, counter); status != ERROR_SUCCESS) {
+            *counter = NULL;
+            reportError("[WARNING] PDH setup for system metrics",
+                        pdhError(status, std::format("PdhAddCounter failed for {} counter", name)));
+        }
+    };
+
+    // Avg. Disk Queue Length for the entire physical disk subsystem
+    addCounter(L"\\PhysicalDisk(_Total)\\Avg. Disk Queue Length", &m_hDiskCounter, "disk queue");
+    // Segments Retransmitted/sec for IPv4 traffic
+    addCounter(L"\\TCPv4\\Segments Retransmitted/sec", &m_hNetRetransCounter, "TCP retransmit");
+    addCounter(L"\\GPU Engine(*)\\Utilization Percentage", &m_hGpuTotalCounter, "GPU utilization");
+
+    // Collect initial data sample for counters that require two samples (like averages/rates)
+    PdhCollectQueryData(m_hQuery.get());
+}
+#endif
 
 WindowsPlatform::~WindowsPlatform()
 {
@@ -181,8 +200,12 @@ int WindowsPlatform::run(
         DWORD err = GetLastError();
         if (forceService || err != ERROR_FAILED_SERVICE_CONTROLLER_CONNECT)
         {
-            std::string errMessage = std::format("StartServiceCtrlDispatcher failed ({}), cannot continue.", err);
-            logMessage(errMessage);
+            reportError("Service start", core::PlatformError{
+                .code = core::CoreError::Code::Internal,
+                .sub_code = core::PlatformError::SubCode::ServiceStartFailed,
+                .message = "StartServiceCtrlDispatcher failed, cannot continue",
+                .platform_error = err,
+            });
             return static_cast<int>(err);
         }
 
@@ -235,7 +258,7 @@ bool WindowsPlatform::runningUnderServiceControlManager()
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnap == INVALID_HANDLE_VALUE) return false;
 
-    PROCESSENTRY32 pe = { 0 };
+    PROCESSENTRY32 pe{};
     pe.dwSize = sizeof(pe);
     DWORD parentPid = 0;
 
@@ -339,41 +362,98 @@ void WindowsPlatform::stopService(const std::string& stopReason)
         on_stop_callback(stopReason);
     SetEvent(g_stop_event.get());
 }
-#ifdef ENABLE_C2A
-bool WindowsPlatform::enableShutdownPrivilege()
+void WindowsPlatform::reportError(const std::string& context, const core::PlatformError& error)
 {
-    HANDLE hToken;
-    TOKEN_PRIVILEGES tkp;
+    logMessage(std::format("{}: {}", context, core::describe(error)));
+    core::EventLogger::instance().log(context, error);
+}
 
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
-        logMessage("Failed to open process token for shutdown/restart.");
-        return false;
+void WindowsPlatform::reportErrorOnChange(const std::string& key, const std::string& context,
+                                          const core::PlatformError& error)
+{
+    if (core::EventLogger::instance().log_on_change(key, context, error)) {
+        logMessage(std::format("{}: {}", context, core::describe(error)));
     }
+}
 
+void WindowsPlatform::clearReportedError(const std::string& key)
+{
+    core::EventLogger::instance().clear(key);
+}
+
+std::expected<DWORD, core::PlatformError> WindowsPlatform::activeConsoleSessionId()
+{
+    DWORD sessionId = WTSGetActiveConsoleSessionId();
+    if (sessionId == 0xFFFFFFFF) {
+        return std::unexpected(core::PlatformError{
+            .code = core::CoreError::Code::NotFound,
+            .sub_code = core::PlatformError::SubCode::SessionActionFailed,
+            .message = "no active console session",
+        });
+    }
+    return sessionId;
+}
+
+#ifdef ENABLE_C2A
+std::expected<void, core::PlatformError> WindowsPlatform::enableShutdownPrivilege()
+{
+    HANDLE rawToken = nullptr;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &rawToken)) {
+        DWORD err = GetLastError();
+        return std::unexpected(core::PlatformError{
+            .code = core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::PrivilegeAdjustFailed,
+            .message = "Failed to open process token for shutdown/restart",
+            .platform_error = err,
+        });
+    }
+    UniqueHandle hToken(rawToken);
+
+    TOKEN_PRIVILEGES tkp = {};
     LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid);
     tkp.PrivilegeCount = 1;
     tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-    AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, (PTOKEN_PRIVILEGES)NULL, 0);
-    bool ok = (GetLastError() == ERROR_SUCCESS);
-    if (!ok) {
-        logMessage("Failed to adjust token privileges for shutdown/restart.");
+    // AdjustTokenPrivileges can "succeed" without assigning the privilege;
+    // GetLastError() (ERROR_NOT_ALL_ASSIGNED) is the real result.
+    AdjustTokenPrivileges(hToken.get(), FALSE, &tkp, 0, (PTOKEN_PRIVILEGES)NULL, 0);
+    DWORD err = GetLastError();
+    if (err != ERROR_SUCCESS) {
+        return std::unexpected(core::PlatformError{
+            .code = err == ERROR_NOT_ALL_ASSIGNED ? core::CoreError::Code::PermissionDenied
+                                                  : core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::PrivilegeAdjustFailed,
+            .message = "Failed to adjust token privileges for shutdown/restart",
+            .platform_error = err,
+        });
+    }
+    return {};
+}
+
+std::expected<void, core::PlatformError> WindowsPlatform::exitWindows(UINT flags, const char* action)
+{
+    if (auto privileged = enableShutdownPrivilege(); !privileged) {
+        return privileged;
     }
 
-    CloseHandle(hToken);
-    return ok;
+    if (!ExitWindowsEx(flags, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER)) {
+        DWORD err = GetLastError();
+        return std::unexpected(core::PlatformError{
+            .code = core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::PowerActionFailed,
+            .message = std::format("Failed to initiate system {}", action),
+            .platform_error = err,
+        });
+    }
+    return {};
 }
 
 void WindowsPlatform::shutdownSystem(const std::string& reason)
 {
     logMessage("Initiating system shutdown." + (reason.empty() ? "" : (" Reason: " + reason)));
 
-    if (!enableShutdownPrivilege()) {
-        return;
-    }
-
-    if (!ExitWindowsEx(EWX_SHUTDOWN | EWX_FORCE, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER)) {
-        logMessage("Failed to initiate system shutdown.");
+    if (auto result = exitWindows(EWX_SHUTDOWN | EWX_FORCE, "shutdown"); !result) {
+        reportError("shutdownSystem", result.error());
     }
 }
 
@@ -381,41 +461,49 @@ void WindowsPlatform::restartSystem(const std::string& reason)
 {
     logMessage("Initiating system restart." + (reason.empty() ? "" : (" Reason: " + reason)));
 
-    if (!enableShutdownPrivilege()) {
-        return;
-    }
-
-    if (!ExitWindowsEx(EWX_REBOOT | EWX_FORCE, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER)) {
-        logMessage("Failed to initiate system restart.");
+    if (auto result = exitWindows(EWX_REBOOT | EWX_FORCE, "restart"); !result) {
+        reportError("restartSystem", result.error());
     }
 }
 
 void WindowsPlatform::lockActiveSession()
 {
-    DWORD sessionId = WTSGetActiveConsoleSessionId();
-    if (sessionId == 0xFFFFFFFF) {
-        logMessage("lockActiveSession: no active console session.");
+    auto sessionId = activeConsoleSessionId();
+    if (!sessionId) {
+        reportError("lockActiveSession", sessionId.error());
         return;
     }
 
     // Disconnecting the console session (as opposed to logging it off) locks
     // it: the user's apps and state are preserved, and Windows requires the
     // user to re-enter credentials to reconnect - identical to Win+L.
-    if (!WTSDisconnectSession(WTS_CURRENT_SERVER_HANDLE, sessionId, FALSE)) {
-        logMessage("lockActiveSession: WTSDisconnectSession failed, error " + std::to_string(GetLastError()));
+    if (!WTSDisconnectSession(WTS_CURRENT_SERVER_HANDLE, *sessionId, FALSE)) {
+        DWORD err = GetLastError();
+        reportError("lockActiveSession", core::PlatformError{
+            .code = core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::SessionActionFailed,
+            .message = "WTSDisconnectSession failed",
+            .platform_error = err,
+        });
     }
 }
 
 void WindowsPlatform::logoffActiveSession()
 {
-    DWORD sessionId = WTSGetActiveConsoleSessionId();
-    if (sessionId == 0xFFFFFFFF) {
-        logMessage("logoffActiveSession: no active console session.");
+    auto sessionId = activeConsoleSessionId();
+    if (!sessionId) {
+        reportError("logoffActiveSession", sessionId.error());
         return;
     }
 
-    if (!WTSLogoffSession(WTS_CURRENT_SERVER_HANDLE, sessionId, FALSE)) {
-        logMessage("logoffActiveSession: WTSLogoffSession failed, error " + std::to_string(GetLastError()));
+    if (!WTSLogoffSession(WTS_CURRENT_SERVER_HANDLE, *sessionId, FALSE)) {
+        DWORD err = GetLastError();
+        reportError("logoffActiveSession", core::PlatformError{
+            .code = core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::SessionActionFailed,
+            .message = "WTSLogoffSession failed",
+            .platform_error = err,
+        });
     }
 }
 #endif

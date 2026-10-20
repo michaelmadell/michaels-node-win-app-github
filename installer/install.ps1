@@ -228,6 +228,14 @@ try {
     Write-Host "Configuring service recovery options..."
     sc.exe failure $ServiceName reset= 0 actions= restart/1000/restart/2000/restart/5000 | Out-Null
 
+    # 8. Register the Event Viewer source. The exe carries the message table
+    # (src/core/EventMessages.mc), so EventMessageFile points straight at it.
+    Write-Host "Registering Event Viewer source 'CoreStationHXAgent'..."
+    $EventSourceKey = "HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application\CoreStationHXAgent"
+    New-Item -Path $EventSourceKey -Force | Out-Null
+    New-ItemProperty -Path $EventSourceKey -Name "EventMessageFile" -PropertyType ExpandString -Value $NewExePath -Force | Out-Null
+    New-ItemProperty -Path $EventSourceKey -Name "TypesSupported" -PropertyType DWord -Value 7 -Force | Out-Null
+
     Write-Host "Service '$ServiceName' installed successfully." -ForegroundColor Green
 }
 catch {

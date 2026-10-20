@@ -6,7 +6,8 @@
 #include <wintrust.h>
 #include <wincrypt.h>
 
-#include <atomic>
+#include <format>
+#include <utility>
 #include <vector>
 
 #pragma comment(lib, "wintrust")
@@ -16,36 +17,51 @@ namespace IpcAuth {
 
 namespace {
 
-// Resolves the full image path of the process on the other end of an
-// already-connected pipe handle. Returns an empty string on any failure --
-// callers must treat that as "not authenticated", not as a wildcard.
-std::wstring ResolveClientImagePath(HANDLE hPipe, const std::string& logPrefix,
-                                     const std::function<void(const std::string&)>& logFn) {
+core::AuthError ClientUnresolved(std::string message, DWORD err) {
+    return core::AuthError{
+        .code = core::CoreError::Code::Internal,
+        .sub_code = core::AuthError::SubCode::ClientUnresolved,
+        .message = std::move(message),
+        .platform_error = err,
+    };
+}
+
+core::AuthError Rejected(core::AuthError::SubCode subCode, std::string message, std::uint32_t err = 0) {
+    return core::AuthError{
+        .code = core::CoreError::Code::PermissionDenied,
+        .sub_code = subCode,
+        .message = std::move(message),
+        .platform_error = err,
+    };
+}
+
+// Resolves the pid and full image path of the process on the other end of an
+// already-connected pipe handle. Any failure is an error -- never a wildcard.
+std::expected<AuthenticatedClient, core::AuthError> ResolveClient(HANDLE hPipe) {
     DWORD clientPid = 0;
     if (!GetNamedPipeClientProcessId(hPipe, &clientPid)) {
-        logFn(logPrefix + "GetNamedPipeClientProcessId failed, error=" + std::to_string(GetLastError()));
-        return L"";
+        DWORD err = GetLastError();
+        return std::unexpected(ClientUnresolved("GetNamedPipeClientProcessId failed", err));
     }
 
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, clientPid);
     if (!hProcess) {
-        logFn(logPrefix + "OpenProcess(pid=" + std::to_string(clientPid) +
-              ") failed, error=" + std::to_string(GetLastError()));
-        return L"";
+        DWORD err = GetLastError();
+        return std::unexpected(ClientUnresolved(std::format("OpenProcess(pid={}) failed", clientPid), err));
     }
 
     wchar_t pathBuf[MAX_PATH] = {0};
     DWORD pathLen = MAX_PATH;
     BOOL ok = QueryFullProcessImageNameW(hProcess, 0, pathBuf, &pathLen);
+    DWORD err = GetLastError();
     CloseHandle(hProcess);
 
     if (!ok) {
-        logFn(logPrefix + "QueryFullProcessImageNameW(pid=" + std::to_string(clientPid) +
-              ") failed, error=" + std::to_string(GetLastError()));
-        return L"";
+        return std::unexpected(ClientUnresolved(
+            std::format("QueryFullProcessImageNameW(pid={}) failed", clientPid), err));
     }
 
-    return std::wstring(pathBuf, pathLen);
+    return AuthenticatedClient{ .pid = clientPid, .imagePath = std::wstring(pathBuf, pathLen) };
 }
 
 // Narrow (UTF-8-ish, good enough for logging/comparison of cert Subject
@@ -73,10 +89,10 @@ std::string GetCertNameField(PCCERT_CONTEXT cert, LPCSTR oid) {
 // if (and only if) it succeeds, extracts the signer certificate's Subject
 // CN/O/OU and compares them against TrustedSigningIdentity. Always closes
 // the WinVerifyTrust state it opens, on every return path.
-bool VerifyAuthenticodeSignerMatches(const std::wstring& imagePath,
-                                      const std::string& logPrefix,
-                                      const std::function<void(const std::string&)>& logFn) {
-    if (imagePath.empty()) return false;
+std::expected<void, core::AuthError> VerifyAuthenticodeSignerMatches(const std::wstring& imagePath) {
+    if (imagePath.empty()) {
+        return std::unexpected(ClientUnresolved("client image path is empty", 0));
+    }
 
     WINTRUST_FILE_INFO fileInfo = {};
     fileInfo.cbStruct = sizeof(fileInfo);
@@ -94,7 +110,7 @@ bool VerifyAuthenticodeSignerMatches(const std::wstring& imagePath,
     GUID policyGuid = WINTRUST_ACTION_GENERIC_VERIFY_V2;
     LONG verifyResult = WinVerifyTrust(nullptr, &policyGuid, &trustData);
 
-    bool matched = false;
+    std::expected<void, core::AuthError> result;
 
     if (verifyResult == ERROR_SUCCESS) {
         CRYPT_PROVIDER_DATA const* provData = WTHelperProvDataFromStateData(trustData.hWVTStateData);
@@ -107,24 +123,32 @@ bool VerifyAuthenticodeSignerMatches(const std::wstring& imagePath,
             std::string o = GetCertNameField(signerCert, const_cast<LPSTR>(szOID_ORGANIZATION_NAME));
             std::string ou = GetCertNameField(signerCert, const_cast<LPSTR>(szOID_ORGANIZATIONAL_UNIT_NAME));
 
-            matched = SubjectMatchesTrustedIdentity(cn, o, ou);
-
-            if (!matched) {
-                logFn(logPrefix + "signature valid but signer identity does not match "
-                      "(CN='" + cn + "', O='" + o + "', OU='" + ou + "')");
+            if (!SubjectMatchesTrustedIdentity(cn, o, ou)) {
+                result = std::unexpected(Rejected(
+                    core::AuthError::SubCode::TrustedIdentityMismatch,
+                    std::format("signature valid but signer identity does not match (CN='{}', O='{}', OU='{}')",
+                                cn, o, ou)));
             }
         } else {
-            logFn(logPrefix + "signature verified but no signer certificate could be extracted");
+            result = std::unexpected(Rejected(
+                core::AuthError::SubCode::SignatureVerificationFailed,
+                "signature verified but no signer certificate could be extracted"));
         }
     } else {
-        logFn(logPrefix + "WinVerifyTrust failed, code=" + std::to_string(verifyResult));
+        // verifyResult is an HRESULT (TRUST_E_NOSIGNATURE, CERT_E_EXPIRED, ...);
+        // core::describe() renders its text via FormatMessage.
+        result = std::unexpected(Rejected(
+            verifyResult == CERT_E_EXPIRED ? core::AuthError::SubCode::CertificateExpired
+                                           : core::AuthError::SubCode::SignatureVerificationFailed,
+            "WinVerifyTrust failed",
+            static_cast<std::uint32_t>(verifyResult)));
     }
 
     // Always release the WinVerifyTrust state, regardless of outcome above.
     trustData.dwStateAction = WTD_STATEACTION_CLOSE;
     WinVerifyTrust(nullptr, &policyGuid, &trustData);
 
-    return matched;
+    return result;
 }
 
 }  // namespace
@@ -136,19 +160,19 @@ bool SubjectMatchesTrustedIdentity(const std::string& cn, const std::string& o,
            (ou == TrustedSigningIdentity::OrganizationalUnit);
 }
 
-bool WindowsIsAuthenticated(HANDLE hPipe, const std::string& logPrefix,
-                             const std::function<void(const std::string&)>& logFn) {
+std::expected<AuthenticatedClient, core::AuthError> AuthenticateClient(HANDLE hPipe) {
 #ifdef IPC_AUTH_DEV_DISABLE
-    static std::atomic<bool> warned{false};
-    if (!warned.exchange(true)) {
-        logFn(logPrefix + "DEV MODE: IPC authentication disabled (IPC_AUTH_DEV_DISABLE) -- "
-              "this build MUST NOT be used in production");
-    }
     (void)hPipe;
-    return true;
+    return AuthenticatedClient{ .devBypass = true };
 #else
-    std::wstring imagePath = ResolveClientImagePath(hPipe, logPrefix, logFn);
-    return VerifyAuthenticodeSignerMatches(imagePath, logPrefix, logFn);
+    auto client = ResolveClient(hPipe);
+    if (!client) {
+        return std::unexpected(client.error());
+    }
+    if (auto verified = VerifyAuthenticodeSignerMatches(client->imagePath); !verified) {
+        return std::unexpected(verified.error());
+    }
+    return client;
 #endif
 }
 

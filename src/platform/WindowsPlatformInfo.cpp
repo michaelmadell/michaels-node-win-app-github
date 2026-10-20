@@ -16,6 +16,9 @@
 #include <cctype>
 #include <print>
 #include <format>
+#include <memory>
+#include <type_traits>
+#include "../core/EventLogger.h"
 #include "../version.h"
 
 std::string WideToUtf8(const std::wstring &wstr)
@@ -152,74 +155,143 @@ std::string WindowsPlatform::getLoggedInUser()
     return username;
 }
 
+namespace {
+
+const char* const kCurrentVersionKey = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+
+// RtlGetVersion reports the real OS version (GetVersionEx lies to
+// unmanifested apps). The error's message is a short tag ("ntdll.dll",
+// "RtlGetVersion", "RtlGetVersion failed") that getOsBuild() reports on the
+// wire as "Unknown Build (<tag>)", unchanged from before the migration.
+std::expected<RTL_OSVERSIONINFOW, core::PlatformError> queryRtlVersion()
+{
+    auto versionError = [](const char* tag, std::uint32_t err) {
+        return std::unexpected(core::PlatformError{
+            .code = core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::VersionQueryFailed,
+            .message = tag,
+            .platform_error = err,
+        });
+    };
+
+    HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
+    if (!hMod) return versionError("ntdll.dll", GetLastError());
+
+    // Via void(*)() - the generic function-pointer type - so -Wcast-function-type
+    // accepts the FARPROC -> RtlGetVersionPtr conversion.
+    auto fn = reinterpret_cast<RtlGetVersionPtr>(
+        reinterpret_cast<void (*)()>(::GetProcAddress(hMod, "RtlGetVersion")));
+    if (!fn) return versionError("RtlGetVersion", GetLastError());
+
+    RTL_OSVERSIONINFOW rovi{};
+    rovi.dwOSVersionInfoSize = sizeof(rovi);
+    if (LONG status = fn(&rovi); status != 0) {
+        return versionError("RtlGetVersion failed", static_cast<std::uint32_t>(status));
+    }
+    return rovi;
+}
+
+std::string formatVersion(const RTL_OSVERSIONINFOW& rovi)
+{
+    return std::format("{}.{}.{}", rovi.dwMajorVersion, rovi.dwMinorVersion, rovi.dwBuildNumber);
+}
+
+core::PlatformError registryError(LSTATUS status, std::string message)
+{
+    const bool denied = status == ERROR_ACCESS_DENIED;
+    return core::PlatformError{
+        .code = status == ERROR_FILE_NOT_FOUND ? core::CoreError::Code::NotFound
+              : denied ? core::CoreError::Code::PermissionDenied
+              : core::CoreError::Code::Internal,
+        .sub_code = denied ? core::PlatformError::SubCode::RegistryAccessDenied
+                           : core::PlatformError::SubCode::RegistryReadFailed,
+        .message = std::move(message),
+        .platform_error = static_cast<std::uint32_t>(status),
+    };
+}
+
+// Closes the HKEY on scope exit.
+struct RegKeyCloser {
+    void operator()(HKEY key) const { RegCloseKey(key); }
+};
+using UniqueRegKey = std::unique_ptr<std::remove_pointer_t<HKEY>, RegKeyCloser>;
+
+std::expected<UniqueRegKey, core::PlatformError> openHklmKey(const char* subKey)
+{
+    HKEY key = nullptr;
+    LSTATUS status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, subKey, 0, KEY_READ, &key);
+    if (status != ERROR_SUCCESS) {
+        return std::unexpected(registryError(status, std::format("Failed to open HKLM\\{}", subKey)));
+    }
+    return UniqueRegKey(key);
+}
+
+// Reads a REG_SZ value. RegGetValue guarantees the result is null-terminated,
+// which a raw RegQueryValueEx into a char[] does not.
+std::expected<std::string, core::PlatformError> readRegString(HKEY key, const char* valueName)
+{
+    char buffer[256] = {};
+    DWORD size = sizeof(buffer);
+    LSTATUS status = RegGetValueA(key, nullptr, valueName, RRF_RT_REG_SZ, nullptr, buffer, &size);
+    if (status != ERROR_SUCCESS) {
+        return std::unexpected(registryError(status, std::format("Failed to read registry value '{}'", valueName)));
+    }
+    return std::string(buffer);
+}
+
+} // namespace
+
 std::string WindowsPlatform::getOsVersion()
 {
     // First, get the raw version info to check the build number
-    HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
-    if (!hMod) return "Unknown Windows Version";
-
-    RtlGetVersionPtr fn = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
-    if (!fn) return "Unknown Windows Version";
-
-    RTL_OSVERSIONINFOW rovi = {0};
-    rovi.dwOSVersionInfoSize = sizeof(rovi);
-    if (fn(&rovi) != 0) return "Unknown Windows Version";
-
-    // Now, query the registry for the friendly name
-    HKEY hKey;
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
-        // Fallback to build number if registry fails
-        std::ostringstream version;
-        version << rovi.dwMajorVersion << "." << rovi.dwMinorVersion << "." << rovi.dwBuildNumber;
-        return version.str();
-    }
-
-    char productName[255];
-    DWORD productNameSize = sizeof(productName);
-    if (RegQueryValueExA(hKey, "ProductName", NULL, NULL, (LPBYTE)productName, &productNameSize) != ERROR_SUCCESS) {
-        RegCloseKey(hKey);
+    auto rovi = queryRtlVersion();
+    if (!rovi) {
+        reportErrorOnChange("getOsVersion", "OS version query", rovi.error());
         return "Unknown Windows Version";
     }
 
-    std::string finalProductName = productName;
+    // Now, query the registry for the friendly name
+    auto key = openHklmKey(kCurrentVersionKey);
+    if (!key) {
+        reportErrorOnChange("getOsVersion", "OS version query", key.error());
+        return formatVersion(*rovi);  // fall back to the build number
+    }
+
+    auto productName = readRegString(key->get(), "ProductName");
+    if (!productName) {
+        reportErrorOnChange("getOsVersion", "OS version query", productName.error());
+        return "Unknown Windows Version";
+    }
+    core::EventLogger::instance().clear("getOsVersion");
+
+    std::string finalProductName = *productName;
 
     // Correct the product name if the build number indicates Windows 11
-    if (rovi.dwBuildNumber >= 22000) {
+    if (rovi->dwBuildNumber >= 22000) {
         size_t pos = finalProductName.find("10");
         if (pos != std::string::npos) {
             finalProductName.replace(pos, 2, "11");
         }
     }
 
-    char displayVersion[255];
-    DWORD displayVersionSize = sizeof(displayVersion);
-    if (RegQueryValueExA(hKey, "DisplayVersion", NULL, NULL, (LPBYTE)displayVersion, &displayVersionSize) == ERROR_SUCCESS) {
-        RegCloseKey(hKey);
-        return finalProductName + " " + std::string(displayVersion);
+    // DisplayVersion (e.g. "23H2") doesn't exist on older builds - not an error.
+    if (auto displayVersion = readRegString(key->get(), "DisplayVersion")) {
+        return finalProductName + " " + *displayVersion;
     }
-
-    RegCloseKey(hKey);
     return finalProductName;
 }
 
 std::string WindowsPlatform::getOsBuild()
 {
-    HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
-    if (!hMod) return "Unknown Build (ntdll.dll)";
+    auto rovi = queryRtlVersion();
+    if (!rovi) {
+        reportErrorOnChange("getOsBuild", "OS build query", rovi.error());
+        return std::format("Unknown Build ({})", rovi.error().message);
+    }
+    core::EventLogger::instance().clear("getOsBuild");
 
-    RtlGetVersionPtr fn = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
-    if (!fn) return "Unknown Build (RtlGetVersion)";
-
-    RTL_OSVERSIONINFOW rovi = {0};
-    rovi.dwOSVersionInfoSize = sizeof(rovi);
-
-    if (fn(&rovi) != 0) return "Unknown Build (RtlGetVersion failed)";
-
-    // Format the version as a string: Major.Minor.Build
-    std::ostringstream version;
-    version << rovi.dwMajorVersion << "." << rovi.dwMinorVersion << "." << rovi.dwBuildNumber;
-
-    return version.str();
+    // Major.Minor.Build
+    return formatVersion(*rovi);
 }
 
 #ifdef ENABLE_C2A

@@ -1,13 +1,24 @@
 #include "CmcCommandHandler.h"
+#include "../../core/Errors.h"
 
 #include <algorithm>
 #include <cctype>
+#include <charconv>
 #include <ctime>
+#include <expected>
+#include <format>
 #include <iomanip>
 #include <sstream>
 #include <vector>
 
 namespace {
+
+core::CoreError invalidArgument(std::string message) {
+    return core::CoreError{
+        .code = core::CoreError::Code::InvalidArgument,
+        .message = std::move(message),
+    };
+}
 
 std::string trim(const std::string& s) {
     size_t start = s.find_first_not_of(" \t\r\n");
@@ -34,55 +45,65 @@ std::vector<std::string> splitTokens(const std::string& message) {
 }
 
 std::string joinFrom(const std::vector<std::string>& tokens, size_t idx) {
-    if (tokens.size() <= idx) return "";
-    std::ostringstream oss;
+    std::string joined;
     for (size_t i = idx; i < tokens.size(); ++i) {
-        if (i > idx) oss << ", ";
-        oss << tokens[i];
+        if (i > idx) joined += ", ";
+        joined += tokens[i];
     }
-    return oss.str();
+    return joined;
 }
 
 // Parses a duration string like "30s", "5m", "1h" (digits followed by
-// exactly one unit character). Returns false on any malformed input.
-bool parseDurationString(const std::string& s, std::chrono::seconds& out) {
-    if (s.size() < 2) return false;
+// exactly one unit character).
+std::expected<std::chrono::seconds, core::CoreError> parseDurationString(const std::string& s) {
+    if (s.size() < 2) {
+        return std::unexpected(invalidArgument(std::format("timeout '{}' is too short", s)));
+    }
 
     size_t digitsEnd = 0;
     while (digitsEnd < s.size() && std::isdigit(static_cast<unsigned char>(s[digitsEnd]))) {
         digitsEnd++;
     }
-    if (digitsEnd == 0 || digitsEnd != s.size() - 1) return false;
-
-    long value;
-    try {
-        value = std::stol(s.substr(0, digitsEnd));
-    } catch (...) {
-        return false;
+    if (digitsEnd == 0 || digitsEnd != s.size() - 1) {
+        return std::unexpected(invalidArgument(std::format("timeout '{}' must be digits followed by one unit", s)));
     }
-    if (value <= 0) return false;
+
+    // from_chars instead of stol: no exceptions, and overflow is reported
+    // via ec rather than thrown.
+    long value = 0;
+    auto [ptr, ec] = std::from_chars(s.data(), s.data() + digitsEnd, value);
+    if (ec != std::errc{} || ptr != s.data() + digitsEnd) {
+        return std::unexpected(invalidArgument(std::format("timeout '{}' is out of range", s)));
+    }
+    if (value <= 0) {
+        return std::unexpected(invalidArgument(std::format("timeout '{}' must be positive", s)));
+    }
 
     switch (std::tolower(static_cast<unsigned char>(s[digitsEnd]))) {
-        case 's': out = std::chrono::seconds(value); return true;
-        case 'm': out = std::chrono::minutes(value); return true;
-        case 'h': out = std::chrono::hours(value); return true;
-        default: return false;
+        case 's': return std::chrono::seconds(value);
+        case 'm': return std::chrono::minutes(value);
+        case 'h': return std::chrono::hours(value);
+        default:
+            return std::unexpected(invalidArgument(std::format("timeout '{}' has unknown unit (expected s/m/h)", s)));
     }
 }
 
 // Parses "YYYY-MM-DD HH:MM:SS" as a local time in the system's timezone.
-bool parseLocalDateTime(const std::string& s, std::chrono::system_clock::time_point& out) {
+std::expected<std::chrono::system_clock::time_point, core::CoreError> parseLocalDateTime(const std::string& s) {
     std::tm tmVal = {};
     std::istringstream iss(s);
     iss >> std::get_time(&tmVal, "%Y-%m-%d %H:%M:%S");
-    if (iss.fail()) return false;
+    if (iss.fail()) {
+        return std::unexpected(invalidArgument(std::format("time '{}' is not YYYY-MM-DD HH:MM:SS", s)));
+    }
 
     tmVal.tm_isdst = -1; // let mktime work out DST for this local time
     std::time_t t = std::mktime(&tmVal);
-    if (t == static_cast<std::time_t>(-1)) return false;
+    if (t == static_cast<std::time_t>(-1)) {
+        return std::unexpected(invalidArgument(std::format("time '{}' is not representable", s)));
+    }
 
-    out = std::chrono::system_clock::from_time_t(t);
-    return true;
+    return std::chrono::system_clock::from_time_t(t);
 }
 
 std::string formatLocalTime(std::chrono::system_clock::time_point tp) {
@@ -93,6 +114,8 @@ std::string formatLocalTime(std::chrono::system_clock::time_point tp) {
 #else
     localtime_r(&t, &tmVal);
 #endif
+    // There's no std::formatter<std::tm>, and zoned_time needs a tzdb the
+    // Linux CI toolchain doesn't ship - put_time is still the portable option.
     std::ostringstream oss;
     oss << std::put_time(&tmVal, "%Y-%m-%d %H:%M:%S");
     return oss.str();
@@ -152,13 +175,13 @@ void CmcCommandHandler::handle(const std::string& message) {
                 sendToMec_(verb + "Rejected, missing-timeout-value");
                 return;
             }
-            std::chrono::seconds duration;
-            if (!parseDurationString(tokens[2], duration)) {
-                platform_->logMessage("CMC " + verb + " rejected: invalid timeout '" + tokens[2] + "'.");
+            auto duration = parseDurationString(tokens[2]);
+            if (!duration) {
+                platform_->logMessage(std::format("CMC {} rejected: {}.", verb, duration.error().message));
                 sendToMec_(verb + "Rejected, invalid-timeout");
                 return;
             }
-            beginScheduledAction(verb, std::chrono::system_clock::now() + duration, joinFrom(tokens, 3));
+            beginScheduledAction(verb, std::chrono::system_clock::now() + *duration, joinFrom(tokens, 3));
             return;
         }
 
@@ -167,13 +190,13 @@ void CmcCommandHandler::handle(const std::string& message) {
                 sendToMec_(verb + "Rejected, missing-time-value");
                 return;
             }
-            std::chrono::system_clock::time_point deadline;
-            if (!parseLocalDateTime(tokens[2], deadline)) {
-                platform_->logMessage("CMC " + verb + " rejected: invalid time '" + tokens[2] + "'.");
+            auto deadline = parseLocalDateTime(tokens[2]);
+            if (!deadline) {
+                platform_->logMessage(std::format("CMC {} rejected: {}.", verb, deadline.error().message));
                 sendToMec_(verb + "Rejected, invalid-time");
                 return;
             }
-            beginScheduledAction(verb, deadline, joinFrom(tokens, 3));
+            beginScheduledAction(verb, *deadline, joinFrom(tokens, 3));
             return;
         }
 

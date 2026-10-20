@@ -4,8 +4,12 @@
 #endif
 
 #ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0A00
+#endif
 #include <wbemidl.h>
 #include <comdef.h>
 #include <cstdio>
@@ -30,6 +34,9 @@
 #endif
 #ifdef ENABLE_TRAY_APP
 #include "platform/WinHandles.h"
+#endif
+#ifdef _WIN32
+#include "core/EventLogger.h"
 #endif
 #include "version.h"
 
@@ -92,6 +99,18 @@ void notifyStopRequested(const std::string& stopReason) {
     sendLineToBmc("appStopRequested, " + stopReason);
 }
 
+// Top-level safety net for the worker threads: anything that escapes
+// std::expected handling lands here, gets logged everywhere, and the thread's
+// loop carries on.
+void reportUnhandledException(const char* where, const char* what) {
+    std::string text = std::format("Unhandled exception in {}: {}", where, what);
+    std::print("[ERROR] {}\n", text);
+    platform->logMessage("[ERROR] " + text);
+#ifdef _WIN32
+    core::EventLogger::instance().log_error(text);
+#endif
+}
+
 void heartbeatThread() {
     platform->logMessage("Heartbeat thread started.");
 
@@ -138,25 +157,25 @@ void heartbeatThread() {
                     sendLineToBmc("gpuUsage, " + std::to_string(metrics.gpu.usage) + "%");
                     sendLineToBmc("highRamProcs, " + metrics.processes.highRamProcesses);
 
-                    std::stringstream logMsg;
-                    logMsg << "Metrics: CPU=" << metrics.performance.cpuUsage << "%, "
-                        << "RAM = " << metrics.performance.ramUsage << "%, "
-                        << "Disk = " << metrics.performance.freeDiskSpace << "GB, "
-                        << "WU = " << metrics.updates.state << ", "
-                        << "DiskQ=" << metrics.performance.diskQueue << ", "
-                        << "NetR = " << metrics.performance.netRetrans << " / s, "
-                        << "Uptime = " << metrics.performance.uptime << " | "
-                        << "GPU=" << metrics.gpu.usage << "% | "
-                        << metrics.gpu.driverInfo << " | "
-                        << "HighRam={" << metrics.processes.highRamProcesses << "}";
-                    platform->logMessage(logMsg.str());
+                    platform->logMessage(std::format(
+                        "Metrics: CPU={}%, RAM = {}%, Disk = {}GB, WU = {}, DiskQ={}, NetR = {} / s, "
+                        "Uptime = {} | GPU={}% | {} | HighRam={{{}}}",
+                        metrics.performance.cpuUsage, metrics.performance.ramUsage,
+                        metrics.performance.freeDiskSpace, metrics.updates.state,
+                        metrics.performance.diskQueue, metrics.performance.netRetrans,
+                        metrics.performance.uptime, metrics.gpu.usage, metrics.gpu.driverInfo,
+                        metrics.processes.highRamProcesses));
                 }
 #endif
 
                 sendLineToBmc("HB");
             } catch (const std::exception& e) {
-                std::print("[ERROR] Exception in heartbeatThread: {}\n", e.what());
-                platform->logMessage("[ERROR] Exception in heartbeatThread: " + std::string(e.what()));
+                // Safety net only: fallible operations report through
+                // std::expected, so reaching here means something unexpected
+                // threw. Log it and keep the heartbeat loop running.
+                reportUnhandledException("heartbeatThread", e.what());
+            } catch (...) {
+                reportUnhandledException("heartbeatThread", "unknown exception");
             }
         }
 
@@ -210,8 +229,10 @@ void resendThread() {
 
                 sendInitialInfo();
             } catch (const std::exception& e) {
-                std::print("[ERROR] Exception in ResendThread: {}\n", e.what());
-                platform->logMessage("[ERROR] Exception in ResendThread: " + std::string(e.what()));
+                // Safety net only - see heartbeatThread.
+                reportUnhandledException("ResendThread", e.what());
+            } catch (...) {
+                reportUnhandledException("ResendThread", "unknown exception");
             }
         }
 
@@ -455,6 +476,27 @@ void serialThread() {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    // One-shot admin commands for the Event Viewer source (installer/install.ps1
+    // writes the same registry key; these are for dev machines).
+    for (int i = 1; i < argc; i++) {
+        const bool doRegister = _stricmp(argv[i], "--register-event-source") == 0;
+        const bool doUnregister = _stricmp(argv[i], "--unregister-event-source") == 0;
+        if (!doRegister && !doUnregister) {
+            continue;
+        }
+        auto result = doRegister
+            ? core::EventLogger::register_event_source(core::EventLogger::current_module_path())
+            : core::EventLogger::unregister_event_source();
+        if (!result) {
+            std::print(stderr, "[ERROR] {}\n", core::describe(result.error()));
+            return 1;
+        }
+        std::print("[DEBUG] Event source {}.\n", doRegister ? "registered" : "unregistered");
+        return 0;
+    }
+#endif
+
 #if defined(_WIN32) && defined(ENABLE_TRAY_APP)
     // Tray-helper mode: the service (Session 0) spawns this exe into the user
     // session with --tray-only so the tray icon appears on the user's desktop.
@@ -482,47 +524,59 @@ int main(int argc, char* argv[]) {
     std::print("[DEBUG] Checking current COM assignment for AMT Serial Port\n");
     #ifdef _WIN32
 
-    AMTPortInfo AMTInfo = GetAMTComPort();
+    // Top-level boundary for the AMT std::expected results: print, file-log
+    // and Event Viewer.
+    auto reportAmtError = [](const std::string& what, const core::PlatformError& error) {
+        std::string text = std::format("{}: {}", what, core::describe(error));
+        std::print("[ERROR] {}\n", text);
+        platform->logMessage(text);
+        core::EventLogger::instance().log(what, error);
+    };
 
-    if (!AMTInfo.comPort.empty()) {
-        std::wcout << L"[DEBUG] AMT Serial Port is currently assigned to: " << AMTInfo.comPort << std::endl;
-        platform->logMessage("AMT Serial Port COM assignment: " + std::string(AMTInfo.comPort.begin(), AMTInfo.comPort.end()));
-    } else {
+    auto AMTInfo = GetAMTComPort();
+
+    if (AMTInfo) {
+        std::wcout << L"[DEBUG] AMT Serial Port is currently assigned to: " << AMTInfo->comPort << std::endl;
+        platform->logMessage("AMT Serial Port COM assignment: " + std::string(AMTInfo->comPort.begin(), AMTInfo->comPort.end()));
+    } else if (AMTInfo.error().code == core::CoreError::Code::NotFound) {
+        // Normal on hardware without AMT - not an error.
         std::print("[DEBUG] No AMT Serial Port COM assignment found.\n");
         platform->logMessage("No AMT Serial Port COM assignment found.");
+    } else {
+        reportAmtError("Failed to read AMT Serial Port COM assignment", AMTInfo.error());
     }
 
-    if (AMTInfo.comPort == L"COM3") {
+    if (AMTInfo && AMTInfo->comPort == L"COM3") {
         std::print("[DEBUG] AMT Serial Port is on COM3. Attempting to disable it to free COM3 for our use.\n");
         platform->logMessage("AMT Serial Port is on COM3. Attempting to disable it.");
-        if (disableAMTComPort()) {
-            std::print("[DEBUG] Successfully disabled AMT Serial Port.\n");
-            platform->logMessage("Successfully disabled AMT Serial Port.");
-            if (enableAMTComPort()) {
-                std::print("[DEBUG] Successfully re-enabled AMT Serial Port after disabling.\n");
-                platform->logMessage("Successfully re-enabled AMT Serial Port after disabling.");
-                std::this_thread::sleep_for(std::chrono::seconds(2));
-                AMTPortInfo amtPortInfo = GetAMTComPort();
-                if (!amtPortInfo.comPort.empty() && amtPortInfo.comPort != L"COM3") {
-                    std::print("[DEBUG] Verified AMT Serial Port is not back on COM3 after re-enabling.\n");
-                    platform->logMessage("Verified AMT Serial Port is not back on COM3 after re-enabling.");
-                } else {
-                    std::print("[ERROR] After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment.\n");
-                    platform->logMessage("After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment.");
-                    if (reassignComPort()) {
-                        std::print("[DEBUG] Successfully reassigned AMT Serial Port to a different COM port.\n");
-                        platform->logMessage("Successfully reassigned AMT Serial Port to a different COM port.");
-                    } else {
-                        std::print("[ERROR] Failed to reassign AMT Serial Port. COM3 may still be occupied.\n");
-                        platform->logMessage("Failed to reassign AMT Serial Port. COM3 may still be occupied.");
-                        exit(1);
-                    }
-                }
-            }
-        } else {
-            std::print("[ERROR] Failed to disable AMT Serial Port. This may cause issues if COM3 is not available.\n");
-            platform->logMessage("Failed to disable AMT Serial Port. COM3 may not be available.");
+        if (auto disabled = disableAMTComPort(); !disabled) {
+            reportAmtError("Failed to disable AMT Serial Port. COM3 may not be available", disabled.error());
             exit(1);
+        }
+        std::print("[DEBUG] Successfully disabled AMT Serial Port.\n");
+        platform->logMessage("Successfully disabled AMT Serial Port.");
+
+        if (auto enabled = enableAMTComPort(); !enabled) {
+            // As before, carry on: COM3 is free, the AMT port just stays disabled.
+            reportAmtError("Failed to re-enable AMT Serial Port after disabling", enabled.error());
+        } else {
+            std::print("[DEBUG] Successfully re-enabled AMT Serial Port after disabling.\n");
+            platform->logMessage("Successfully re-enabled AMT Serial Port after disabling.");
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            auto amtPortInfo = GetAMTComPort();
+            if (amtPortInfo && amtPortInfo->comPort != L"COM3") {
+                std::print("[DEBUG] Verified AMT Serial Port is not back on COM3 after re-enabling.\n");
+                platform->logMessage("Verified AMT Serial Port is not back on COM3 after re-enabling.");
+            } else {
+                std::print("[ERROR] After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment.\n");
+                platform->logMessage("After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment.");
+                if (auto reassigned = reassignComPort(); !reassigned) {
+                    reportAmtError("Failed to reassign AMT Serial Port. COM3 may still be occupied", reassigned.error());
+                    exit(1);
+                }
+                std::print("[DEBUG] Successfully reassigned AMT Serial Port to a different COM port.\n");
+                platform->logMessage("Successfully reassigned AMT Serial Port to a different COM port.");
+            }
         }
     }
 #endif

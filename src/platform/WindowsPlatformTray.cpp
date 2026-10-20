@@ -6,8 +6,10 @@
 #include "WindowsPlatform.h"
 #include <wtsapi32.h>
 #include <userenv.h>
+#include <format>
 #include <mutex>
 #include <string>
+#include "../core/EventLogger.h"
 
 #ifdef ENABLE_TRAY_APP
 #include "../modules/tray/TrayApp.h"
@@ -61,29 +63,58 @@ void WindowsPlatform::stopTrayApp()
 
 void WindowsPlatform::spawnTrayHelper()
 {
-    DWORD sessionId = WTSGetActiveConsoleSessionId();
-    if (sessionId == 0xFFFFFFFF) {
-        logMessage("[Tray] No active console session — cannot spawn tray helper.");
+    // Called at start-up and on session changes; at boot there's often no
+    // console session yet, so only log to Event Viewer when the error changes.
+    auto sessionId = activeConsoleSessionId();
+    if (!sessionId) {
+        reportErrorOnChange("trayHelper", "[Tray] Cannot spawn tray helper", sessionId.error());
         return;
     }
 
-    HANDLE hToken = NULL;
-    if (!WTSQueryUserToken(sessionId, &hToken)) {
-        logMessage("[Tray] WTSQueryUserToken failed: " + std::to_string(GetLastError()));
+    auto pi = launchTrayHelper(*sessionId);
+    if (!pi) {
+        reportErrorOnChange("trayHelper", "[Tray] Cannot spawn tray helper", pi.error());
         return;
     }
+    core::EventLogger::instance().clear("trayHelper");
 
-    HANDLE hPrimary = NULL;
-    if (!DuplicateTokenEx(hToken, MAXIMUM_ALLOWED, NULL,
-                          SecurityImpersonation, TokenPrimary, &hPrimary)) {
-        logMessage("[Tray] DuplicateTokenEx failed: " + std::to_string(GetLastError()));
-        CloseHandle(hToken);
-        return;
+    CloseHandle(pi->hThread);
+    {
+        std::lock_guard<std::mutex> lock(trayHelperMutex_);
+        if (hTrayHelperProcess_ != INVALID_HANDLE_VALUE) {
+            CloseHandle(hTrayHelperProcess_);
+        }
+        hTrayHelperProcess_ = pi->hProcess;
     }
-    CloseHandle(hToken);
+    logMessage(std::format("[Tray] Helper spawned in session {}, PID={}", *sessionId, pi->dwProcessId));
+}
+
+std::expected<PROCESS_INFORMATION, core::PlatformError> WindowsPlatform::launchTrayHelper(DWORD sessionId)
+{
+    auto launchFailed = [](const char* what, DWORD err) {
+        return std::unexpected(core::PlatformError{
+            .code = core::CoreError::Code::Internal,
+            .sub_code = core::PlatformError::SubCode::ProcessLaunchFailed,
+            .message = std::format("{} failed", what),
+            .platform_error = err,
+        });
+    };
+
+    HANDLE rawToken = NULL;
+    if (!WTSQueryUserToken(sessionId, &rawToken)) {
+        return launchFailed("WTSQueryUserToken", GetLastError());
+    }
+    UniqueHandle hToken(rawToken);
+
+    HANDLE rawPrimary = NULL;
+    if (!DuplicateTokenEx(hToken.get(), MAXIMUM_ALLOWED, NULL,
+                          SecurityImpersonation, TokenPrimary, &rawPrimary)) {
+        return launchFailed("DuplicateTokenEx", GetLastError());
+    }
+    UniqueHandle hPrimary(rawPrimary);
 
     LPVOID pEnv = NULL;
-    CreateEnvironmentBlock(&pEnv, hPrimary, FALSE);
+    CreateEnvironmentBlock(&pEnv, hPrimary.get(), FALSE);
 
     wchar_t exePath[MAX_PATH] = {};
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
@@ -96,30 +127,19 @@ void WindowsPlatform::spawnTrayHelper()
 
     PROCESS_INFORMATION pi = {};
     BOOL ok = CreateProcessAsUserW(
-        hPrimary, NULL,
+        hPrimary.get(), NULL,
         const_cast<LPWSTR>(cmdLine.c_str()),
         NULL, NULL, FALSE,
         CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT,
         pEnv, NULL, &si, &pi);
+    DWORD err = GetLastError();
 
     if (pEnv) DestroyEnvironmentBlock(pEnv);
-    CloseHandle(hPrimary);
 
     if (!ok) {
-        logMessage("[Tray] CreateProcessAsUser failed: " + std::to_string(GetLastError()));
-        return;
+        return launchFailed("CreateProcessAsUser", err);
     }
-
-    CloseHandle(pi.hThread);
-    {
-        std::lock_guard<std::mutex> lock(trayHelperMutex_);
-        if (hTrayHelperProcess_ != INVALID_HANDLE_VALUE) {
-            CloseHandle(hTrayHelperProcess_);
-        }
-        hTrayHelperProcess_ = pi.hProcess;
-    }
-    logMessage("[Tray] Helper spawned in session " + std::to_string(sessionId) +
-               ", PID=" + std::to_string(pi.dwProcessId));
+    return pi;
 }
 
 int WindowsPlatform::runAsTrayHelper(DWORD parentPid)

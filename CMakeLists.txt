@@ -269,6 +269,43 @@ if(WIN32 AND EXISTS "${CMAKE_SOURCE_DIR}/app.rc")
     target_sources(${PROJECT_NAME} PRIVATE app.rc)
 endif()
 
+# Windows Event Log message table: src/core/EventMessages.mc is compiled to
+# EventMessages.rc/.h + MSG00409.bin and linked into the exe, which is what the
+# event source's EventMessageFile registry value points at (see EventLogger.h).
+# mc.exe ships next to rc.exe in the Windows SDK; MinGW uses windmc from binutils.
+if(WIN32)
+    if(MSVC)
+        get_filename_component(_rc_dir "${CMAKE_RC_COMPILER}" DIRECTORY)
+        find_program(MESSAGE_COMPILER NAMES mc HINTS "${_rc_dir}" NO_DEFAULT_PATH)
+    else()
+        # x86_64-w64-mingw32-windres -> x86_64-w64-mingw32-windmc, .../windres.exe -> .../windmc.exe
+        string(REGEX REPLACE "windres" "windmc" _windmc "${CMAKE_RC_COMPILER}")
+        find_program(MESSAGE_COMPILER NAMES "${_windmc}" windmc)
+    endif()
+    if(NOT MESSAGE_COMPILER)
+        message(FATAL_ERROR "Message compiler (mc.exe / windmc) not found - needed for the Event Log message table")
+    endif()
+
+    set(EVENT_MESSAGES_DIR "${CMAKE_CURRENT_BINARY_DIR}/eventlog")
+    add_custom_command(
+        OUTPUT "${EVENT_MESSAGES_DIR}/EventMessages.h"
+               "${EVENT_MESSAGES_DIR}/EventMessages.rc"
+               "${EVENT_MESSAGES_DIR}/MSG00409.bin"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${EVENT_MESSAGES_DIR}"
+        COMMAND "${MESSAGE_COMPILER}" -h "${EVENT_MESSAGES_DIR}" -r "${EVENT_MESSAGES_DIR}"
+                "${CMAKE_SOURCE_DIR}/src/core/EventMessages.mc"
+        DEPENDS "${CMAKE_SOURCE_DIR}/src/core/EventMessages.mc"
+        COMMENT "Compiling Event Log message table"
+        VERBATIM
+    )
+    target_sources(${PROJECT_NAME} PRIVATE
+        "${EVENT_MESSAGES_DIR}/EventMessages.h"
+        "${EVENT_MESSAGES_DIR}/EventMessages.rc"
+        src/core/EventMessagesCheck.cpp
+    )
+    target_include_directories(${PROJECT_NAME} PRIVATE "${EVENT_MESSAGES_DIR}")
+endif()
+
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src

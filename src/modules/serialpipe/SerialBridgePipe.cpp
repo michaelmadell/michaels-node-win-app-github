@@ -2,15 +2,17 @@
 #include "SerialBridgePipe.h"
 #include "WindowsIpcClientAuth.h"
 #include "../../platform/WindowsPlatform.h"
+#include "../../core/EventLogger.h"
 #include <sddl.h>
 #include <chrono>
+#include <format>
 
 const char* const SerialBridgePipe::PIPE_NAME = "\\\\.\\pipe\\corestation_serial_bridge";
 
 SerialBridgePipe::SerialBridgePipe(WindowsPlatform* platform) : platform_(platform) {
     stopEvent_ = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (!stopEvent_) {
-        Log("Failed to create stop event");
+        stopEventError_ = GetLastError();  // reported by Start()
     }
 }
 
@@ -20,6 +22,10 @@ SerialBridgePipe::~SerialBridgePipe() {
         CloseHandle(stopEvent_);
         stopEvent_ = nullptr;
     }
+    if (securityDescriptor_) {
+        LocalFree(securityDescriptor_);
+        securityDescriptor_ = nullptr;
+    }
 }
 
 void SerialBridgePipe::Log(const std::string& msg) {
@@ -28,16 +34,68 @@ void SerialBridgePipe::Log(const std::string& msg) {
     }
 }
 
-bool SerialBridgePipe::Start() {
+void SerialBridgePipe::ReportPipeError(const core::PipeError& error) {
+    Log(core::describe(error));
+    core::EventLogger::instance().log_on_change("serialpipe", "Serial bridge pipe", error);
+}
+
+std::expected<void, core::PipeError> SerialBridgePipe::Start() {
     if (!stopEvent_) {
-        Log("Cannot start: stop event unavailable");
-        return false;
+        return std::unexpected(core::PipeError{
+            .code = core::CoreError::Code::ResourceExhausted,
+            .sub_code = core::PipeError::SubCode::SetupFailed,
+            .message = "Cannot start: stop event unavailable",
+            .platform_error = stopEventError_,
+        });
+    }
+
+    // Restrict connections to members of BUILTIN\Administrators. Any other
+    // caller's CreateFile on this pipe fails with ERROR_ACCESS_DENIED before
+    // a single byte is exchanged. Built here rather than on the listener
+    // thread so a failure reaches the caller instead of silently ending it.
+    if (!securityDescriptor_ &&
+        !ConvertStringSecurityDescriptorToSecurityDescriptorA(
+            "D:(A;;GA;;;BA)", SDDL_REVISION_1, &securityDescriptor_, NULL)) {
+        DWORD err = GetLastError();
+        securityDescriptor_ = nullptr;
+        return std::unexpected(core::PipeError{
+            .code = core::CoreError::Code::Internal,
+            .sub_code = core::PipeError::SubCode::SetupFailed,
+            .message = "Failed to build pipe security descriptor, refusing to start",
+            .platform_error = err,
+        });
     }
 
     stop_ = false;
     ResetEvent(stopEvent_);
     pipeThread_ = std::thread([this]() { PipeThreadProc(); });
-    return true;
+    return {};
+}
+
+std::expected<HANDLE, core::PipeError> SerialBridgePipe::CreatePipeInstance(SECURITY_ATTRIBUTES& sa) {
+    HANDLE hPipe = CreateNamedPipeA(
+        PIPE_NAME,
+        PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+        1,
+        1024,
+        1024,
+        0,
+        &sa);
+
+    if (hPipe == INVALID_HANDLE_VALUE) {
+        DWORD err = GetLastError();
+        // Another process already owns the single allowed instance (e.g. a
+        // second copy of the agent) -> busy rather than a hard failure.
+        const bool busy = err == ERROR_PIPE_BUSY || err == ERROR_ACCESS_DENIED;
+        return std::unexpected(core::PipeError{
+            .code = busy ? core::CoreError::Code::Busy : core::CoreError::Code::Internal,
+            .sub_code = busy ? core::PipeError::SubCode::PipeBusy : core::PipeError::SubCode::CreateFailed,
+            .message = "Failed to create named pipe",
+            .platform_error = err,
+        });
+    }
+    return hPipe;
 }
 
 void SerialBridgePipe::Stop() {
@@ -55,39 +113,22 @@ void SerialBridgePipe::Stop() {
 }
 
 void SerialBridgePipe::PipeThreadProc() {
-    // Restrict connections to members of BUILTIN\Administrators. Any other
-    // caller's CreateFile on this pipe fails with ERROR_ACCESS_DENIED before
-    // a single byte is exchanged.
-    PSECURITY_DESCRIPTOR sd = nullptr;
-    if (!ConvertStringSecurityDescriptorToSecurityDescriptorA(
-            "D:(A;;GA;;;BA)", SDDL_REVISION_1, &sd, NULL)) {
-        Log("Failed to build pipe security descriptor, refusing to start");
-        return;
-    }
-
     SECURITY_ATTRIBUTES sa = {};
     sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = sd;
+    sa.lpSecurityDescriptor = securityDescriptor_;
     sa.bInheritHandle = FALSE;
 
     Log("Serial bridge pipe listener started");
 
     while (!stop_.load()) {
-        HANDLE hPipe = CreateNamedPipeA(
-            PIPE_NAME,
-            PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-            1,
-            1024,
-            1024,
-            0,
-            &sa);
-
-        if (hPipe == INVALID_HANDLE_VALUE) {
-            Log("Failed to create named pipe");
+        auto pipe = CreatePipeInstance(sa);
+        if (!pipe) {
+            ReportPipeError(pipe.error());
             std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
         }
+        core::EventLogger::instance().clear("serialpipe", "Serial bridge pipe: listener recovered");
+        HANDLE hPipe = *pipe;
 
         OVERLAPPED ovConnect = {};
         ovConnect.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -113,12 +154,23 @@ void SerialBridgePipe::PipeThreadProc() {
             // WindowsIpcClientAuth.h and specs/001-secure-serial-ipc.
             // Administrator-only pipe ACL (above) is defense-in-depth only;
             // this check is the actual control (spec.md FR-001..FR-005).
-            bool authenticated = IpcAuth::WindowsIsAuthenticated(
-                hPipe, "[SerialBridgePipe] ",
-                [this](const std::string& m) { Log(m); });
+            auto client = IpcAuth::AuthenticateClient(hPipe);
 
-            if (!authenticated) {
+            if (client && client->devBypass && !devBypassLogged_) {
+                devBypassLogged_ = true;
+                const char* notice = "DEV MODE: IPC authentication disabled (IPC_AUTH_DEV_DISABLE) -- "
+                                     "this build MUST NOT be used in production";
+                Log(notice);
+                core::EventLogger::instance().log_warning(std::format("Serial bridge pipe: {}", notice));
+            }
+
+            if (!client) {
+                // Every rejection is logged - they're security-relevant and
+                // the admin-only pipe ACL keeps the rate low.
+                Log(core::describe(client.error()));
                 Log("WARNING: rejected unauthenticated IPC bridge connection");
+                core::EventLogger::instance().log("Serial bridge pipe: rejected unauthenticated IPC connection",
+                                                  client.error());
                 if (ovConnect.hEvent) {
                     CloseHandle(ovConnect.hEvent);
                 }
@@ -177,7 +229,6 @@ void SerialBridgePipe::PipeThreadProc() {
         CloseHandle(hPipe);
     }
 
-    LocalFree(sd);
     Log("Serial bridge pipe listener stopped");
 }
 
