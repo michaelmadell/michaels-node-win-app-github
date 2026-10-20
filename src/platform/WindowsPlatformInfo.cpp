@@ -75,14 +75,10 @@ std::vector<NetworkInterface> WindowsPlatform::getNetworkInterfaces()
             NetworkInterface iface;
 
             // Format MAC address
-            std::ostringstream macStream;
             for (ULONG i = 0; i < pAdapter->PhysicalAddressLength; i++)
             {
-                if (i != 0)
-                    macStream << ":";
-                macStream << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(pAdapter->PhysicalAddress[i]);
+                iface.macAddress += std::format("{}{:02X}", i != 0 ? ":" : "", pAdapter->PhysicalAddress[i]);
             }
-            iface.macAddress = macStream.str();
 
             if (iface.macAddress.compare(0, 8, "00:17:FD") == 0 || // Amulet Hotkey MAC
                 iface.macAddress.compare(0, 8, "00:07:32") == 0 || // AAEON MAC

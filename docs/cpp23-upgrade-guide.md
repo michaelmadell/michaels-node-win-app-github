@@ -80,7 +80,7 @@ if(MSVC)
 
 **What these flags do:**
 - `/permissive-` — Enables strict standards conformance. Turns off some Microsoft-specific extensions that violate the C++ standard. This is recommended for all modern C++ projects. **You may get new warnings here — see Phase 3.**
-- `/std:c++23` — Explicitly requests the C++23 dialect. Without this, MSVC may default to an earlier standard even if CMake says 23.
+- Don't hand-add `/std:c++23` (or `-std=c++23` for GCC/Clang). MSVC doesn't recognise `/std:c++23` (VS 2022 only has `/std:c++23preview` / `/std:c++latest`), and `CMAKE_CXX_STANDARD 23` already makes CMake emit the right flag for each compiler. Adding it by hand produces duplicate/conflicting switches.
 
 ### Step 1.3 — Add C++23 Standard Flag for GCC/Clang
 

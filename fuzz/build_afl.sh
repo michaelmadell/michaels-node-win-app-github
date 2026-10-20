@@ -29,13 +29,13 @@ if [[ -z "$DRIVER_LIB" ]]; then
     exit 1
 fi
 
-"$CXX" -std=c++17 -g -O1 \
+"$CXX" -std=c++23 -g -O1 \
     -fsanitize=address,undefined \
     -DENABLE_C2A \
     -I ../src \
     -c harness_cmc.cpp -o harness_cmc.o
 
-"$CXX" -std=c++17 -g -O1 \
+"$CXX" -std=c++23 -g -O1 \
     -fsanitize=address,undefined \
     -DENABLE_C2A \
     -I ../src \

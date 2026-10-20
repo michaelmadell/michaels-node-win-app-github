@@ -19,7 +19,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 OUT=cmc_fuzzer
 
-clang++ -std=c++17 -g -O1 \
+clang++ -std=c++23 -g -O1 \
     -fsanitize=fuzzer,address,undefined \
     -D_DISABLE_STRING_ANNOTATION -D_DISABLE_VECTOR_ANNOTATION \
     -DENABLE_C2A \

@@ -365,7 +365,7 @@ To enable pre-commit checks I created this file
   echo "🔍 Running clang-tidy on main.cpp..."
 
   SRC="main.cpp"
-  CLANG_FLAGS="-std=c++17 -Iinclude"
+  CLANG_FLAGS="-std=c++23 -Iinclude"
 
   if [ -f "$SRC" ]; then
     clang-tidy "$SRC" -- $CLANG_FLAGS

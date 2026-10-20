@@ -324,7 +324,6 @@ if(MSVC)
         /EHsc
         /MP
         /permissive-
-        /std:c++23
         $<$<CONFIG:Release>:/O2>
         $<$<CONFIG:Release>:/MT>
         $<$<CONFIG:Debug>:/Od>
@@ -335,7 +334,6 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -Wall
         -Wextra
-        -std=c++23
         $<$<CONFIG:Release>:-O2>
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Debug>:-O0>
@@ -367,6 +365,12 @@ if(WIN32)
         # Authenticode verification for the IPC bridge's client authentication
         # (src/modules/serialpipe/WindowsIpcClientAuth.cpp).
         target_link_libraries(${PROJECT_NAME} PRIVATE wintrust crypt32)
+    endif()
+
+    # libstdc++ ships the Windows console backend for C++23 std::print
+    # (std::__open_terminal / std::__write_to_terminal) in a separate library.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_link_libraries(${PROJECT_NAME} PRIVATE stdc++exp)
     endif()
 elseif(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
