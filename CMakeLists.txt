@@ -17,7 +17,7 @@ option(IPC_AUTH_DEV_DISABLE "DANGEROUS: compile out IPC client signature verific
 option(ENABLE_TESTING "Build tests" OFF)
 
 # C++ Standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -323,6 +323,8 @@ if(MSVC)
         /W3
         /EHsc
         /MP
+        /permissive-
+        /std:c++23
         $<$<CONFIG:Release>:/O2>
         $<$<CONFIG:Release>:/MT>
         $<$<CONFIG:Debug>:/Od>
@@ -333,6 +335,7 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -Wall
         -Wextra
+        -std=c++23
         $<$<CONFIG:Release>:-O2>
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Debug>:-O0>

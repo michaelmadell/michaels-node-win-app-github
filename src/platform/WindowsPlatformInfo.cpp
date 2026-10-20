@@ -14,6 +14,8 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <print>
+#include <format>
 #include "../version.h"
 
 std::string WideToUtf8(const std::wstring &wstr)

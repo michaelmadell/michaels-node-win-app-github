@@ -9,6 +9,8 @@
 #include <wbemidl.h>
 #include <comdef.h>
 #include <cstdio>
+#include <print>
+#include <format>
 
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "ole32.lib")
@@ -65,14 +67,14 @@ void sendLineToBmc(const std::string& output_string) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(250)); // Small delay to avoid overwhelming the serial port
 
-    std::cout << "[SENDING] " << output_string << std::endl;
+    std::print("[SENDING] {}\n", output_string);
 
     platform->logMessage(output_string);
 
     if (serialManager->Write(output_string + "\r\n")) {
-        std::cout << "[SENT OK] " << output_string << std::endl;
+        std::print("[SENT OK] {}\n", output_string);
     } else {
-        std::cerr << "[SEND FAILED] " << output_string << std::endl;
+        std::print("[SEND FAILED] {}\n", output_string);
         platform->logMessage("[ERROR] Failed to write to serial port: " + output_string);
     }
 }
@@ -153,7 +155,7 @@ void heartbeatThread() {
 
                 sendLineToBmc("HB");
             } catch (const std::exception& e) {
-                std::cerr << "[ERROR] Exception in heartbeatThread: " << e.what() << std::endl;
+                std::print("[ERROR] Exception in heartbeatThread: {}\n", e.what());
                 platform->logMessage("[ERROR] Exception in heartbeatThread: " + std::string(e.what()));
             }
         }
@@ -178,17 +180,16 @@ void resendThread() {
 
             try {
                 auto sendInitialInfo = [&]() {
-                    std::stringstream versionStream;
-                    versionStream << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_RELEASE << "." << VERSION_BUILD;
+                    std::string versionStr = std::format("{}.{}.{}.{}", VERSION_MAJOR, VERSION_MINOR, VERSION_RELEASE, VERSION_BUILD);
                     if (std::string(VERSION_EXTRAVERSION) == "rc") {
-                        versionStream << "_" << VERSION_EXTRAVERSION << VERSION_RC_NO;
+                        versionStr += std::format("_{}{}", VERSION_EXTRAVERSION, VERSION_RC_NO);
                     }
                     else {
-                        versionStream << "_" << VERSION_EXTRAVERSION;
+                        versionStr += std::format("_{}", VERSION_EXTRAVERSION);
                     }
 
-                    std::cout << "[DEBUG] resending initial messages..." << std::endl;
-                    sendLineToBmc("appVersion, " + versionStream.str());
+                    std::print("[DEBUG] resending initial messages...\n");
+                    sendLineToBmc("appVersion, " + versionStr);
 
                     // Send initial username
                     {
@@ -199,20 +200,17 @@ void resendThread() {
                         // Send initial network state
                         currentState.networkInterfaces = platform->getNetworkInterfaces();
                         for (const auto& iface : currentState.networkInterfaces) {
-                            std::stringstream ss;
-                            ss << "network, " << iface.macAddress << ", " << iface.linkStatus
-                                << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
-                                << iface.dhcp << ", " << iface.name;
-                            sendLineToBmc(ss.str());
+                            std::string networkStr = std::format("network, {}, {}, {}, {}, {}, {}", iface.macAddress, iface.linkStatus, iface.ipv4, iface.ipv6, iface.dhcp, iface.name);
+                            sendLineToBmc(networkStr);
                         }
                     }
 
-                    std::cout << "[DEBUG] resent initial messages." << std::endl;
+                    std::print("[DEBUG] resent initial messages.\n");
                 };
 
                 sendInitialInfo();
             } catch (const std::exception& e) {
-                std::cerr << "[ERROR] Exception in ResendThread: " << e.what() << std::endl;
+                std::print("[ERROR] Exception in ResendThread: {}\n", e.what());
                 platform->logMessage("[ERROR] Exception in ResendThread: " + std::string(e.what()));
             }
         }
@@ -257,11 +255,8 @@ void checkSystemState() {
 
         platform->logMessage("Network configuration changed - sending updates");
         for (const auto& iface : newInterfaces) {
-            std::stringstream ss;
-            ss << "network, " << iface.macAddress << ", " << iface.linkStatus
-                << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
-                << iface.dhcp << ", " << iface.name;
-            sendLineToBmc(ss.str());
+            std::string networkStr = std::format("network, {}, {}, {}, {}, {}, {}", iface.macAddress, iface.linkStatus, iface.ipv4, iface.ipv6, iface.dhcp, iface.name);
+            sendLineToBmc(networkStr);
         }
         hasChanges = true;
     }
@@ -274,7 +269,7 @@ void processIncomingCommand(const std::string& command) {
     if (command.size() > prefix.size() && command.substr(0, prefix.size()) == prefix) {
         std::string message = command.substr(prefix.size());
         platform->logMessage("Received C2A Command: " + message);
-        std::cout << "[RX] Received C2A Command: " << message << std::endl;
+        std::print("[RX] Received C2A Command: {}\n", message);
 
         if (cmcHandler) {
             cmcHandler->handle(message);
@@ -282,24 +277,24 @@ void processIncomingCommand(const std::string& command) {
     }
     else {
         platform->logMessage("Received: " + command);
-        std::cout << "[RX] " << command << std::endl;
+        std::print("[RX] {}\n", command);
     }
 }
 #endif
 
 void serialThread() {
-    std::cout << "[DEBUG] serialThread has started." << std::endl;
+    std::print("[DEBUG] serialThread has started.\n");
 
 #ifdef _WIN32
     std::string portName;
     CPUInfo cpuInfo = GetCpuInfo();
-    std::cout << "[DEBUG] CPUInfo: " << cpuInfo.manufacturer << " " << cpuInfo.model << " " << cpuInfo.clockspeed << std::endl;
+    std::print("[DEBUG] CPUInfo: {} {} {}\n", cpuInfo.manufacturer, cpuInfo.model, cpuInfo.clockspeed);
     if (IsHX2KCPU(&cpuInfo)) {
-        std::cout << "[DEBUG] Detected HX2000 CPU. Setting port to COM3..." << std::endl;
+        std::print("[DEBUG] Detected HX2000 CPU. Setting port to COM3...\n");
         platform->logMessage("Detected HX2000 CPU. Setting port to COM3...");
         portName = "COM3";
     } else {
-        std::cout << "[DEBUG] No HX2000 CPU detected. Using COM1..." << std::endl;
+        std::print("[DEBUG] No HX2000 CPU detected. Using COM1...\n");
         platform->logMessage("No HX2000 CPU detected. Using COM1...");
         portName = "COM1";
     }
@@ -338,28 +333,29 @@ void serialThread() {
 
     std::string portName;
     if (isHx2k) {
-        std::cout << "[DEBUG] Detected HX2000 CPU. Setting port to /dev/ttyS2..." << std::endl;
+        std::print("[DEBUG] Detected HX2000 CPU. Setting port to /dev/ttyS2...\n");
         platform->logMessage("Detected HX2000 CPU. Setting port to /dev/ttyS2...");
         portName = "/dev/ttyS2";
     } else {
-        std::cout << "[DEBUG] No HX2000 CPU detected. Using /dev/ttyS0..." << std::endl;
+        std::print("[DEBUG] No HX2000 CPU detected. Using /dev/ttyS0...\n");
         platform->logMessage("No HX2000 CPU detected. Using /dev/ttyS0...");
         portName = "/dev/ttyS0";
     }
 #endif
 
-    std::cout << "[DEBUG] Attempting to open serial port: " << portName << std::endl;
+    std::print("[DEBUG] Attempting to open serial port: {}\n", portName);
     platform->logMessage("Serial Thread Started. Attempting to open port " + portName);
 
     serialManager = std::make_unique<SerialManager>(
         [](const std::string& command) {
             #ifdef ENABLE_C2A
             processIncomingCommand(command);
-            std::cout << "[RX] " << command << std::endl;
+            std::print("[RX] %s\n", command.c_str());
+            
             #else
             platform->logMessage("Received: " + command);
             platform->logMessage("Not processing C2A commands because ENABLE_C2A is not defined.");
-            std::cout << "[RX] " << command << std::endl;
+            std::print("[RX] %s\n", command.c_str());
             #endif
         }
     );
@@ -373,29 +369,28 @@ void serialThread() {
     });
 
     if (!serialManager->Open(portName, 115200)) {
-        std::cerr << "[DEBUG] Failed to open serial port, will retry in background: " << portName << std::endl;
+        std::print("[DEBUG] Failed to open serial port, will retry in background: {}\n", portName);
         platform->logMessage("FATAL: Failed to Open Serial Port: " + portName);
 #ifdef _WIN32
         OutputDebugStringW(L"[FATAL] Failed to Open Serial Port.\n");
 #endif
     }
     else {
-        std::cout << "[DEBUG] Serial Port opened successfully." << std::endl;
+        std::print("[DEBUG] Serial Port opened successfully.\n");
         platform->logMessage("Serial Port opened successfully");
     }
 
     auto sendInitialInfo = [&]() {
-        std::stringstream versionStream;
-        versionStream << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_RELEASE << "." << VERSION_BUILD;
+        std::string versionStr = std::format("{}.{}.{}.{}", VERSION_MAJOR, VERSION_MINOR, VERSION_RELEASE, VERSION_BUILD);
         if (std::string(VERSION_EXTRAVERSION) == "rc") {
-            versionStream << "_" << VERSION_EXTRAVERSION << VERSION_RC_NO;
+            versionStr += std::format("_{}{}", VERSION_EXTRAVERSION, VERSION_RC_NO);
         }
         else {
-            versionStream << "_" << VERSION_EXTRAVERSION;
+            versionStr += std::format("_{}", VERSION_EXTRAVERSION);
         }
 
-        std::cout << "[DEBUG] Sending initial messages..." << std::endl;
-        sendLineToBmc("appVersion, " + versionStream.str());
+        std::print("[DEBUG] Sending initial messages...\n");
+        sendLineToBmc("appVersion, " + versionStr);
         sendLineToBmc("winVersion, " + platform->getOsVersion());
         sendLineToBmc("osBuild, " + platform->getOsBuild());
 
@@ -411,15 +406,12 @@ void serialThread() {
             // Send initial network state
             currentState.networkInterfaces = platform->getNetworkInterfaces();
             for (const auto& iface : currentState.networkInterfaces) {
-                std::stringstream ss;
-                ss << "network, " << iface.macAddress << ", " << iface.linkStatus
-                    << ", " << iface.ipv4 << ", " << iface.ipv6 << ", "
-                    << iface.dhcp << ", " << iface.name;
-                sendLineToBmc(ss.str());
+                std::string networkStr = std::format("network, {}, {}, {}, {}, {}, {}", iface.macAddress, iface.linkStatus, iface.ipv4, iface.ipv6, iface.dhcp, iface.name);
+                sendLineToBmc(networkStr);
             }
         }
 
-        std::cout << "[DEBUG] Initial messages sent." << std::endl;
+        std::print("[DEBUG] Initial messages sent.\n");
     };
 
     bool initialInfoSent = false;
@@ -483,11 +475,11 @@ int main(int argc, char* argv[]) {
 #endif
 
     // This message should always appear
-    std::cout << "[DEBUG] Application starting. Creating platform object." << std::endl;
+    std::print("[DEBUG] Application starting. Creating platform object.\n");
 
     platform = createPlatform();
 
-    std::cout << "[DEBUG] Checking current COM assignment for AMT Serial Port" << std::endl;
+    std::print("[DEBUG] Checking current COM assignment for AMT Serial Port\n");
     #ifdef _WIN32
 
     AMTPortInfo AMTInfo = GetAMTComPort();
@@ -496,39 +488,39 @@ int main(int argc, char* argv[]) {
         std::wcout << L"[DEBUG] AMT Serial Port is currently assigned to: " << AMTInfo.comPort << std::endl;
         platform->logMessage("AMT Serial Port COM assignment: " + std::string(AMTInfo.comPort.begin(), AMTInfo.comPort.end()));
     } else {
-        std::cout << "[DEBUG] No AMT Serial Port COM assignment found." << std::endl;
+        std::print("[DEBUG] No AMT Serial Port COM assignment found.\n");
         platform->logMessage("No AMT Serial Port COM assignment found.");
     }
 
     if (AMTInfo.comPort == L"COM3") {
-        std::cout << "[DEBUG] AMT Serial Port is on COM3. Attempting to disable it to free COM3 for our use." << std::endl;
+        std::print("[DEBUG] AMT Serial Port is on COM3. Attempting to disable it to free COM3 for our use.\n");
         platform->logMessage("AMT Serial Port is on COM3. Attempting to disable it.");
         if (disableAMTComPort()) {
-            std::cout << "[DEBUG] Successfully disabled AMT Serial Port." << std::endl;
+            std::print("[DEBUG] Successfully disabled AMT Serial Port.\n");
             platform->logMessage("Successfully disabled AMT Serial Port.");
             if (enableAMTComPort()) {
-                std::cout << "[DEBUG] Successfully re-enabled AMT Serial Port after disabling." << std::endl;
+                std::print("[DEBUG] Successfully re-enabled AMT Serial Port after disabling.\n");
                 platform->logMessage("Successfully re-enabled AMT Serial Port after disabling.");
                 std::this_thread::sleep_for(std::chrono::seconds(2));
                 AMTPortInfo amtPortInfo = GetAMTComPort();
                 if (!amtPortInfo.comPort.empty() && amtPortInfo.comPort != L"COM3") {
-                    std::cout << "[DEBUG] Verified AMT Serial Port is not back on COM3 after re-enabling." << std::endl;
+                    std::print("[DEBUG] Verified AMT Serial Port is not back on COM3 after re-enabling.\n");
                     platform->logMessage("Verified AMT Serial Port is not back on COM3 after re-enabling.");
                 } else {
-                    std::cerr << "[ERROR] After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment." << std::endl;
+                    std::print("[ERROR] After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment.\n");
                     platform->logMessage("After re-enabling, AMT Serial Port is back on COM3, falling back to manual reassignment.");
                     if (reassignComPort()) {
-                        std::cout << "[DEBUG] Successfully reassigned AMT Serial Port to a different COM port." << std::endl;
+                        std::print("[DEBUG] Successfully reassigned AMT Serial Port to a different COM port.\n");
                         platform->logMessage("Successfully reassigned AMT Serial Port to a different COM port.");
                     } else {
-                        std::cerr << "[ERROR] Failed to reassign AMT Serial Port. COM3 may still be occupied." << std::endl;
+                        std::print("[ERROR] Failed to reassign AMT Serial Port. COM3 may still be occupied.\n");
                         platform->logMessage("Failed to reassign AMT Serial Port. COM3 may still be occupied.");
                         exit(1);
                     }
                 }
             }
         } else {
-            std::cerr << "[ERROR] Failed to disable AMT Serial Port. This may cause issues if COM3 is not available." << std::endl;
+            std::print("[ERROR] Failed to disable AMT Serial Port. This may cause issues if COM3 is not available.\n");
             platform->logMessage("Failed to disable AMT Serial Port. COM3 may not be available.");
             exit(1);
         }
@@ -543,20 +535,20 @@ int main(int argc, char* argv[]) {
     std::thread hbThread;
     std::thread reThread;
 
-    std::cout << "[DEBUG] Calling platform->run(). Waiting for on_start callback..." << std::endl;
+    std::print("[DEBUG] Calling platform->run(). Waiting for on_start callback...\n");
 
     platform->run(argc, argv, 
         // on_start callback
         [&]() {
             // If we see this message, we know the service/daemon started correctly
-            std::cout << "[DEBUG] on_start callback EXECUTED. Launching serialThread." << std::endl;
+            std::print("[DEBUG] on_start callback EXECUTED. Launching serialThread.\n");
             workerThread = std::thread(serialThread);
             hbThread = std::thread(heartbeatThread);
             reThread = std::thread(resendThread);
         },
         // on_stop callback
         [&](const std::string& stopReason) {
-            std::cout << "[DEBUG] on_stop callback EXECUTED. Stopping serialThread. Reason: " << stopReason << std::endl;
+            std::print("[DEBUG] on_stop callback EXECUTED. Stopping serialThread. Reason: %s\n", stopReason.c_str());
 #ifdef _WIN32
 			OutputDebugStringW(L"on_stop callback EXECUTED. Stopping serial Thread.\n");
 #endif
@@ -616,7 +608,7 @@ int main(int argc, char* argv[]) {
         }
     );
 
-    std::cout << "[DEBUG] platform->run() has exited. Application terminating." << std::endl;
+    std::print("[DEBUG] platform->run() has exited. Application terminating.\n");
     return 0;
 }
 

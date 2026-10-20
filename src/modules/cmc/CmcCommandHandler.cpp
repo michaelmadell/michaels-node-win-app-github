@@ -25,7 +25,7 @@ bool iequals(const std::string& a, const std::string& b) {
 
 std::vector<std::string> splitTokens(const std::string& message) {
     std::vector<std::string> tokens;
-    std::stringstream ss(message);
+    std::istringstream ss(message);
     std::string token;
     while (std::getline(ss, token, ',')) {
         tokens.push_back(trim(token));

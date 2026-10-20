@@ -8,6 +8,7 @@
 #include "WindowsPlatform.h"
 #include <iomanip>
 #include <sstream>
+#include <format>
 
 static ULONGLONG FileTimeToInt64(const FILETIME& ft) {
     return ((ULONGLONG)ft.dwHighDateTime) << 32 | ((ULONGLONG)ft.dwLowDateTime);
@@ -95,13 +96,8 @@ std::string WindowsPlatform::getSystemUptimeImpl()
     minutes %= 60;
     hours %= 24;
 
-    std::stringstream ss;
-    ss << days << "d ";
-    ss << std::setw(2) << std::setfill('0') << hours << "h ";
-    ss << std::setw(2) << std::setfill('0') << minutes << "m ";
-    ss << std::setw(2) << std::setfill('0') << seconds << "s";
-
-    return ss.str();
+    std::string uptime = std::format("{}d {:02}h {:02}m {:02}s", days, hours, minutes, seconds);
+    return uptime;
 }
 
 #ifdef ENABLE_METRICS
@@ -144,9 +140,8 @@ std::string WindowsPlatform::getFreeDiskSpaceGBImpl(const std::string& drivePath
     ))
     {
         double freeGB = (double)freeBytesAvailableToCaller.QuadPart / (1024.0 * 1024.0 * 1024.0);
-        std::stringstream ss;
-        ss << std::fixed << std::setprecision(1) << freeGB;
-        return ss.str();
+        std::string freeGBStr = std::format("{:.1f}", freeGB);
+        return freeGBStr;
     }
     return "Unknown";
 }

@@ -11,6 +11,8 @@
 #include <sstream>
 #include <cctype>
 #include "WinHandles.h"
+#include <print>
+#include <format>
 
 #ifdef ENABLE_TRAY_APP
 #include "../modules/tray/TrayApp.h"
@@ -157,11 +159,11 @@ int WindowsPlatform::run(
     const bool isServiceLaunch = runningUnderServiceControlManager();
 
     {
-        std::ostringstream oss;
-        oss << "Mode Detection: forceInteractive=" << (forceInteractive ? "true" : "false")
-            << ", forceService=" << (forceService ? "true" : "false")
-            << ", isServiceLaunch=" << (isServiceLaunch ? "true" : "false");
-        logMessage(oss.str());
+        std::string modeMessage = std::format("Mode Detection: forceInteractive={}, forceService={}, isServiceLaunch={}",
+            forceInteractive ? "true" : "false",
+            forceService ? "true" : "false",
+            isServiceLaunch ? "true" : "false");
+        logMessage(modeMessage);
     }
 
     // Attempt SCM dispatch unless interactive mode is explicitly requested.
@@ -179,15 +181,13 @@ int WindowsPlatform::run(
         DWORD err = GetLastError();
         if (forceService || err != ERROR_FAILED_SERVICE_CONTROLLER_CONNECT)
         {
-            std::ostringstream oss;
-            oss << "StartServiceCtrlDispatcher failed (" << err << "), cannot continue.";
-            logMessage(oss.str());
+            std::string errMessage = std::format("StartServiceCtrlDispatcher failed ({}), cannot continue.", err);
+            logMessage(errMessage);
             return static_cast<int>(err);
         }
 
-        std::ostringstream oss;
-        oss << "StartServiceCtrlDispatcher failed (" << err << "), falling back to interactive mode.";
-        logMessage(oss.str());
+        std::string errMessage = std::format("StartServiceCtrlDispatcher failed ({}), falling back to interactive mode.", err);
+        logMessage(errMessage);
     }
 
     logMessage("Running in interactive mode.");
@@ -198,7 +198,7 @@ int WindowsPlatform::run(
 #endif
     if (on_start_callback)
         on_start_callback();
-    std::cout << "Service running interactively. Press Enter to stop." << std::endl;
+    std::print("Service running interactively. Press Enter to stop.\n");
     std::cin.get();
     if (on_stop_callback)
         on_stop_callback("interactive-stop");

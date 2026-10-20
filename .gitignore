@@ -122,3 +122,5 @@ entities.json
 installer/release-notes.txt
 installer/CoreStationHXAgent
 .devcerts/
+
+.cache/
