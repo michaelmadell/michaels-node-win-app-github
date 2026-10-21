@@ -16,6 +16,33 @@ option(BUILD_C2A "Build with C2A command support (ping/status/shutdown/message-d
 option(IPC_AUTH_DEV_DISABLE "DANGEROUS: compile out IPC client signature verification (dev/test builds only -- never define for Release/RC/GA)" OFF)
 option(ENABLE_TESTING "Build tests" OFF)
 
+# Build profiles (cmake/profiles/*.cmake): only applied when one is selected
+# with -DDEVELOPMENT_PROFILE=<name> (build.bat/build.sh --profile <name> do
+# this). Without it the option() defaults above stand, so CI and plain cmake
+# invocations are unaffected. See docs/dev-config.md.
+include(cmake/load-profile.cmake)
+set(DEVELOPMENT_PROFILE "" CACHE STRING
+    "Build profile from cmake/profiles/ (dev-full, dev-minimal, dev-ci, production); empty = option defaults")
+if(DEVELOPMENT_PROFILE)
+    load_profile("${DEVELOPMENT_PROFILE}")
+endif()
+
+# Option compatibility checks (apply with or without a profile)
+if(BUILD_TRAY_APP AND NOT WIN32)
+    # On by default, so only a note: the tray sources are WIN32-gated below.
+    message(STATUS "BUILD_TRAY_APP is Windows-only - ignored on this platform")
+endif()
+
+if(ENABLE_TESTING AND NOT CMAKE_CXX_COMPILER_ID MATCHES "^(MSVC|GNU|Clang|AppleClang)$")
+    message(WARNING "ENABLE_TESTING: compiler '${CMAKE_CXX_COMPILER_ID}' isn't one the unit tests are "
+                    "built with (MSVC, GCC, Clang) - the googletest build may fail")
+endif()
+
+if(DEVELOPMENT_PROFILE STREQUAL "production" AND IPC_AUTH_DEV_DISABLE)
+    message(FATAL_ERROR "IPC_AUTH_DEV_DISABLE=ON with the production profile (check cmake/profiles/local.cmake) - "
+                        "production builds must keep IPC client authentication")
+endif()
+
 # C++ Standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -528,6 +555,11 @@ message(STATUS "Build Type:        ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ Standard:      C++${CMAKE_CXX_STANDARD}")
 message(STATUS "Compiler:          ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "Platform:          ${CMAKE_SYSTEM_NAME}")
+if(DEVELOPMENT_PROFILE)
+    message(STATUS "Profile:           ${DEVELOPMENT_PROFILE}")
+else()
+    message(STATUS "Profile:           (none - option defaults / -D flags)")
+endif()
 message(STATUS "")
 message(STATUS "Features:")
 message(STATUS "  TrayApp:            ${BUILD_TRAY_APP}")

@@ -124,3 +124,5 @@ installer/CoreStationHXAgent
 .devcerts/
 
 .cache/
+# Developer-local build profile overrides (see cmake/profiles/local.cmake.example)
+cmake/profiles/local.cmake

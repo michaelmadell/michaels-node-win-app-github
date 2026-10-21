@@ -7,11 +7,15 @@ michaels-node-win-app
 │   app.rc                      - resource definitions for things like Icons
 │   architecture-graph.html     - interactive HTML graph of the codebase structure (open in a browser)
 │   app.res                     - compiled resource file
-│   build.bat                   - Windows Build script (CMake + MSVC)
-│   build-g++.bat               - Windows Build script (CMake + MSYS2 MinGW G++)
-│   build.sh                    - Linux Build script (cross-compiles Windows .exe via MinGW)
-│   build-linux.sh              - Linux Build script (CMake + native GCC/G++)
+│   build.bat                   - Windows Build script (CMake + MSVC), accepts --profile
+│   build-g++.bat               - Windows Build script (CMake + MSYS2 MinGW G++), accepts --profile
+│   build-production.bat        - build.bat --profile production
+│   build.sh                    - Linux Build script (CMake): native Linux, or --target windows to cross-compile the .exe via MinGW; accepts --profile
+│   build-linux.sh / .bash      - build.sh --target linux
 │   CMakeLists.txt              - CMake configuration
+├── cmake
+│    ├─ load-profile.cmake      - build profile loader (see docs/dev-config.md)
+│    └─ profiles/               - dev-full, dev-minimal, dev-ci, production (+ git-ignored local.cmake)
 │   CoreStationHXAgent.service  - Service file for installation in Linux
 │   logo.ico                    - Application Icon
 │   README.md                   - This File
@@ -205,6 +209,8 @@ RC builds write all log output to `C:\ProgramData\ahk\node-win-app.log` via `Log
 ### To build
 - Update `version.h` with the desired release details and commit to git
 - Run `build.bat` from windows **cmd shell**. This will populate the installer dir that can then be passed to a third party
+  - `build-production.bat` (= `build.bat --profile production`) builds the shipping feature set instead of the CMake defaults
+  - For development, `build.bat --profile dev-full` / `dev-minimal` / `dev-ci` build module sets with unit tests into `build-<profile>\` without touching the installer dir - see [docs/dev-config.md](docs/dev-config.md)
 - As admin from **PowerShell shell** run `installer/install.ps1` to setup as windows service. This will automatically stop and remove any previous versions before instalation 
 - `remove.ps1` can be used to remove the service
 
@@ -212,7 +218,7 @@ RC builds write all log output to `C:\ProgramData\ahk\node-win-app.log` via `Log
 - Run `build-g++.bat` instead of `build.bat` to build with the MSYS2 MinGW64/UCRT64 G++ toolchain via CMake (`-G "MinGW Makefiles"`) instead of MSVC
 - Auto-detects the MSYS2 toolchain (checks `PATH`, then `C:\msys64\<mingw64|ucrt64|clang64>\bin`) and CMake (checks `PATH`, then the copy bundled with Visual Studio)
 - Requires `mingw-w64-x86_64-gcc` (or the `ucrt64`/`clang64` equivalent) installed via `pacman` in MSYS2
-- Output goes to `build-mingw\bin\CoreStationHXAgent.exe` (kept separate from the MSVC `build\` dir)
+- Output goes to `build-mingw\bin\CoreStationHXAgent.exe` (kept separate from the MSVC `build\` dir); `--profile NAME` builds into `build-mingw-NAME\`
 
 
 ### Build machine setup #

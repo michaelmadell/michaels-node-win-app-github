@@ -1,0 +1,18 @@
+# Personal overrides, applied after whichever profile is selected.
+#
+#   copy cmake/profiles/local.cmake.example to cmake/profiles/local.cmake
+#
+# local.cmake is git-ignored, so nothing here affects anyone else or CI. It is
+# only read when a profile is selected (-DDEVELOPMENT_PROFILE=... or
+# build.bat/build.sh --profile ...). Re-run the configure step after editing.
+#
+# Use FORCE, like the profiles do, or the profile's value wins. Examples:
+
+# Working on the serial bridge but don't need metrics:
+# set(BUILD_METRICS OFF CACHE BOOL "" FORCE)
+
+# Want C2A in the minimal profile:
+# set(BUILD_C2A ON CACHE BOOL "" FORCE)
+
+# More verbose system logging (see src/core/Logging.h):
+# set(CORESTATION_LOG_MIN_LEVEL "Debug" CACHE STRING "" FORCE)

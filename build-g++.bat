@@ -1,14 +1,75 @@
 @echo off
 setlocal enabledelayedexpansion
 
+rem ============================================================================
+rem CoreStationHXAgent - Windows build with MSYS2 MinGW G++ (CMake)
+rem
+rem   build-g++.bat                              option defaults -> build-mingw\
+rem   build-g++.bat --profile dev-full           cmake\profiles\dev-full.cmake -> build-mingw-dev-full\
+rem   build-g++.bat --config Debug
+rem   build-g++.bat --profile dev-full "-DCORESTATION_LOG_MIN_LEVEL=Debug"
+rem
+rem Extra CMake flags go to the configure step - quote them (cmd.exe splits
+rem unquoted arguments at "="). The exe stays in the build dir; this script
+rem has never fed installer\ (use build.bat). See docs\dev-config.md.
+rem ============================================================================
+
+cd /d "%~dp0"
+
 for /f %%i in ('powershell -command "[int](Get-Date -UFormat %%s)"') do set START_EPOCH=%%i
 
+set "PROFILE="
+set "CONFIG=Release"
+set "EXTRA_CMAKE_ARGS="
+
+:parse_args
+if "%~1"=="" goto :args_done
+if /I "%~1"=="--profile" (
+    if "%~2"=="" (
+        echo ERROR: --profile needs a name ^(see cmake\profiles\^)
+        exit /b 1
+    )
+    set "PROFILE=%~2"
+    shift
+    shift
+    goto :parse_args
+)
+if /I "%~1"=="--config" (
+    if "%~2"=="" (
+        echo ERROR: --config needs a value ^(Release, Debug, RelWithDebInfo, MinSizeRel^)
+        exit /b 1
+    )
+    set "CONFIG=%~2"
+    shift
+    shift
+    goto :parse_args
+)
+if /I "%~1"=="--help" goto :usage
+if /I "%~1"=="-h" goto :usage
+set "EXTRA_CMAKE_ARGS=!EXTRA_CMAKE_ARGS! "%~1""
+shift
+goto :parse_args
+
+:usage
+echo Usage: build-g++.bat [--profile NAME] [--config Release^|Debug] ["-DVAR=VALUE" ...]
+echo.
+echo Profiles ^(cmake\profiles\^):
+for %%P in (cmake\profiles\*.cmake) do if /I not "%%~nP"=="local" echo    %%~nP
+exit /b 0
+
+:args_done
+if defined PROFILE (
+    if /I "!PROFILE!"=="local" goto :bad_profile
+    if not exist "cmake\profiles\!PROFILE!.cmake" goto :bad_profile
+    set "BUILD_DIR=build-mingw-!PROFILE!"
+) else (
+    set "BUILD_DIR=build-mingw"
+)
+
 echo ============================================================================
-echo CoreStationHXAgent - MSYS2 MinGW G++ Build
+echo CoreStationHXAgent - MSYS2 MinGW G++ Build ^(profile: !PROFILE!, %CONFIG%^)
 echo ============================================================================
 
-set "BUILD_DIR=build-mingw"
-set "CONFIG=Release"
 set "OUTPUT_EXE_FILE=%BUILD_DIR%\bin\CoreStationHXAgent.exe"
 set "BUILT_EXE="
 
@@ -65,17 +126,29 @@ echo [3/4] Configuring CMake (MinGW Makefiles)...
     -DCMAKE_BUILD_TYPE=%CONFIG% ^
     -DCMAKE_C_COMPILER="%MINGW_BIN_FWD%gcc.exe" ^
     -DCMAKE_CXX_COMPILER="%MINGW_BIN_FWD%g++.exe" ^
-    -DCMAKE_RC_COMPILER="%MINGW_BIN_FWD%windres.exe"
+    -DCMAKE_RC_COMPILER="%MINGW_BIN_FWD%windres.exe" ^
+    "-DDEVELOPMENT_PROFILE=!PROFILE!" !EXTRA_CMAKE_ARGS!
 if errorlevel 1 (
     echo ERROR: CMake configure failed
     exit /b 1
 )
 
-echo [4/4] Building target CoreStationHXAgent...
-"%CMAKE_EXE%" --build "%BUILD_DIR%" --config %CONFIG% --target CoreStationHXAgent -- -j%NUMBER_OF_PROCESSORS%
+echo [4/4] Building...
+"%CMAKE_EXE%" --build "%BUILD_DIR%" --config %CONFIG% -- -j%NUMBER_OF_PROCESSORS%
 if errorlevel 1 (
     echo ERROR: CMake build failed
     exit /b 1
+)
+
+if exist "%BUILD_DIR%\CTestTestfile.cmake" (
+    echo [4b/4] Running unit tests...
+    rem ctest lives next to whichever cmake was found above.
+    if "%CMAKE_EXE%"=="cmake" (set "CTEST_EXE=ctest") else (set "CTEST_EXE=!CMAKE_EXE:cmake.exe=ctest.exe!")
+    "!CTEST_EXE!" --test-dir "%BUILD_DIR%" --output-on-failure
+    if errorlevel 1 (
+        echo ERROR: Unit tests failed
+        exit /b 1
+    )
 )
 
 if exist "%BUILD_DIR%\bin\CoreStationHXAgent.exe" set "BUILT_EXE=%BUILD_DIR%\bin\CoreStationHXAgent.exe"
@@ -101,3 +174,8 @@ echo.
 
 endlocal
 exit /b 0
+
+:bad_profile
+echo ERROR: Unknown profile "%PROFILE%". Available profiles:
+for %%P in (cmake\profiles\*.cmake) do if /I not "%%~nP"=="local" echo    %%~nP
+exit /b 1

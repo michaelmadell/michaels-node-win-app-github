@@ -16,6 +16,7 @@ debian/source/format   text eol=lf
 
 # Shell scripts
 *.sh text eol=lf
+*.bash text eol=lf
 
 # Windows-only
 *.bat  text eol=crlf
