@@ -19,6 +19,14 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
+# Run cross-compiled executables (the unit tests, and googletest's test
+# discovery at build time) under Wine when it's installed, so ctest works
+# from Linux CI. Without Wine, tests still build; discovery is deferred.
+find_program(WINE_EXECUTABLE NAMES wine wine64)
+if(WINE_EXECUTABLE)
+    set(CMAKE_CROSSCOMPILING_EMULATOR "${WINE_EXECUTABLE}")
+endif()
+
 # Static-link the mingw runtime so the .exe runs on machines with no MinGW
 # DLLs installed (mirrors the -static flag build.sh already uses).
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")

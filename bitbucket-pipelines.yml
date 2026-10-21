@@ -1,10 +1,21 @@
-# Full cross-platform build, meant to mirror .github/workflows/ci-build.yml.
+# Full cross-platform build + unit tests, meant to mirror
+# .github/workflows/ci-build.yml.
 #
 # Bitbucket Cloud has no hosted Windows runner, so like GitHub Actions here,
-# Windows is cross-compiled with mingw-w64 from the same Ubuntu image, and
-# the Inno Setup installer (.iss) is built with the real ISCC compiler
-# running under Wine (see tools/build-inno-installer.sh) - no self-hosted
-# Windows machine required.
+# Windows is cross-compiled with mingw-w64 on Linux, and the Inno Setup
+# installer (.iss) is built with the real ISCC compiler running under Wine
+# (see tools/build-inno-installer.sh) - no self-hosted Windows machine
+# required. The Windows unit tests are cross-compiled the same way and run
+# under Wine (mingw-w64-toolchain.cmake sets Wine as the CMake emulator).
+#
+# The Windows steps use debian:trixie: its mingw-w64 is GCC 14, and the agent
+# needs C++23 <print>, which no Ubuntu mingw-w64 package has yet (Ubuntu
+# 24.04-26.04 all ship GCC 13). The .exe is statically linked, so the build
+# image doesn't matter at runtime. The Linux build stays on ubuntu:24.04 so
+# the .deb runs on the Ubuntu releases it targets.
+#
+# Test results: ctest writes JUnit XML to test-results/, which Bitbucket
+# picks up automatically (Tests tab). Any failing test fails its step.
 #
 # LIMITATION: Bitbucket's `pull-requests` pipeline key only matches the PR's
 # SOURCE branch, not its destination - there's no native way to say "only run
@@ -21,6 +32,7 @@ pipelines:
       - parallel:
           - step:
               name: Windows (mingw-w64 cross) + Inno Setup installer
+              image: debian:trixie
               size: 2x
               script:
                 - |
@@ -39,6 +51,25 @@ pipelines:
                 - Output/CoreStation_HX_Agent_Installer_*.exe
 
           - step:
+              name: Windows unit tests (mingw-w64 cross, run under Wine)
+              image: debian:trixie
+              size: 2x
+              script:
+                - |
+                  if [ "$BITBUCKET_PR_DESTINATION_BRANCH" != "ci-build" ]; then
+                    echo "Destination branch is '$BITBUCKET_PR_DESTINATION_BRANCH', not 'ci-build' - skipping."
+                    exit 0
+                  fi
+                - apt-get update
+                - apt-get install -y mingw-w64 cmake ninja-build git wine
+                - export WINEDEBUG=-all
+                # dev-ci = every module + unit tests, IPC auth enabled (cmake/profiles/dev-ci.cmake)
+                - cmake -S . -B build-win-tests -G Ninja -DCMAKE_TOOLCHAIN_FILE=mingw-w64-toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DDEVELOPMENT_PROFILE=dev-ci
+                - cmake --build build-win-tests
+                - ctest --test-dir build-win-tests -N | tail -1
+                - ctest --test-dir build-win-tests --output-on-failure --timeout 120 --parallel "$(nproc)" --output-junit "$BITBUCKET_CLONE_DIR/test-results/windows-mingw-wine.xml"
+
+          - step:
               name: Linux build + Debian package
               script:
                 - |
@@ -54,3 +85,22 @@ pipelines:
               artifacts:
                 - build/bin/CoreStationHXAgent
                 - build/*.deb
+
+          - step:
+              name: Linux unit tests + coverage
+              script:
+                - |
+                  if [ "$BITBUCKET_PR_DESTINATION_BRANCH" != "ci-build" ]; then
+                    echo "Destination branch is '$BITBUCKET_PR_DESTINATION_BRANCH', not 'ci-build' - skipping."
+                    exit 0
+                  fi
+                - apt-get update
+                - apt-get install -y cmake build-essential pkg-config libdbus-1-dev libssl-dev git gcovr
+                # Coverage gate: COVERAGE_MIN_LINE in cmake/coverage.cmake (src/core + src/modules)
+                - cmake -S . -B build-tests -DCMAKE_BUILD_TYPE=Debug -DDEVELOPMENT_PROFILE=dev-ci -DENABLE_COVERAGE=ON
+                - cmake --build build-tests -- -j"$(nproc)"
+                - ctest --test-dir build-tests -N | tail -1
+                - ctest --test-dir build-tests --output-on-failure --timeout 30 --output-junit "$BITBUCKET_CLONE_DIR/test-results/linux.xml"
+                - cmake --build build-tests --target coverage
+              artifacts:
+                - build-tests/coverage/**

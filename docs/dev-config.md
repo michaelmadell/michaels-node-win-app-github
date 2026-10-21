@@ -132,10 +132,10 @@ no check tying them together.
 
 ## CI
 
-CI (`bitbucket-pipelines.yml`, `.github/workflows/ci-build.yml`) calls CMake
-directly without `DEVELOPMENT_PROFILE`, so it builds exactly what it did
-before profiles existed. To make CI build everything and run the tests, add
-`-DDEVELOPMENT_PROFILE=dev-ci` to its configure step.
+CI (`bitbucket-pipelines.yml`, `.github/workflows/ci-build.yml`) builds the
+shipping artifacts (exe, installer, .deb) without a profile - exactly the
+`option()` defaults - and runs the unit-test jobs with
+`-DDEVELOPMENT_PROFILE=dev-ci`. See README "Running tests".
 
 ## Adding a profile
 

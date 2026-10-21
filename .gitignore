@@ -126,3 +126,6 @@ installer/CoreStationHXAgent
 .cache/
 # Developer-local build profile overrides (see cmake/profiles/local.cmake.example)
 cmake/profiles/local.cmake
+
+# CI/ctest JUnit output (ctest --output-junit test-results/...)
+test-results/

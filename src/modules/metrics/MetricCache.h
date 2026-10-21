@@ -10,7 +10,10 @@
 * It stores the last retrieved value along with a timestamp, and only refreshes the value if a specified cache duration has elapsed. 
 * This helps reduce overhead while still providing reasonably up-to-date information.
 */
-template<typename T>
+// Clock is std::chrono::steady_clock in production; tests substitute a
+// controllable clock (MockClock in tests/test_helpers.h) to check TTL expiry
+// without sleeping.
+template<typename T, typename Clock = std::chrono::steady_clock>
 class MetricCache {
 public:
 	/** 
@@ -18,8 +21,8 @@ public:
 	 * @param ttl_seconds The time-to-live for the cache in seconds. After this duration, the cached value will be considered stale and will be refreshed on the next request.
 	*/
 	explicit MetricCache(int ttl_seconds)
-		: ttl_(std::chrono::seconds(ttl_seconds))
-		, lastUpdate_(std::chrono::steady_clock::now())
+		: lastUpdate_(Clock::now())
+		, ttl_(std::chrono::seconds(ttl_seconds))
 		, isValid_(false)
 	{}
 
@@ -31,7 +34,7 @@ public:
 	T get(std::function<T()> computeFunc) {
 		std::lock_guard<std::mutex> lock(mutex_);
 
-		auto now = std::chrono::steady_clock::now();
+		auto now = Clock::now();
 		auto elapsed = now - lastUpdate_;
 
 		if (!isValid_ || elapsed >= ttl_) {
@@ -56,7 +59,7 @@ public:
 	*/
 	bool isValid() const {
 		std::lock_guard<std::mutex> lock(mutex_);
-		auto now = std::chrono::steady_clock::now();
+		auto now = Clock::now();
 		auto elapsed = now - lastUpdate_;
 		return isValid_ && (elapsed < ttl_);
 	}
@@ -78,7 +81,7 @@ public:
 
 private:
 	T cachedValue_;
-	std::chrono::steady_clock::time_point lastUpdate_;
+	typename Clock::time_point lastUpdate_;
 	std::chrono::seconds ttl_;
 	bool isValid_;
 	mutable std::mutex mutex_;

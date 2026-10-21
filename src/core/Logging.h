@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <expected>
 #include <format>
+#include <functional>
 #include <iterator>
 #include <map>
 #include <mutex>
@@ -108,12 +109,28 @@ constexpr int syslogPriority(LogLevel level) noexcept {
 
 } // namespace detail
 
+#ifdef CORESTATION_LOG_CAPTURE
+// Unit-test builds only (tests/CMakeLists.txt defines CORESTATION_LOG_CAPTURE):
+// every Log() call goes to this callback instead of the Event Log / syslog,
+// so tests never write to the real system log and can assert on what was
+// logged. An empty callback drops messages.
+using LogCaptureFn = std::function<void(LogLevel, std::uint32_t, const std::string&)>;
+inline LogCaptureFn& LogCapture() {
+    static LogCaptureFn capture;
+    return capture;
+}
+#endif
+
 // The single entry point. `message` is UTF-8.
 inline void Log(LogLevel level, std::uint32_t messageId, const char* message) {
     if (level < kMinLogLevel || message == nullptr) {
         return;
     }
-#ifdef _WIN32
+#if defined(CORESTATION_LOG_CAPTURE)
+    if (auto& capture = LogCapture()) {
+        capture(level, messageId, message);
+    }
+#elif defined(_WIN32)
     // The Event Log has no debug/critical levels: Debug -> Information,
     // Critical -> Error.
     const WORD type = level >= LogLevel::Error   ? EVENTLOG_ERROR_TYPE

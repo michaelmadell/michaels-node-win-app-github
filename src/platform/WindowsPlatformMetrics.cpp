@@ -12,6 +12,7 @@
 #include <windows.h>
 #include "WindowsPlatform.h"
 #include "../core/Logging.h"
+#include "../modules/metrics/MetricMath.h"
 #include <format>
 
 static ULONGLONG FileTimeToInt64(const FILETIME& ft) {
@@ -35,8 +36,9 @@ core::PlatformError metricError(const char* what, std::uint32_t err,
 void WindowsPlatform::updateCpuTimes() {
     FILETIME idleTime, kernelTime, userTime;
     if (GetSystemTimes(&idleTime, &kernelTime, &userTime)) {
+        // Raw counters; kernel time includes idle (see metrics::CpuTimesFromSystemTimes).
         m_previousIdleTime = FileTimeToInt64(idleTime);
-        m_previousKernelTime = FileTimeToInt64(kernelTime) - m_previousIdleTime;
+        m_previousKernelTime = FileTimeToInt64(kernelTime);
         m_previousUserTime = FileTimeToInt64(userTime);
     }
 }
@@ -59,28 +61,18 @@ std::expected<int, core::PlatformError> WindowsPlatform::getCpuUsagePercentImpl(
         return std::unexpected(metricError("GetSystemTimes", GetLastError()));
     }
 
-    ULONGLONG currentIdleTime = FileTimeToInt64(idleTime);
-    ULONGLONG currentKernelTime = FileTimeToInt64(kernelTime) - currentIdleTime;
-    ULONGLONG currentUserTime = FileTimeToInt64(userTime);
+    // GetSystemTimes' kernel time includes idle time. This used to subtract
+    // idle from kernel and then subtract it again from the total, in unsigned
+    // arithmetic, which wrapped whenever idle exceeded busy time (i.e. under
+    // ~50% load) and reported 0/100. metrics::CpuBusyPercent is the tested
+    // calculation (tests/test_metrics.cpp).
+    const metrics::CpuTimes previous = metrics::CpuTimesFromSystemTimes(
+        m_previousIdleTime, m_previousKernelTime, m_previousUserTime);
+    const metrics::CpuTimes current = metrics::CpuTimesFromSystemTimes(
+        FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime), FileTimeToInt64(userTime));
 
-    ULONGLONG idleTimeDelta = currentIdleTime - m_previousIdleTime;
-    ULONGLONG kernelTimeDelta = currentKernelTime - m_previousKernelTime;
-    ULONGLONG userTimeDelta = currentUserTime - m_previousUserTime;
-
-    ULONGLONG totalTimeDelta = kernelTimeDelta + userTimeDelta;
-
-    // No time elapsed since the baseline - genuinely 0%, not an error.
-    if (totalTimeDelta == 0) {
-        return 0;
-    }
-
-    // CPU Usage = (Total Time - Idle Time) / Total Time * 100
-    int cpuUsage = (int)((totalTimeDelta - idleTimeDelta) * 100 / totalTimeDelta);
-
-    if (cpuUsage < 0) return 0;
-    if (cpuUsage > 100) return 100;
-
-    return cpuUsage;
+    // No time elapsed since the baseline reads as 0% - not an error.
+    return metrics::CpuBusyPercent(previous, current);
 }
 
 int WindowsPlatform::getRamUsagePercent() {
@@ -106,21 +98,8 @@ std::string WindowsPlatform::getSystemUptime() {
 // GetTickCount64 can't fail, so this stays a plain value.
 std::string WindowsPlatform::getSystemUptimeImpl()
 {
-    // Get the system tick count in milliseconds
-    ULONGLONG ms = GetTickCount64();
-
-    // Convert milliseconds to days, hours, minutes, seconds
-    ULONGLONG seconds = ms / 1000;
-    ULONGLONG minutes = seconds / 60;
-    ULONGLONG hours = minutes / 60;
-    ULONGLONG days = hours / 24;
-
-    seconds %= 60;
-    minutes %= 60;
-    hours %= 24;
-
-    std::string uptime = std::format("{}d {:02}h {:02}m {:02}s", days, hours, minutes, seconds);
-    return uptime;
+    // System tick count in milliseconds -> "<d>d <hh>h <mm>m <ss>s"
+    return metrics::FormatUptime(GetTickCount64() / 1000);
 }
 
 #ifdef ENABLE_METRICS
@@ -201,8 +180,7 @@ std::expected<std::string, core::PlatformError> WindowsPlatform::getFreeDiskSpac
         });
     }
 
-    double freeGB = (double)freeBytesAvailableToCaller.QuadPart / (1024.0 * 1024.0 * 1024.0);
-    return std::format("{:.1f}", freeGB);
+    return metrics::FormatGigabytes(freeBytesAvailableToCaller.QuadPart);
 }
 
 std::string WindowsPlatform::getWindowsUpdateState() {

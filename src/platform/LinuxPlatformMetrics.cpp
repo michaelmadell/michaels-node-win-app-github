@@ -5,24 +5,25 @@
 //     - gated behind ENABLE_METRICS.
 #ifdef __linux__
 #include "LinuxPlatform.h"
+#include "../modules/metrics/MetricMath.h"
+#include <cstdint>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <cmath>
 #include <algorithm>
 
+// The parsing/arithmetic lives in modules/metrics/MetricMath.h (unit-tested);
+// these just feed it /proc.
 void getCpuTimes(unsigned long long& total_time, unsigned long long& idle_time) {
     total_time = 0;
     idle_time = 0;
     std::ifstream file("/proc/stat");
     std::string line;
     if (std::getline(file, line)) {
-        if (line.substr(0, 3) == "cpu") {
-            unsigned long long user, nice, system, iowait, irq, softirq, steal, guest;
-            std::stringstream ss(line.substr(4));
-            if (ss >> user >> nice >> system >> idle_time >> iowait >> irq >> softirq >> steal >> guest) {
-                total_time = user + nice + system + idle_time + iowait + irq + softirq + steal + guest;
-            }
+        if (auto times = metrics::ParseProcStatCpuLine(line)) {
+            total_time = times->total;
+            idle_time = times->idle;
         }
     }
 }
@@ -30,22 +31,8 @@ void getCpuTimes(unsigned long long& total_time, unsigned long long& idle_time) 
 std::string LinuxPlatform::getSystemUptime() {
     std::ifstream file("/proc/uptime");
     double uptime_seconds;
-    if (file >> uptime_seconds) {
-        long long seconds = (long long)uptime_seconds;
-        long long minutes = seconds / 60;
-        long long hours = minutes / 60;
-        long long days = hours / 24;
-
-        seconds %= 60;
-        minutes %= 60;
-        hours %= 24;
-
-        std::stringstream ss;
-        ss << days << "d "
-           << std::setw(2) << std::setfill('0') << hours << "h "
-           << std::setw(2) << std::setfill('0') << minutes << "m "
-           << std::setw(2) << std::setfill('0') << seconds << "s";
-        return ss.str();
+    if (file >> uptime_seconds && uptime_seconds >= 0) {
+        return metrics::FormatUptime(static_cast<std::uint64_t>(uptime_seconds));
     }
     return "Unknown";
 }
@@ -54,45 +41,18 @@ int LinuxPlatform::getCpuUsagePercent() {
     unsigned long long total_time, idle_time;
     getCpuTimes(total_time, idle_time);
 
-    unsigned long long total_diff = total_time - m_prev_total_time;
-    unsigned long long idle_diff = idle_time - m_prev_idle_time;
+    const metrics::CpuTimes previous{ m_prev_total_time, m_prev_idle_time };
+    const metrics::CpuTimes current{ total_time, idle_time };
 
     m_prev_total_time = total_time;
     m_prev_idle_time = idle_time;
 
-    if (total_diff == 0) return 0;
-
-    int usage = static_cast<int>(std::round((1.0 - (double)idle_diff / total_diff) * 100.0));
-    return std::max(0, std::min(100, usage));
+    return metrics::CpuBusyPercent(previous, current);
 }
 
 int LinuxPlatform::getRamUsagePercent() {
-    long long total_mem = 0;
-    long long free_mem = 0;
-
     std::ifstream file("/proc/meminfo");
-    std::string line;
-
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string key;
-        long long value;
-        std::string unit;
-
-        if (ss >> key >> value >> unit) {
-            if (key == "MemTotal:") {
-                total_mem = value;
-            } else if (key == "MemAvailable:") {
-                free_mem = value;
-            }
-        }
-    }
-    if (total_mem > 0) {
-        long long used_mem = total_mem - free_mem;
-        int usage_percent = static_cast<int>(std::round((double)used_mem / total_mem * 100.0));
-        return std::max(0, std::min(100, usage_percent));
-    }
-    return 0;
+    return metrics::MemInfoUsedPercent(file).value_or(0);
 }
 
 #ifdef ENABLE_METRICS

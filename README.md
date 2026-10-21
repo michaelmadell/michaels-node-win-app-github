@@ -220,6 +220,21 @@ RC builds write all log output to `C:\ProgramData\ahk\node-win-app.log` via `Log
 - Requires `mingw-w64-x86_64-gcc` (or the `ucrt64`/`clang64` equivalent) installed via `pacman` in MSYS2
 - Output goes to `build-mingw\bin\CoreStationHXAgent.exe` (kept separate from the MSVC `build\` dir); `--profile NAME` builds into `build-mingw-NAME\`
 
+### Running tests
+Unit tests (googletest + gmock, in `tests/`) are built whenever `ENABLE_TESTING` is on - every `dev-*` build profile turns it on, and the build scripts run them:
+- Windows: `build.bat --profile dev-full` (or `dev-ci`, `dev-minimal`) - builds and runs the tests, never touches `installer\`
+- Linux: `./build.sh --profile dev-full`
+- CMake directly: `cmake -S . -B build-dev-ci -DDEVELOPMENT_PROFILE=dev-ci`, `cmake --build build-dev-ci`, `ctest --test-dir build-dev-ci --output-on-failure`
+- One test or group: `build-dev-ci\tests\unit_tests.exe --gtest_filter=CommandHandler*` (or `ctest -R CommandHandler`)
+- Per-test timeout and extra googletest flags: `-DUNIT_TEST_TIMEOUT=<seconds>` (default 30), `-DUNIT_TEST_ARGS="--gtest_brief=1"`
+- Shard a run across processes: set `GTEST_TOTAL_SHARDS` / `GTEST_SHARD_INDEX`, or `ctest --parallel N` (each test is its own ctest entry)
+
+Coverage (GCC/Clang, Linux): add `-DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug`, run the tests, then `cmake --build <dir> --target coverage` for an HTML/Cobertura report of `src/core` + `src/modules` in `<dir>/coverage/`; it fails below `COVERAGE_MIN_LINE` (default 75%). MSVC has no gcov-style coverage, so this is Linux-only.
+
+What's covered: error types and `std::expected` paths, the logging helpers (via a capture hook - tests never write to the real Event Log/syslog), serial line framing, `SerialManager` failure paths, C2A command dispatch, metric calculations and `MetricsCollector`, `MetricCache` (with a mock clock), and IPC client authentication over a real in-process pipe/socketpair. Platform layers (`WindowsPlatform*`, `LinuxPlatform*`), `main.cpp` and anything needing a real serial port aren't unit-tested. Helpers: `tests/test_helpers.h` (`OutputStreamCapture`, `MockClock`, `TempFile`, `LogCapture`, `MessageSink`) and `tests/mock_platform.h` (gmock `Platform`).
+
+CI (`bitbucket-pipelines.yml`, `.github/workflows/ci-build.yml`) runs the tests on Linux GCC (with the coverage gate), mingw-w64 cross-compiled under Wine, and - GitHub only - native Windows MSVC and MinGW; any failure fails the pipeline and JUnit XML is published from `test-results/`.
+
 
 ### Build machine setup #
 - Install VSCode: [download](https://code.visualstudio.com/download) and pin to task bar

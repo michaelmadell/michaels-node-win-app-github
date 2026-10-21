@@ -1,4 +1,5 @@
 #include "SerialManager.h"
+#include "LineFramer.h"
 #include <iostream>
 
 #ifdef _WIN32
@@ -317,15 +318,9 @@ void SerialManager::ProcessIncomingData() {
     Read(newData);
     rxBuffer_ += newData;
 
-    size_t pos = 0;
-    while ((pos = rxBuffer_.find_first_of("\r\n")) != std::string::npos) {
-        std::string line = rxBuffer_.substr(0, pos);
-        if (!line.empty() && onMessage_) {
+    for (const std::string& line : serial::ExtractLines(rxBuffer_)) {
+        if (onMessage_) {
             onMessage_(line);
-        }
-        rxBuffer_.erase(0, pos + 1);
-        if (!rxBuffer_.empty() && (rxBuffer_[0] == '\r' || rxBuffer_[0] == '\n')) {
-            rxBuffer_.erase(0, 1);
         }
     }
 }
