@@ -11,6 +11,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include "WindowsPlatform.h"
+#include "../core/Logging.h"
 #include <format>
 
 static ULONGLONG FileTimeToInt64(const FILETIME& ft) {
@@ -42,7 +43,7 @@ void WindowsPlatform::updateCpuTimes() {
 
 int WindowsPlatform::getCpuUsagePercent() {
     return cpuCache_.get([this]() {
-        return valueOrReport(getCpuUsagePercentImpl(), 0, "metric:cpu", "CPU usage");
+        return valueOrReport(core::kMsgIDMetrics, getCpuUsagePercentImpl(), 0, "metric:cpu", "CPU usage");
     });
 }
 
@@ -84,7 +85,7 @@ std::expected<int, core::PlatformError> WindowsPlatform::getCpuUsagePercentImpl(
 
 int WindowsPlatform::getRamUsagePercent() {
     return ramCache_.get([this]() {
-        return valueOrReport(getRamUsagePercentImpl(), 0, "metric:ram", "RAM usage");
+        return valueOrReport(core::kMsgIDMetrics, getRamUsagePercentImpl(), 0, "metric:ram", "RAM usage");
     });
 }
 
@@ -166,7 +167,7 @@ bool isPdhNoData(PDH_STATUS status) {
 
 std::string WindowsPlatform::getFreeDiskSpaceGB(const std::string& drivePath) {
 	return diskSpaceCache_.get([this, drivePath]() {
-        return valueOrReport(getFreeDiskSpaceGBImpl(drivePath), std::string("Unknown"),
+        return valueOrReport(core::kMsgIDMetrics, getFreeDiskSpaceGBImpl(drivePath), std::string("Unknown"),
                              "metric:disk:" + drivePath, "Free disk space");
     });
 }
@@ -206,7 +207,7 @@ std::expected<std::string, core::PlatformError> WindowsPlatform::getFreeDiskSpac
 
 std::string WindowsPlatform::getWindowsUpdateState() {
     return windowsUpdateCache_.get([this]() {
-        return valueOrReport(getWindowsUpdateStateImpl(), std::string("Up to Date or Unknown"),
+        return valueOrReport(core::kMsgIDMetrics, getWindowsUpdateStateImpl(), std::string("Up to Date or Unknown"),
                              "metric:windowsUpdate", "Windows Update state");
     });
 }
@@ -261,7 +262,7 @@ void WindowsPlatform::updatePdhMetrics() {
 
     if (m_hQuery.get()) {
         if (PDH_STATUS status = PdhCollectQueryData((PDH_HQUERY)m_hQuery.get()); status != ERROR_SUCCESS) {
-            reportErrorOnChange("metric:pdhCollect", "PDH sample collection",
+            reportErrorOnChange(core::kMsgIDMetrics, "metric:pdhCollect", "PDH sample collection",
                                 metricError("PdhCollectQueryData", static_cast<std::uint32_t>(status)));
         } else {
             clearReportedError("metric:pdhCollect");
@@ -291,7 +292,7 @@ std::expected<float, core::PlatformError> WindowsPlatform::readPdhCounter(PDH_HC
 
 float WindowsPlatform::getDiskQueueLength() {
 	return diskQueueCache_.get([this]() {
-        return valueOrReport(getDiskQueueLengthImpl(), 0.0f, "metric:diskQueue", "Disk queue length");
+        return valueOrReport(core::kMsgIDMetrics, getDiskQueueLengthImpl(), 0.0f, "metric:diskQueue", "Disk queue length");
     });
 }
 
@@ -302,7 +303,7 @@ std::expected<float, core::PlatformError> WindowsPlatform::getDiskQueueLengthImp
 
 float WindowsPlatform::getNetworkRetransRate() {
     return netRetransCache_.get([this]() {
-        return valueOrReport(getNetworkRetransRateImpl(), 0.0f, "metric:netRetrans", "TCP retransmit rate");
+        return valueOrReport(core::kMsgIDMetrics, getNetworkRetransRateImpl(), 0.0f, "metric:netRetrans", "TCP retransmit rate");
     });
 }
 
@@ -313,7 +314,7 @@ std::expected<float, core::PlatformError> WindowsPlatform::getNetworkRetransRate
 
 std::string WindowsPlatform::getGpuDriverInfo() {
 	return gpuDriverCache_.get([this]() {
-        return valueOrReport(getGpuDriverInfoImpl(), std::string("GPU: Not Found."),
+        return valueOrReport(core::kMsgIDMetrics, getGpuDriverInfoImpl(), std::string("GPU: Not Found."),
                              "metric:gpuDriver", "GPU driver query");
     });
 }
@@ -399,7 +400,7 @@ std::expected<std::string, core::PlatformError> WindowsPlatform::getGpuDriverInf
 
 float WindowsPlatform::getGpuUsagePercent() {
     return gpuUsageCache_.get([this]() {
-        return valueOrReport(getGpuUsagePercentImpl(), 0.0f, "metric:gpuUsage", "GPU usage");
+        return valueOrReport(core::kMsgIDMetrics, getGpuUsagePercentImpl(), 0.0f, "metric:gpuUsage", "GPU usage");
     });
 }
 
@@ -462,7 +463,7 @@ std::string WindowsPlatform::getProcessName(HANDLE hProcess) {
 
 std::string WindowsPlatform::getHighRamProcesses() {
     return highRamProcsCache_.get([this]() {
-        return valueOrReport(getHighRamProcessesImpl(), std::string("error: EnumProcesses failed"),
+        return valueOrReport(core::kMsgIDMetrics, getHighRamProcessesImpl(), std::string("error: EnumProcesses failed"),
                              "metric:highRamProcs", "High-RAM process scan");
     });
 }

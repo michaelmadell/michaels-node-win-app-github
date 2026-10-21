@@ -5,7 +5,7 @@
 #ifdef __linux__
 #include "LinuxPlatform.h"
 #include <dbus/dbus.h>
-#include <syslog.h>
+#include "../core/Logging.h"
 #include <cstring>
 #include <atomic>
 
@@ -19,7 +19,7 @@ void dbusThread() {
     dbus_error_init(&err);
     DBusConnection* conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
     if (dbus_error_is_set(&err)) {
-        syslog(LOG_ERR, "D-Bus connection error: %s", err.message);
+        core::Log(core::LogLevel::Error, core::kMsgIDSession, std::string("D-Bus connection error: ") + err.message);
         dbus_error_free(&err);
         return;
     }
@@ -38,7 +38,7 @@ void dbusThread() {
     dbus_bus_add_match(conn, match_rule3, &err);
     dbus_bus_add_match(conn, match_rule4, &err);
 
-    syslog(LOG_INFO, "D-Bus thread started and listening for session signals.");
+    core::Log(core::LogLevel::Info, core::kMsgIDSession, "D-Bus thread started and listening for session signals.");
 
     while (!g_terminate.load()) {
         dbus_connection_read_write_dispatch(conn, 200);
@@ -89,7 +89,7 @@ void dbusThread() {
         dbus_message_unref(msg);
     }
 
-    syslog(LOG_INFO, "D-Bus thread terminating.");
+    core::Log(core::LogLevel::Info, core::kMsgIDSession, "D-Bus thread terminating.");
     dbus_connection_unref(conn);
 }
 

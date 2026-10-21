@@ -222,6 +222,8 @@ endif()
 set(HEADER_FILES
     src/core/Platform.h
     src/core/SystemState.h
+    src/core/Errors.h
+    src/core/Logging.h
     src/version.h
     src/modules/serial/SerialManager.h
     src/modules/amt/AMTPortManager.h
@@ -236,7 +238,7 @@ if(BUILD_C2A)
 endif()
 
 if(WIN32)
-    list(APPEND HEADER_FILES src/platform/WinHandles.h)
+    list(APPEND HEADER_FILES src/platform/WinHandles.h src/core/EventLogger.h)
     
     if(BUILD_TRAY_APP)
         list(APPEND HEADER_FILES src/modules/tray/TrayApp.h)
@@ -324,7 +326,28 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     $<$<PLATFORM_ID:Windows>:NOMINMAX>
     $<$<CONFIG:Debug>:_DEBUG>
     $<$<CONFIG:Release>:NDEBUG>
-)    
+)
+
+# System logging (src/core/Logging.h): Event Log on Windows, syslog on Linux.
+# Compile-time only - there is no runtime log configuration.
+set(CORESTATION_LOG_MIN_LEVEL "Info" CACHE STRING
+    "Lowest level written to the Event Log / syslog (Debug, Info, Warning, Error, Critical)")
+set_property(CACHE CORESTATION_LOG_MIN_LEVEL PROPERTY STRINGS Debug Info Warning Error Critical)
+set(_log_levels Debug Info Warning Error Critical)
+list(FIND _log_levels "${CORESTATION_LOG_MIN_LEVEL}" _log_min_level_index)
+if(_log_min_level_index EQUAL -1)
+    message(FATAL_ERROR "CORESTATION_LOG_MIN_LEVEL must be one of: ${_log_levels} (got '${CORESTATION_LOG_MIN_LEVEL}')")
+endif()
+target_compile_definitions(${PROJECT_NAME} PRIVATE CORESTATION_LOG_MIN_LEVEL=${_log_min_level_index})
+
+if(UNIX AND NOT APPLE)
+    set(CORESTATION_LOG_FACILITY "LOG_DAEMON" CACHE STRING
+        "syslog facility for core::Log (LOG_DAEMON, LOG_LOCAL0..LOG_LOCAL7, ...)")
+    if(NOT CORESTATION_LOG_FACILITY MATCHES "^LOG_[A-Z0-9]+$")
+        message(FATAL_ERROR "CORESTATION_LOG_FACILITY must be a <syslog.h> facility macro such as LOG_DAEMON (got '${CORESTATION_LOG_FACILITY}')")
+    endif()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CORESTATION_LOG_FACILITY=${CORESTATION_LOG_FACILITY})
+endif()
 
 if(BUILD_METRICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_METRICS)
@@ -516,6 +539,10 @@ if(IPC_AUTH_DEV_DISABLE)
     message(STATUS "  *** IPC_AUTH_DEV_DISABLE is ON: IPC bridge client authentication is COMPILED OUT. Dev/test builds only. ***")
 endif()
 message(STATUS "  Testing:            ${ENABLE_TESTING}")
+message(STATUS "  Log min level:      ${CORESTATION_LOG_MIN_LEVEL}")
+if(UNIX AND NOT APPLE)
+    message(STATUS "  syslog facility:    ${CORESTATION_LOG_FACILITY}")
+endif()
 message(STATUS "")
 message(STATUS "Source Files:")
 foreach(src ${CORE_SOURCES} ${MODULE_SOURCES})

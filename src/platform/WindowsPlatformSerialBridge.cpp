@@ -7,7 +7,7 @@
 
 #ifdef ENABLE_SERIAL_BRIDGE_PIPE
 #include "../modules/serialpipe/SerialBridgePipe.h"
-#include "../core/EventLogger.h"
+#include "../core/Logging.h"
 #endif
 
 void WindowsPlatform::startSerialBridgePipe() {
@@ -16,7 +16,7 @@ void WindowsPlatform::startSerialBridgePipe() {
         serial_bridge_pipe_ = std::make_unique<SerialBridgePipe>(this);
         if (auto started = serial_bridge_pipe_->Start(); !started) {
             logMessage("[SerialBridgePipe] " + core::describe(started.error()));
-            core::EventLogger::instance().log("Serial bridge pipe failed to start", started.error());
+            core::LogError(core::kMsgIDSerialBridge, "Serial bridge pipe failed to start", started.error());
             // Drop it so the next startSerialBridgePipe() (e.g. on service
             // restart) retries from scratch.
             serial_bridge_pipe_.reset();

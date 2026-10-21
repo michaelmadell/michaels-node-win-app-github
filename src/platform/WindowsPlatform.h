@@ -202,14 +202,15 @@ private:
     // is at the console (e.g. at the logon screen right after boot).
     static std::expected<DWORD, core::PlatformError> activeConsoleSessionId();
 
-    // Logs a failed one-shot operation to the file log and Event Viewer.
-    void reportError(const std::string& context, const core::PlatformError& error);
+    // Logs a failed one-shot operation to the file log and the system log
+    // (core::LogError) under `messageId` (a core::kMsgID*).
+    void reportError(std::uint32_t messageId, const std::string& context, const core::PlatformError& error);
 
     // As reportError(), but for operations retried on a timer or polled by
-    // the heartbeat: the file log and Event Viewer only get an entry when the
-    // error changes (see EventLogger::log_on_change). `key` identifies the
+    // the heartbeat: the file log and system log only get an entry when the
+    // error changes (see core::LogErrorOnChange). `key` identifies the
     // operation.
-    void reportErrorOnChange(const std::string& key, const std::string& context,
+    void reportErrorOnChange(std::uint32_t messageId, const std::string& key, const std::string& context,
                              const core::PlatformError& error);
 
     // Unwraps a metric/info query for the Platform interface, which has to
@@ -217,11 +218,11 @@ private:
     // `fallback` (the same placeholder the wire format has always carried);
     // on success clears `key` so a later failure is reported again.
     template <typename T>
-    T valueOrReport(std::expected<T, core::PlatformError> result, T fallback,
+    T valueOrReport(std::uint32_t messageId, std::expected<T, core::PlatformError> result, T fallback,
                     const std::string& key, const std::string& context)
     {
         if (!result) {
-            reportErrorOnChange(key, context, result.error());
+            reportErrorOnChange(messageId, key, context, result.error());
             return fallback;
         }
         clearReportedError(key);

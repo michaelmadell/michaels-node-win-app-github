@@ -12,7 +12,7 @@
 #include <sstream>
 #include <cctype>
 #include "WinHandles.h"
-#include "../core/EventLogger.h"
+#include "../core/Logging.h"
 #include <print>
 #include <format>
 
@@ -87,7 +87,7 @@ WindowsPlatform::WindowsPlatform()
     initPdhCounters();
 
     if (!com_initializer.Succeeded()) {
-        reportError("[WARNING] COM initialization for WMI access", core::PlatformError{
+        reportError(core::kMsgIDMetrics, "[WARNING] COM initialization for WMI access", core::PlatformError{
             .code = core::CoreError::Code::Internal,
             .sub_code = core::PlatformError::SubCode::WmiQueryFailed,
             .message = "CoInitializeEx failed",
@@ -118,7 +118,7 @@ void WindowsPlatform::initPdhCounters()
 
     PDH_HQUERY rawQuery = NULL;
     if (PDH_STATUS status = PdhOpenQuery(NULL, 0, &rawQuery); status != ERROR_SUCCESS || rawQuery == NULL) {
-        reportError("[WARNING] PDH setup for system metrics", pdhError(status, "PdhOpenQuery failed"));
+        reportError(core::kMsgIDMetrics, "[WARNING] PDH setup for system metrics", pdhError(status, "PdhOpenQuery failed"));
         return;
     }
     // Store the raw handle in the unique_ptr wrapper
@@ -127,7 +127,7 @@ void WindowsPlatform::initPdhCounters()
     auto addCounter = [&](const wchar_t* path, PDH_HCOUNTER* counter, const char* name) {
         if (PDH_STATUS status = PdhAddCounterW(m_hQuery.get(), path, 0, counter); status != ERROR_SUCCESS) {
             *counter = NULL;
-            reportError("[WARNING] PDH setup for system metrics",
+            reportError(core::kMsgIDMetrics, "[WARNING] PDH setup for system metrics",
                         pdhError(status, std::format("PdhAddCounter failed for {} counter", name)));
         }
     };
@@ -200,7 +200,7 @@ int WindowsPlatform::run(
         DWORD err = GetLastError();
         if (forceService || err != ERROR_FAILED_SERVICE_CONTROLLER_CONNECT)
         {
-            reportError("Service start", core::PlatformError{
+            reportError(core::kMsgIDPlatform, "Service start", core::PlatformError{
                 .code = core::CoreError::Code::Internal,
                 .sub_code = core::PlatformError::SubCode::ServiceStartFailed,
                 .message = "StartServiceCtrlDispatcher failed, cannot continue",
@@ -362,23 +362,24 @@ void WindowsPlatform::stopService(const std::string& stopReason)
         on_stop_callback(stopReason);
     SetEvent(g_stop_event.get());
 }
-void WindowsPlatform::reportError(const std::string& context, const core::PlatformError& error)
+void WindowsPlatform::reportError(std::uint32_t messageId, const std::string& context,
+                                  const core::PlatformError& error)
 {
     logMessage(std::format("{}: {}", context, core::describe(error)));
-    core::EventLogger::instance().log(context, error);
+    core::LogError(messageId, context, error);
 }
 
-void WindowsPlatform::reportErrorOnChange(const std::string& key, const std::string& context,
-                                          const core::PlatformError& error)
+void WindowsPlatform::reportErrorOnChange(std::uint32_t messageId, const std::string& key,
+                                          const std::string& context, const core::PlatformError& error)
 {
-    if (core::EventLogger::instance().log_on_change(key, context, error)) {
+    if (core::LogErrorOnChange(key, messageId, context, error)) {
         logMessage(std::format("{}: {}", context, core::describe(error)));
     }
 }
 
 void WindowsPlatform::clearReportedError(const std::string& key)
 {
-    core::EventLogger::instance().clear(key);
+    core::ClearReportedError(key);
 }
 
 std::expected<DWORD, core::PlatformError> WindowsPlatform::activeConsoleSessionId()
@@ -453,7 +454,7 @@ void WindowsPlatform::shutdownSystem(const std::string& reason)
     logMessage("Initiating system shutdown." + (reason.empty() ? "" : (" Reason: " + reason)));
 
     if (auto result = exitWindows(EWX_SHUTDOWN | EWX_FORCE, "shutdown"); !result) {
-        reportError("shutdownSystem", result.error());
+        reportError(core::kMsgIDPlatform, "shutdownSystem", result.error());
     }
 }
 
@@ -462,7 +463,7 @@ void WindowsPlatform::restartSystem(const std::string& reason)
     logMessage("Initiating system restart." + (reason.empty() ? "" : (" Reason: " + reason)));
 
     if (auto result = exitWindows(EWX_REBOOT | EWX_FORCE, "restart"); !result) {
-        reportError("restartSystem", result.error());
+        reportError(core::kMsgIDPlatform, "restartSystem", result.error());
     }
 }
 
@@ -470,7 +471,7 @@ void WindowsPlatform::lockActiveSession()
 {
     auto sessionId = activeConsoleSessionId();
     if (!sessionId) {
-        reportError("lockActiveSession", sessionId.error());
+        reportError(core::kMsgIDPlatform, "lockActiveSession", sessionId.error());
         return;
     }
 
@@ -479,7 +480,7 @@ void WindowsPlatform::lockActiveSession()
     // user to re-enter credentials to reconnect - identical to Win+L.
     if (!WTSDisconnectSession(WTS_CURRENT_SERVER_HANDLE, *sessionId, FALSE)) {
         DWORD err = GetLastError();
-        reportError("lockActiveSession", core::PlatformError{
+        reportError(core::kMsgIDPlatform, "lockActiveSession", core::PlatformError{
             .code = core::CoreError::Code::Internal,
             .sub_code = core::PlatformError::SubCode::SessionActionFailed,
             .message = "WTSDisconnectSession failed",
@@ -492,13 +493,13 @@ void WindowsPlatform::logoffActiveSession()
 {
     auto sessionId = activeConsoleSessionId();
     if (!sessionId) {
-        reportError("logoffActiveSession", sessionId.error());
+        reportError(core::kMsgIDPlatform, "logoffActiveSession", sessionId.error());
         return;
     }
 
     if (!WTSLogoffSession(WTS_CURRENT_SERVER_HANDLE, *sessionId, FALSE)) {
         DWORD err = GetLastError();
-        reportError("logoffActiveSession", core::PlatformError{
+        reportError(core::kMsgIDPlatform, "logoffActiveSession", core::PlatformError{
             .code = core::CoreError::Code::Internal,
             .sub_code = core::PlatformError::SubCode::SessionActionFailed,
             .message = "WTSLogoffSession failed",

@@ -18,7 +18,7 @@
 #include <format>
 #include <memory>
 #include <type_traits>
-#include "../core/EventLogger.h"
+#include "../core/Logging.h"
 #include "../version.h"
 
 std::string WideToUtf8(const std::wstring &wstr)
@@ -246,23 +246,23 @@ std::string WindowsPlatform::getOsVersion()
     // First, get the raw version info to check the build number
     auto rovi = queryRtlVersion();
     if (!rovi) {
-        reportErrorOnChange("getOsVersion", "OS version query", rovi.error());
+        reportErrorOnChange(core::kMsgIDPlatform, "getOsVersion", "OS version query", rovi.error());
         return "Unknown Windows Version";
     }
 
     // Now, query the registry for the friendly name
     auto key = openHklmKey(kCurrentVersionKey);
     if (!key) {
-        reportErrorOnChange("getOsVersion", "OS version query", key.error());
+        reportErrorOnChange(core::kMsgIDPlatform, "getOsVersion", "OS version query", key.error());
         return formatVersion(*rovi);  // fall back to the build number
     }
 
     auto productName = readRegString(key->get(), "ProductName");
     if (!productName) {
-        reportErrorOnChange("getOsVersion", "OS version query", productName.error());
+        reportErrorOnChange(core::kMsgIDPlatform, "getOsVersion", "OS version query", productName.error());
         return "Unknown Windows Version";
     }
-    core::EventLogger::instance().clear("getOsVersion");
+    clearReportedError("getOsVersion");
 
     std::string finalProductName = *productName;
 
@@ -285,10 +285,10 @@ std::string WindowsPlatform::getOsBuild()
 {
     auto rovi = queryRtlVersion();
     if (!rovi) {
-        reportErrorOnChange("getOsBuild", "OS build query", rovi.error());
+        reportErrorOnChange(core::kMsgIDPlatform, "getOsBuild", "OS build query", rovi.error());
         return std::format("Unknown Build ({})", rovi.error().message);
     }
-    core::EventLogger::instance().clear("getOsBuild");
+    clearReportedError("getOsBuild");
 
     // Major.Minor.Build
     return formatVersion(*rovi);

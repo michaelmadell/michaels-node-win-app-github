@@ -1,9 +1,11 @@
 #pragma once
 
-// Windows Event Viewer sink for errors that reach a reporting boundary.
+// Windows backend for core::Log (src/core/Logging.h): writes to the
+// Application log under the "CoreStationHXAgent" event source. Code should log
+// through core::Log / core::LogError rather than using this directly; the
+// exceptions are the event-source registration commands.
 //
-// Events go to the Application log under the "CoreStationHXAgent" source.
-// Their text is rendered through the message table compiled into the exe from
+// Event text is rendered through the message table compiled into the exe from
 // src/core/EventMessages.mc. Builds without that table (e.g. build.sh) still
 // log, but Event Viewer prefixes each entry with "The description for Event
 // ID N cannot be found".
@@ -19,44 +21,26 @@
 
 #include <windows.h>
 #include <cstdint>
+#include <cstring>
 #include <expected>
-#include <format>
-#include <map>
-#include <mutex>
 #include <string>
-#include <system_error>
 #include "Errors.h"
 
 namespace core {
-
-// Must match EventMessages.mc - checked at compile time in CMake builds by
-// EventMessagesCheck.cpp against the mc-generated header.
-inline constexpr DWORD kEventIdInfo = 0x40000001L;
-inline constexpr DWORD kEventIdWarning = 0x80000002L;
-inline constexpr DWORD kEventIdError = 0xC0000003L;
 
 inline constexpr wchar_t kEventSourceName[] = L"CoreStationHXAgent";
 inline constexpr wchar_t kEventSourceRegistryKey[] =
     L"SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\CoreStationHXAgent";
 
-enum class EventSeverity { Information, Warning, Error };
-
-// Missing/busy resources and timeouts are usually transient (port not plugged
-// in yet, peer slow to respond) so they're warnings; everything else is an
-// error.
-constexpr EventSeverity severity_for(CoreError::Code code) noexcept {
-    switch (code) {
-    case CoreError::Code::NotFound:
-    case CoreError::Code::Timeout:
-    case CoreError::Code::Busy:
-        return EventSeverity::Warning;
-    default:
-        return EventSeverity::Error;
-    }
-}
-
 class EventLogger {
 public:
+    // Longest message written, in UTF-16 code units (including the
+    // terminator). Longer messages are truncated. The Event Log's own limit
+    // is ~31,839 characters; this keeps the conversion buffer on the stack.
+    static constexpr int kMaxMessageChars = 4096;
+
+    // The process-wide instance. Initialisation (source self-registration +
+    // RegisterEventSource) runs exactly once, thread-safely, on first use.
     static EventLogger& instance() {
         static EventLogger logger;
         return logger;
@@ -65,70 +49,32 @@ public:
     EventLogger(const EventLogger&) = delete;
     EventLogger& operator=(const EventLogger&) = delete;
 
-    void log_error(const std::string& message, DWORD event_id = kEventIdError) {
-        report(EVENTLOG_ERROR_TYPE, event_id, message);
-    }
-    void log_warning(const std::string& message, DWORD event_id = kEventIdWarning) {
-        report(EVENTLOG_WARNING_TYPE, event_id, message);
-    }
-    void log_info(const std::string& message, DWORD event_id = kEventIdInfo) {
-        report(EVENTLOG_INFORMATION_TYPE, event_id, message);
-    }
-
-    // Logs an error value at the severity its code maps to, with the OS error
-    // text appended (see core::describe).
-    template <Error E>
-    void log(const std::string& context, const E& error) {
-        std::string text = context.empty() ? describe(error) : std::format("{}: {}", context, describe(error));
-        if (severity_for(error.code) == EventSeverity::Warning) {
-            log_warning(text);
-        } else {
-            log_error(text);
+    // Writes one event. `type` is EVENTLOG_{INFORMATION,WARNING,ERROR}_TYPE,
+    // `event_id` one of the kMsgID* IDs from Logging.h, `message` UTF-8.
+    // No heap allocation: the UTF-16 conversion uses a stack buffer.
+    void report(WORD type, DWORD event_id, const char* message) noexcept {
+        if (handle_ == nullptr || message == nullptr) {
+            return;
         }
-    }
 
-    // For failures that are retried on a timer (port reconnects, pipe
-    // re-creation, metric polls): logs only when `error` differs from the last
-    // one logged under `key`, so a persistent fault produces one event rather
-    // than one per retry. Pair with clear() on success. Returns true if it
-    // logged, so callers can rate-limit their own file logging the same way.
-    template <Error E>
-    bool log_on_change(const std::string& key, const std::string& context, const E& error) {
-        const LastError current{ make_error_code(error), error.platform_error };
-        {
-            std::lock_guard<std::mutex> lock(last_errors_mutex_);
-            auto [it, inserted] = last_errors_.try_emplace(key, current);
-            if (!inserted) {
-                if (it->second == current) {
-                    return false;
-                }
-                it->second = current;
+        // Every UTF-8 byte becomes at most one UTF-16 unit, so capping the
+        // input at kMaxMessageChars - 1 bytes guarantees the output fits.
+        // Back off to a character boundary so a multi-byte sequence isn't cut.
+        size_t len = std::strlen(message);
+        if (len > static_cast<size_t>(kMaxMessageChars - 1)) {
+            len = kMaxMessageChars - 1;
+            while (len > 0 && (static_cast<unsigned char>(message[len]) & 0xC0) == 0x80) {
+                --len;
             }
         }
-        log(context, error);
-        return true;
-    }
 
-    // Forgets `key`'s last error. If one had been logged and recovery_message
-    // is non-empty, logs it as Information so the trail doesn't end on a
-    // stale error.
-    void clear(const std::string& key, const std::string& recovery_message = {}) {
-        bool hadError = false;
-        {
-            std::lock_guard<std::mutex> lock(last_errors_mutex_);
-            hadError = last_errors_.erase(key) > 0;
-        }
-        if (hadError && !recovery_message.empty()) {
-            log_info(recovery_message);
-        }
-    }
+        wchar_t wide[kMaxMessageChars];
+        int converted = len == 0 ? 0
+            : MultiByteToWideChar(CP_UTF8, 0, message, static_cast<int>(len), wide, kMaxMessageChars - 1);
+        wide[converted > 0 ? converted : 0] = L'\0';
 
-    // Convenience: log a std::expected's error, if it holds one.
-    template <typename T, Error E>
-    static void log_expected_error(const std::string& context, const std::expected<T, E>& result) {
-        if (!result) {
-            instance().log(context, result.error());
-        }
+        LPCWSTR strings[] = { wide };
+        ReportEventW(handle_, type, 0, event_id, nullptr, 1, 0, strings, nullptr);
     }
 
     // Creates/updates the source's registry key so Event Viewer can find the
@@ -218,34 +164,7 @@ private:
         };
     }
 
-    static std::wstring utf8_to_wide(const std::string& text) {
-        if (text.empty()) {
-            return {};
-        }
-        int len = MultiByteToWideChar(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), nullptr, 0);
-        std::wstring wide(static_cast<size_t>(len), L'\0');
-        MultiByteToWideChar(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), wide.data(), len);
-        return wide;
-    }
-
-    void report(WORD type, DWORD event_id, const std::string& message) {
-        if (handle_ == nullptr) {
-            return;
-        }
-        std::wstring wide = utf8_to_wide(message);
-        LPCWSTR strings[] = { wide.c_str() };
-        ReportEventW(handle_, type, 0, event_id, nullptr, 1, 0, strings, nullptr);
-    }
-
-    struct LastError {
-        std::error_code code;
-        std::uint32_t platform_error = 0;
-        bool operator==(const LastError&) const = default;
-    };
-
     HANDLE handle_ = nullptr;
-    std::mutex last_errors_mutex_;
-    std::map<std::string, LastError> last_errors_;
 };
 
 } // namespace core

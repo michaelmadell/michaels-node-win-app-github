@@ -98,7 +98,7 @@ int LinuxPlatform::getRamUsagePercent() {
 #ifdef ENABLE_METRICS
 #include <cctype>
 #include <cstdio>
-#include <syslog.h>
+#include "../core/Logging.h"
 #include <sys/statvfs.h>
 
 static unsigned long long getTcpValue(int index) {
@@ -112,7 +112,7 @@ static unsigned long long getTcpValue(int index) {
         }
     } catch (const std::exception& e) {
         // Handle any conversion errors if necessary
-        syslog(LOG_ERR, "Error converting TCP value: %s", e.what());
+        core::Log(core::LogLevel::Error, core::kMsgIDMetrics, std::string("Error converting TCP value: ") + e.what());
     }
     return value;
 }

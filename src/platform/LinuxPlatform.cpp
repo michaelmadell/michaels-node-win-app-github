@@ -13,7 +13,6 @@
 #include <cstdio>
 #include <csignal>
 #include <unistd.h>
-#include <syslog.h>
 #include <atomic>
 #include <thread>
 
@@ -67,8 +66,8 @@ int LinuxPlatform::run(
 
     std::cout << "[DEBUG] Running in foreground mode as root." << std::endl;
 
-    openlog("CoreStationHXAgent", LOG_PID, LOG_DAEMON);
-
+    // syslog is opened lazily (ident, LOG_PID, facility) by core::Log on
+    // first use - see src/core/Logging.h.
     signal(SIGTERM, signal_handler);
     signal(SIGINT, signal_handler);
 
@@ -92,7 +91,6 @@ int LinuxPlatform::run(
         on_stop("shutdown");
     }
     std::cout << "[DEBUG] Application terminating cleanly." << std::endl;
-    closelog();
     return 0;
 }
 

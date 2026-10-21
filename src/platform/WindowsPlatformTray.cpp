@@ -9,7 +9,7 @@
 #include <format>
 #include <mutex>
 #include <string>
-#include "../core/EventLogger.h"
+#include "../core/Logging.h"
 
 #ifdef ENABLE_TRAY_APP
 #include "../modules/tray/TrayApp.h"
@@ -67,16 +67,16 @@ void WindowsPlatform::spawnTrayHelper()
     // console session yet, so only log to Event Viewer when the error changes.
     auto sessionId = activeConsoleSessionId();
     if (!sessionId) {
-        reportErrorOnChange("trayHelper", "[Tray] Cannot spawn tray helper", sessionId.error());
+        reportErrorOnChange(core::kMsgIDPlatform, "trayHelper", "[Tray] Cannot spawn tray helper", sessionId.error());
         return;
     }
 
     auto pi = launchTrayHelper(*sessionId);
     if (!pi) {
-        reportErrorOnChange("trayHelper", "[Tray] Cannot spawn tray helper", pi.error());
+        reportErrorOnChange(core::kMsgIDPlatform, "trayHelper", "[Tray] Cannot spawn tray helper", pi.error());
         return;
     }
-    core::EventLogger::instance().clear("trayHelper");
+    clearReportedError("trayHelper");
 
     CloseHandle(pi->hThread);
     {

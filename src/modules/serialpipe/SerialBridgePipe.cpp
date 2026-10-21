@@ -2,7 +2,7 @@
 #include "SerialBridgePipe.h"
 #include "WindowsIpcClientAuth.h"
 #include "../../platform/WindowsPlatform.h"
-#include "../../core/EventLogger.h"
+#include "../../core/Logging.h"
 #include <sddl.h>
 #include <chrono>
 #include <format>
@@ -36,7 +36,7 @@ void SerialBridgePipe::Log(const std::string& msg) {
 
 void SerialBridgePipe::ReportPipeError(const core::PipeError& error) {
     Log(core::describe(error));
-    core::EventLogger::instance().log_on_change("serialpipe", "Serial bridge pipe", error);
+    core::LogErrorOnChange("serialpipe", core::kMsgIDSerialBridge, "Serial bridge pipe", error);
 }
 
 std::expected<void, core::PipeError> SerialBridgePipe::Start() {
@@ -127,7 +127,7 @@ void SerialBridgePipe::PipeThreadProc() {
             std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
         }
-        core::EventLogger::instance().clear("serialpipe", "Serial bridge pipe: listener recovered");
+        core::ClearReportedError("serialpipe", core::kMsgIDSerialBridge, "Serial bridge pipe: listener recovered");
         HANDLE hPipe = *pipe;
 
         OVERLAPPED ovConnect = {};
@@ -161,7 +161,8 @@ void SerialBridgePipe::PipeThreadProc() {
                 const char* notice = "DEV MODE: IPC authentication disabled (IPC_AUTH_DEV_DISABLE) -- "
                                      "this build MUST NOT be used in production";
                 Log(notice);
-                core::EventLogger::instance().log_warning(std::format("Serial bridge pipe: {}", notice));
+                core::Log(core::LogLevel::Warning, core::kMsgIDSerialBridge,
+                          std::format("Serial bridge pipe: {}", notice));
             }
 
             if (!client) {
@@ -169,8 +170,8 @@ void SerialBridgePipe::PipeThreadProc() {
                 // the admin-only pipe ACL keeps the rate low.
                 Log(core::describe(client.error()));
                 Log("WARNING: rejected unauthenticated IPC bridge connection");
-                core::EventLogger::instance().log("Serial bridge pipe: rejected unauthenticated IPC connection",
-                                                  client.error());
+                core::LogError(core::kMsgIDSerialBridge,
+                               "Serial bridge pipe: rejected unauthenticated IPC connection", client.error());
                 if (ovConnect.hEvent) {
                     CloseHandle(ovConnect.hEvent);
                 }

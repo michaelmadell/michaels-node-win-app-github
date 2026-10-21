@@ -1,5 +1,5 @@
 // System information getters: hostname, logged-in user, OS version/build,
-// network interfaces, message dialogs, and syslog logging.
+// network interfaces, message dialogs, and logging (via core::Log -> syslog).
 #ifdef __linux__
 #include "LinuxPlatform.h"
 #include <iostream>
@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
-#include <syslog.h>
+#include "../core/Logging.h"
 #include <unistd.h>
 
 #include <ifaddrs.h>
@@ -147,22 +147,28 @@ void LinuxPlatform::showMessageDialog(const std::string& title, const std::strin
 }
 #endif
 
-static int SyslogPriorityFor(const std::string& message) {
+// logMessage() callers don't pass a level, so infer one from the text, as
+// before. Each level goes out under the matching general message ID.
+static core::LogLevel LogLevelFor(const std::string& message) {
     std::string upper = message;
     std::transform(upper.begin(), upper.end(), upper.begin(),
         [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 
     if (upper.find("FATAL") != std::string::npos || upper.find("ERROR") != std::string::npos) {
-        return LOG_ERR;
+        return core::LogLevel::Error;
     }
     if (upper.find("WARNING") != std::string::npos) {
-        return LOG_WARNING;
+        return core::LogLevel::Warning;
     }
-    return LOG_INFO;
+    return core::LogLevel::Info;
 }
 
 void LinuxPlatform::logMessage(const std::string& message) {
-    syslog(SyslogPriorityFor(message), "%s", message.c_str());
+    const core::LogLevel level = LogLevelFor(message);
+    const std::uint32_t messageId = level == core::LogLevel::Error   ? core::kMsgIDError
+                                  : level == core::LogLevel::Warning ? core::kMsgIDWarning
+                                                                     : core::kMsgIDInfo;
+    core::Log(level, messageId, message);
 }
 
 std::string LinuxPlatform::getHostname() {

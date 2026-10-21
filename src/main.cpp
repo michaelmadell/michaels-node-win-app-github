@@ -35,9 +35,7 @@
 #ifdef ENABLE_TRAY_APP
 #include "platform/WinHandles.h"
 #endif
-#ifdef _WIN32
-#include "core/EventLogger.h"
-#endif
+#include "core/Logging.h"
 #include "version.h"
 
 #include <iostream>
@@ -106,9 +104,7 @@ void reportUnhandledException(const char* where, const char* what) {
     std::string text = std::format("Unhandled exception in {}: {}", where, what);
     std::print("[ERROR] {}\n", text);
     platform->logMessage("[ERROR] " + text);
-#ifdef _WIN32
-    core::EventLogger::instance().log_error(text);
-#endif
+    core::Log(core::LogLevel::Critical, core::kMsgIDUnhandledException, text);
 }
 
 void heartbeatThread() {
@@ -525,12 +521,12 @@ int main(int argc, char* argv[]) {
     #ifdef _WIN32
 
     // Top-level boundary for the AMT std::expected results: print, file-log
-    // and Event Viewer.
+    // and system log.
     auto reportAmtError = [](const std::string& what, const core::PlatformError& error) {
         std::string text = std::format("{}: {}", what, core::describe(error));
         std::print("[ERROR] {}\n", text);
         platform->logMessage(text);
-        core::EventLogger::instance().log(what, error);
+        core::LogError(core::kMsgIDAmt, what, error);
     };
 
     auto AMTInfo = GetAMTComPort();

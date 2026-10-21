@@ -4,7 +4,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <format>
-#include "../../core/EventLogger.h"
+#include "../../core/Logging.h"
 #include "../../platform/WinHandles.h"
 #else
 #include <unistd.h>
@@ -226,14 +226,14 @@ std::expected<std::size_t, core::SerialError> SerialManager::ReadWindows(char* b
 
 void SerialManager::ReportError(const core::SerialError& error) {
     std::cerr << core::describe(error) << std::endl;
-    core::EventLogger::instance().log_on_change("serial:" + portName_, "Serial", error);
+    core::LogErrorOnChange("serial:" + portName_, core::kMsgIDSerial, "Serial", error);
 }
 
 // Called after a successful open: if a failure had been reported, log the
 // recovery so the Event Viewer trail doesn't end on a stale error.
 void SerialManager::ClearReportedError() {
-    core::EventLogger::instance().clear(
-        "serial:" + portName_, std::format("Serial: port {} opened after earlier failure", portName_));
+    core::ClearReportedError("serial:" + portName_, core::kMsgIDSerial,
+                             std::format("Serial: port {} opened after earlier failure", portName_));
 }
 #endif
 

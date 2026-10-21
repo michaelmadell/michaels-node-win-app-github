@@ -23,6 +23,12 @@ class Platform{
     virtual std::string getOsVersion() = 0;
     virtual std::string getOsBuild() = 0;
 
+    // Operational log line (no level - implementations infer one from the
+    // text where they need it). Windows: the rotating file log under
+    // ProgramData, deliberately NOT the Event Log, since this carries the
+    // 30-second heartbeat/metrics chatter. Linux: core::Log -> syslog.
+    // Errors an operator should see go through core::Log / core::LogError
+    // (src/core/Logging.h) directly.
     virtual void logMessage(const std::string& message) = 0;
 
     // Lets main.cpp's SerialManager (the actual owner of the serial
